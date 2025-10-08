@@ -50,7 +50,7 @@ export default function Navbar() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
-        navigate("/login");
+        navigate("/");
       }
     });
   };

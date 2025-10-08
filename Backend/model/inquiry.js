@@ -29,7 +29,11 @@ const inquirySchema = new mongoose.Schema({
         required: true,
         lowercase: true,
         match: [/.+\@.+\..+/, 'Please fill a valid email address']
-
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false // fallback to email if not available
     },
     inquiry_status:{
         type: String,
@@ -37,8 +41,14 @@ const inquirySchema = new mongoose.Schema({
         default: 'Open'
     },
     inquiry_response:{
-        type: String,
-        default: ''
+        type: [
+            {
+                message: { type: String },
+                responder: { type: String }, // 'admin' or 'user'
+                date: { type: Date, default: Date.now }
+            }
+        ],
+        default: []
     }
 });
 const Inquiry = mongoose.model("Inquiry", inquirySchema);

@@ -41,11 +41,20 @@ export default function ContactUs() {
     }
 
     const inquiry_id = Math.floor(100000 + Math.random() * 900000);
+    let userId = null;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        userId = userObj?._id || userObj?.id || null;
+      }
+    } catch {}
     const payload = {
       inquiry_id,
       email: form.email.trim().toLowerCase(),
       inquiry_type: form.inquiry_type,
       inquiry_message: form.inquiry_message.trim(),
+      userId
     };
 
     setSubmitting(true);
