@@ -28,6 +28,11 @@ const navItems = [
     end: true,
   },
   {
+    to: "/userDashboard/inquiry",
+    label: "Inquiry & Reply",
+    icon: FileText,
+  },
+  {
     to: "/userDashboard/requestMeal",
     label: "Requested Meal Plans",
     icon: ArrowDownToDot,

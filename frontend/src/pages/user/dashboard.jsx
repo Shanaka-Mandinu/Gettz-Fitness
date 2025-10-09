@@ -33,7 +33,7 @@ export default function Dashboard() {
     }
   }, [loaded]);
   return (
-    <div className="w-full min-h-[675px]  flex items-center justify-center">
+    <div className="w-full min-h-[675px] flex items-center justify-center">
       <div className="max-w-sm mx-auto bg-white rounded-2xl border border-red-300 shadow-sm p-6">
         {/* Avatar + Score */}
         <div className="flex flex-col items-center">
