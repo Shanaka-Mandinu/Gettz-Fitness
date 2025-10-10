@@ -37,10 +37,10 @@ export default function PurchaseAddPage() {
   async function handleSave() {
     //if (!P_code.trim()) return toast.error("Code is required");
     if (!P_date) return toast.error("Date is required");
-    if (P_cost === "" || isNaN(Number(P_cost)) || Number(P_cost) < 0) {
+    if (P_cost === "" || isNaN(Number(P_cost)) || Number(P_cost) <= 0) {
       return toast.error("Valid non-negative price is required");
     }
-    if (P_quantiy === "" || isNaN(Number(P_quantiy)) || Number(P_quantiy) < 0) {
+    if (P_quantiy === "" || isNaN(Number(P_quantiy)) || Number(P_quantiy) <= 0) {
       return toast.error("Valid non-negative quantity is required");
     }
 

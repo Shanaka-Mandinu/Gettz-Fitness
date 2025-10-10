@@ -32,7 +32,7 @@ export const getOneMealPlan = (req, res) => {
   const user = req.user._id;
   console.log("getOneMealPlan - user ID:", user);
   
-  if (req.user.role == "user") {
+  if (req.user.role == "user" || req.user.role == "member") {
     console.log("getOneMealPlan - searching for meal plans with user_id:", user);
     // Try both ObjectId and string matching
     MealPlan.find({ 

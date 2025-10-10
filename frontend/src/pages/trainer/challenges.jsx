@@ -12,7 +12,6 @@ export default function TrainerChallenges() {
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
   
-  // -------- SEARCH ----------
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return participations;
@@ -34,7 +33,6 @@ export default function TrainerChallenges() {
     });
   }, [query, participations]);
 
-  // -------- PDF (exports current filtered list) ----------
   const handleDownloadPDF = async () => {
     const list = filtered;
     const doc = new jsPDF();
@@ -97,7 +95,6 @@ export default function TrainerChallenges() {
     doc.save('challenge_approvals.pdf');
   };
 
-  // Fetch all user challenge participations
   async function fetchParticipations() {
     setLoaded(false);
     try {
@@ -114,7 +111,6 @@ export default function TrainerChallenges() {
     }
   }
 
-  // Approve a user's challenge participation
   async function approveParticipation(userChallengeId) {
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("jwt");

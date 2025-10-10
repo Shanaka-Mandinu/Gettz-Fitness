@@ -41,11 +41,20 @@ export default function ContactUs() {
     }
 
     const inquiry_id = Math.floor(100000 + Math.random() * 900000);
+    let userId = null;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        userId = userObj?._id || userObj?.id || null;
+      }
+    } catch {}
     const payload = {
       inquiry_id,
       email: form.email.trim().toLowerCase(),
       inquiry_type: form.inquiry_type,
       inquiry_message: form.inquiry_message.trim(),
+      userId
     };
 
     setSubmitting(true);
@@ -127,7 +136,7 @@ export default function ContactUs() {
               </a>
             </div>
 
-            <div className="mt-10 grid sm:grid-cols-3 gap-8 mt-50">
+            <div className="mt-60 grid sm:grid-cols-3 gap-8">
               <div>
                 <h3 className="font-semibold">Customer Support</h3>
                 <p className="text-sm text-gray-600 mt-2">

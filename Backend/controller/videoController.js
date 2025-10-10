@@ -3,6 +3,13 @@ import Video from "../model/Video_Portal.js";
 
 
 export async function uploadVideo(req, res) {
+  if(req.user == null){
+        res.status(403).json({
+            message: "You need logging first to upload video"
+        })
+        return;
+    }
+    
   try {
     const video = new Video(req.body);
     await video.save();

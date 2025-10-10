@@ -88,8 +88,12 @@ export default function PurchaseEditPage() {
     }, [code, location.state, navigate]);
 
     async function handleSave() {
-        if (P_cost === "" || isNaN(Number(P_cost))) return toast.error("Cost is required");
-        if (P_quantiy === "" || isNaN(Number(P_quantiy))) return toast.error("Quantity is required");
+        if (P_cost === "" || isNaN(Number(P_cost)) || Number(P_cost) <= 0) {
+            return toast.error("Valid non-negative price is required");
+        }
+        if (P_quantiy === "" || isNaN(Number(P_quantiy)) || Number(P_quantiy) <= 0) {
+            return toast.error("Valid non-negative quantity is required");
+        }
         if (!P_date) return toast.error("Date is required");
 
         try {
@@ -209,13 +213,13 @@ export default function PurchaseEditPage() {
                             </label>
                             <div className="relative">
                                 <Layers size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
-                            <input
-                                type="number"
-                                min="0"
-                                value={P_quantiy}
-                                onChange={(e) => setQty(e.target.value)}
-                                className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
-                            />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={P_quantiy}
+                                    onChange={(e) => setQty(e.target.value)}
+                                    className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                                />
                             </div>
                         </div>
 

@@ -150,7 +150,7 @@ export function updateNotification(req, res) {
   const id = req.params.id;
 
   Notification.findOneAndUpdate(
-    { $or: [{ _id: id }, { notificationID: id }] },   // ✅ allow both
+    { $or: [{ _id: id }, { notificationID: id }] }, 
     req.body,
     { new: true }
   )

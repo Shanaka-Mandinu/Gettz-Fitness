@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Dumbbell, CalendarClock, Video,
-  Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy, ChefHat, LogOut
+  Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy,
+  LogOut, ChefHat, LogOut
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
+import Swal from "sweetalert2";
 
 const linkBase =
   "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all";
@@ -23,16 +25,24 @@ const navItems = [
 
 export default function TrainerSidebar() {
   const [open, setOpen] = useState(true);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Navigate to login page
-    navigate('/login');
-  };
+  const navigate=useNavigate()
+   function logout() {
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to log out?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, Log Out!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/admin");
+        }
+      });
+    }
 
   return (
     <aside
@@ -70,12 +80,14 @@ export default function TrainerSidebar() {
           </NavLink>
         ))}
       </nav>
-
-      {/* Logout Button */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="px-3 space-y-3">
+        {/* Logout */}
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+          className={`mb-10 flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 shadow-sm transition-colors ${
+            open ? "justify-start" : "justify-center"
+          }`}
+          title={!open ? "Logout" : undefined}
+          onClick={logout}
         >
           <LogOut className="h-4 w-4" />
           {open && <span>Logout</span>}

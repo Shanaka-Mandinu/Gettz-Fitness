@@ -120,10 +120,10 @@ export default function SupplementEditPage() {
         if (!Sup_name.trim()) return toast.error("Name is required");
         if (!Sup_type.trim()) return toast.error("Type is required");
         if (!IM_ID.trim()) return toast.error("IM_ID is required");
-        if (Sup_price === "" || Number.isNaN(Number(Sup_price)) || Number(Sup_price) < 0) {
+        if (Sup_price === "" || Number.isNaN(Number(Sup_price)) || Number(Sup_price) <= 0) {
             return toast.error("Valid non-negative price is required");
         }
-        if (Sup_quantity === "" || Number.isNaN(Number(Sup_quantity)) || Number(Sup_quantity) < 0) {
+        if (Sup_quantity === "" || Number.isNaN(Number(Sup_quantity)) || Number(Sup_quantity) <= 0) {
             return toast.error("Valid non-negative quantity is required");
         }
 
