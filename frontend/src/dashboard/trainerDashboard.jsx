@@ -3,9 +3,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import TrainerSidebar from "../components/TrainerSidebar.jsx";
 
 import RequestedMeals from "../pages/trainer/requestedMeals.jsx";
-import MealPlans from "../pages/trainer/mealPlans.jsx";
 import Dashboard from "../pages/trainer/dashboard.jsx";
 import Challenges from "../pages/trainer/challenges.jsx";
+import MealTemplate from "../pages/trainer/mealTemplate.jsx";
+import AddMealTemplate from "../pages/trainer/addMealTemplate.jsx";
+import EditMealTemplate from "../pages/trainer/editMealTemplate.jsx";
+import AssignMealPlan from "../pages/trainer/assignMealPlan.jsx";
 
 export default function TrainerLayout() {
   return (
@@ -27,10 +30,13 @@ export default function TrainerLayout() {
             <Routes>
               <Route index element={<Navigate to="dashboard" replace />} />
 
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/reqMeals" element={<RequestedMeals />} />
-              
-              <Route path="/challenges" element={<Challenges />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/reqMeals" element={<RequestedMeals />} />
+                      <Route path="/assign-meal-plan" element={<AssignMealPlan />} />
+                      <Route path="/mealTemplate" element={<MealTemplate />} />
+                      <Route path="/add-meal-template" element={<AddMealTemplate />} />
+                      <Route path="/edit-meal-template/:id" element={<EditMealTemplate />} />
+                      <Route path="/challenges" element={<Challenges />} />
 
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>

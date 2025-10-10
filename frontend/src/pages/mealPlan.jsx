@@ -3,13 +3,15 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import meal1 from "../assets/meal1.jpg";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 export default function MealPlan() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     user_id: "", 
     user_name: "",
     last_name: "",
-    request_date: "",
+    status: "normal",
     weight: "",
     height: "",
     description: "",
@@ -23,7 +25,7 @@ export default function MealPlan() {
       user_id: "",
       user_name: "",
       last_name: "",
-      request_date: "",
+      status: "normal",
       weight: "",
       height: "",
       description: "",
@@ -49,9 +51,9 @@ export default function MealPlan() {
           return "Last name should be 2–40 letters";
         return null;
 
-      case "request_date":
-        if (!value) return "Request date is required";
-        if (value < todayISO) return "Request date cannot be in the past";
+      case "status":
+        if (!value) return "Status is required";
+        if (value !== 'urgent' && value !== 'normal') return "Status must be urgent or normal";
         return null;
 
       case "height":
@@ -89,7 +91,7 @@ export default function MealPlan() {
     const fields = [
       "user_name",
       "last_name",
-      "request_date",
+      "status",
       "height",
       "weight",
       "description",
@@ -148,7 +150,7 @@ export default function MealPlan() {
       user_id: derivedUserId,
       user_name: form.user_name.trim(),
       last_name: form.last_name.trim(),
-      request_date: form.request_date,
+      status: form.status,
       weight: Number(form.weight),
       height: Number(form.height),
       description: form.description.trim(),
@@ -281,31 +283,32 @@ export default function MealPlan() {
 
             <div className="flex-1">
               <label className="block mb-1 text-sm font-medium text-black">
-                Request Date
+                Request Status
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                When you want this request to be recorded.
+                Whether this request is urgent or normal.
               </p>
-              <input
-                type="date"
-                value={form.request_date}
-                min={todayISO}
-                onChange={(e) => handleChange("request_date", e.target.value)}
-                onBlur={() => handleBlur("request_date")}
-                aria-invalid={!!errors.request_date}
-                aria-describedby={errId("request_date")}
+              <select
+                value={form.status}
+                onChange={(e) => handleChange("status", e.target.value)}
+                onBlur={() => handleBlur("status")}
+                aria-invalid={!!errors.status}
+                aria-describedby={errId("status")}
                 className={`w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 ${
-                  errors.request_date
+                  errors.status
                     ? "border-red-500 focus:ring-red-300"
                     : "border-black/30 focus:ring-black/20"
                 }`}
-              />
-              {errors.request_date && (
+              >
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              {errors.status && (
                 <p
-                  id="request_date-error"
+                  id="status-error"
                   className="mt-1 text-sm text-red-600"
                 >
-                  {errors.request_date}
+                  {errors.status}
                 </p>
               )}
             </div>
@@ -458,6 +461,20 @@ export default function MealPlan() {
             style={{ backgroundColor: red, color: "#FFFFFF" }}
           >
             Request a Meal Plan
+          </button>
+
+          {/* Meal Templates Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/meal-templates')}
+            className="w-full py-3 rounded-lg font-semibold border-2"
+            style={{ 
+              borderColor: red, 
+              color: red, 
+              backgroundColor: "transparent" 
+            }}
+          >
+            Browse Meal Templates
           </button>
         </form>
       </div>

@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import Dashboard from "../pages/user/dashboard.jsx";
 import RequestMeals from "../pages/user/requestMeal.jsx";
 import CurrentMeal from "../pages/user/currentMeal.jsx";
+import EditMealRequest from "../pages/user/editMealRequest.jsx";
 import SaveCards from "../pages/client/cards/viewCards.jsx";
 import AddCardForm from "../pages/client/cards/addCards.jsx";
 import UpdateCardForm from "../pages/client/cards/updateCard.jsx";
@@ -54,6 +55,7 @@ export default function UserLayout() {
 
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="requestMeal" element={<RequestMeals />} />
+              <Route path="edit-meal-request" element={<EditMealRequest />} />
               <Route path="currentMeal" element={<CurrentMeal />} />
               <Route path="/manageCards" element={<SaveCards />} />
               <Route path="/manageCards/addCard" element={<AddCardForm />} />
