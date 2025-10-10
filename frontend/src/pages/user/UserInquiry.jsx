@@ -28,7 +28,7 @@ export default function UserInquiry() {
 
     return (
         <div className="p-8">
-            <h2 className="text-2xl font-bold text-red-600 mb-6">Your Inquiries & Replies</h2>
+            <h2 className="text-2xl font-bold text-black mb-6">Your Inquiries & Replies</h2>
             {loading ? (
                 <div className="text-gray-500">Loading inquiries...</div>
             ) : error ? (

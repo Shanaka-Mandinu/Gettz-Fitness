@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   weight: { type: String, required: true, default: "Not given" },
   dob: { type: Date, required: true, default: Date.now },
 
-  profilePicture: { type: String, default: "default-profile.jpg" },
+  profilePicture: { type: String, default: "" },
 
   role: {
     type: String,

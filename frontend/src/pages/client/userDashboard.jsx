@@ -45,10 +45,39 @@ export default function UserDashboard() {
 	}, [user]);
 
 	const avatarSrc = useMemo(() => {
-		if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http")) return user.avatar;
-		if (user?.profilePicture && typeof user.profilePicture === "string" && user.profilePicture.startsWith("http")) return user.profilePicture;
-		if (user?.profilePicture && typeof user.profilePicture === "string") return user.profilePicture;
-		if (user?.avatar && typeof user.avatar === "string") return user.avatar;
+		if (!user) return DefaultAvatar;
+		
+		// Check for valid HTTP URLs first
+		if (
+			user?.avatar &&
+			typeof user.avatar === "string" &&
+			user.avatar.startsWith("http")
+		)
+			return user.avatar;
+		if (
+			user?.profilePicture &&
+			typeof user.profilePicture === "string" &&
+			user.profilePicture.startsWith("http")
+		)
+			return user.profilePicture;
+		
+		// Check for other valid profile pictures (not default placeholder)
+		if (
+			user?.profilePicture &&
+			typeof user.profilePicture === "string" &&
+			user.profilePicture !== "default-profile.jpg" &&
+			user.profilePicture.trim() !== ""
+		)
+			return user.profilePicture;
+		if (
+			user?.avatar &&
+			typeof user.avatar === "string" &&
+			user.avatar !== "default-profile.jpg" &&
+			user.avatar.trim() !== ""
+		)
+			return user.avatar;
+		
+		// Fallback to default avatar
 		return DefaultAvatar;
 	}, [user]);
 

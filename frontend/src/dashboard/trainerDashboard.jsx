@@ -6,6 +6,7 @@ import RequestedMeals from "../pages/trainer/requestedMeals.jsx";
 import MealPlans from "../pages/trainer/mealPlans.jsx";
 import Dashboard from "../pages/trainer/dashboard.jsx";
 import Challenges from "../pages/trainer/challenges.jsx";
+import Profile from "../pages/trainer/profile.jsx";
 
 export default function TrainerLayout() {
   return (
@@ -29,8 +30,8 @@ export default function TrainerLayout() {
 
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/reqMeals" element={<RequestedMeals />} />
-              
               <Route path="/challenges" element={<Challenges />} />
+              <Route path="/profile" element={<Profile />} />
 
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>

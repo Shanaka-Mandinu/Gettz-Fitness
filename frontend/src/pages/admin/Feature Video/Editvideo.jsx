@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -31,8 +30,7 @@ function getAxiosError(err) {
 }
 
 const parseList = (s) => (s || "").split(",").map((t) => t.trim()).filter(Boolean);
-const joinList  = (arr) => (Array.isArray(arr) ? arr.join(", ") : "");
-
+const joinList = (arr) => (Array.isArray(arr) ? arr.join(", ") : "");
 
 export default function EditVideo() {
   const CATEGORIES = [
@@ -70,6 +68,7 @@ export default function EditVideo() {
 
   const videoRef = useRef(null);
 
+  // 🧩 Handle local preview file
   useEffect(() => {
     if (!videoFile) return;
     const objectURL = URL.createObjectURL(videoFile);
@@ -86,6 +85,7 @@ export default function EditVideo() {
     temp.onerror = () => URL.revokeObjectURL(objectURL);
   }, [videoFile]);
 
+  // 🧩 Fetch video data
   useEffect(() => {
     let cancelled = false;
 
@@ -104,15 +104,19 @@ export default function EditVideo() {
         }
         if (cancelled) return;
 
-    setTitle(data?.title || "");
-    setDescription(data?.description || "");
-    setAltNames(joinList(data?.altNames));
-    setTags(joinList(data?.tags));
-    setDuration(Number(data?.duration) || 0);
-    setVideoUrl(data?.videoUrl || "");
-    setIsPublished(Boolean(data?.isPublished));
-    setCategory(data?.category || "");
-    setWorkOutStep(Array.isArray(data?.workOutStep) && data.workOutStep.length > 0 ? data.workOutStep : [""]);
+        setTitle(data?.title || "");
+        setDescription(data?.description || "");
+        setAltNames(joinList(data?.altNames));
+        setTags(joinList(data?.tags));
+        setDuration(Number(data?.duration) || 0);
+        // ✅ Ensure absolute URL
+        const finalUrl = data?.videoUrl?.startsWith("http")
+          ? data.videoUrl
+          : `${import.meta.env.VITE_BACKEND_URL}${data?.videoUrl || ""}`;
+        setVideoUrl(finalUrl);
+        setIsPublished(Boolean(data?.isPublished));
+        setCategory(data?.category || "");
+        setWorkOutStep(Array.isArray(data?.workOutStep) && data.workOutStep.length > 0 ? data.workOutStep : [""]);
       } catch (err) {
         toast.error(`Failed to load video: ${getAxiosError(err)}`);
         navigate("/admin/video");
@@ -123,16 +127,18 @@ export default function EditVideo() {
 
     const s = location.state;
     if (s && typeof s === "object") {
-
-    setTitle(s.title || "");
-    setDescription(s.description || "");
-    setAltNames(joinList(s.altNames));
-    setTags(joinList(s.tags));
-    setDuration(Number(s.duration) || 0);
-    setVideoUrl(s.videoUrl || "");
-    setIsPublished(Boolean(s.isPublished));
-    setCategory(s.category || "");
-    setWorkOutStep(Array.isArray(s.workOutStep) && s.workOutStep.length > 0 ? s.workOutStep : [""]);
+      setTitle(s.title || "");
+      setDescription(s.description || "");
+      setAltNames(joinList(s.altNames));
+      setTags(joinList(s.tags));
+      setDuration(Number(s.duration) || 0);
+      const finalUrl = s?.videoUrl?.startsWith("http")
+        ? s.videoUrl
+        : `${import.meta.env.VITE_BACKEND_URL}${s?.videoUrl || ""}`;
+      setVideoUrl(finalUrl);
+      setIsPublished(Boolean(s.isPublished));
+      setCategory(s.category || "");
+      setWorkOutStep(Array.isArray(s.workOutStep) && s.workOutStep.length > 0 ? s.workOutStep : [""]);
       setLoadingVideo(false);
     } else {
       hydrateFromApi();
@@ -143,10 +149,11 @@ export default function EditVideo() {
     };
   }, [location.state, videoId, navigate]);
 
+  // 🧩 Save updates
   async function handleSave() {
-  if (!title.trim()) return toast.error("Title is required");
-  if (!description.trim()) return toast.error("Description is required");
-  if (!category) return toast.error("Please pick a category");
+    if (!title.trim()) return toast.error("Title is required");
+    if (!description.trim()) return toast.error("Description is required");
+    if (!category) return toast.error("Please pick a category");
 
     try {
       setLoading(true);
@@ -186,7 +193,7 @@ export default function EditVideo() {
     }
   }
 
-
+  // 🧩 YouTube search + selection
   async function searchYouTube(e) {
     e?.preventDefault?.();
     if (!ytQuery.trim()) return;
@@ -229,9 +236,7 @@ export default function EditVideo() {
 
   return (
     <div className="w-full min-h-screen bg-white text-black flex items-center justify-center p-6">
-
       <div className="w-full max-w-6xl rounded-2xl border border-black/10 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] overflow-hidden">
-
         <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e30613] text-white">
@@ -246,12 +251,14 @@ export default function EditVideo() {
             <label className="block text-sm font-medium mb-1">Category</label>
             <select
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
             >
               <option value="">Select category</option>
-              {CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -264,9 +271,8 @@ export default function EditVideo() {
           </Link>
         </div>
 
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-
+          {/* LEFT SIDE */}
           <div className="lg:col-span-1 space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Workout Steps</label>
@@ -275,7 +281,7 @@ export default function EditVideo() {
                   <input
                     type="text"
                     value={step}
-                    onChange={e => {
+                    onChange={(e) => {
                       const arr = [...workOutStep];
                       arr[idx] = e.target.value;
                       setWorkOutStep(arr);
@@ -300,8 +306,11 @@ export default function EditVideo() {
               >
                 + Add Step
               </button>
-              <p className="mt-1 text-xs text-neutral-500">Add each step of the workout (optional).</p>
+              <p className="mt-1 text-xs text-neutral-500">
+                Add each step of the workout (optional).
+              </p>
             </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Title</label>
               <input
@@ -325,9 +334,7 @@ export default function EditVideo() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Alt names (comma separated)
-                </label>
+                <label className="block text-sm font-medium mb-1">Alt names</label>
                 <input
                   value={altNames}
                   onChange={(e) => setAltNames(e.target.value)}
@@ -336,9 +343,7 @@ export default function EditVideo() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tags (comma separated)
-                </label>
+                <label className="block text-sm font-medium mb-1">Tags</label>
                 <input
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -350,9 +355,7 @@ export default function EditVideo() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Duration (seconds)
-                </label>
+                <label className="block text-sm font-medium mb-1">Duration (seconds)</label>
                 <input
                   type="number"
                   min={0}
@@ -375,6 +378,8 @@ export default function EditVideo() {
               </div>
             </div>
           </div>
+
+          {/* RIGHT SIDE */}
           <div className="lg:col-span-1 space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -418,18 +423,29 @@ export default function EditVideo() {
 
               {(preview || videoUrl) && (
                 <div className="mt-3 w-full rounded-xl border border-black/10 overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    src={preview || videoUrl}
-                    controls
-                    className="w-full h-72 object-cover"
-                  />
+                  {/* ✅ Detect YouTube link */}
+                  {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+                    <iframe
+                      src={videoUrl.replace("watch?v=", "embed/")}
+                      title="YouTube video player"
+                      className="w-full h-72"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      src={preview || videoUrl}
+                      controls
+                      className="w-full h-72 object-cover"
+                    />
+                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
-
 
         <div className="flex items-center justify-between border-t border-black/10 px-6 py-4">
           <Link
@@ -449,6 +465,8 @@ export default function EditVideo() {
           </button>
         </div>
       </div>
+
+      {/* YouTube modal */}
       {ytOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-3xl rounded-2xl bg-white shadow-lg">
@@ -475,7 +493,10 @@ export default function EditVideo() {
                   className="w-full rounded-xl border border-black/10 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
                 />
               </div>
-              <button type="submit" className="rounded-xl bg-[#e30613] px-3 py-2 text-sm font-medium text-white hover:opacity-95">
+              <button
+                type="submit"
+                className="rounded-xl bg-[#e30613] px-3 py-2 text-sm font-medium text-white hover:opacity-95"
+              >
                 Search
               </button>
             </form>
