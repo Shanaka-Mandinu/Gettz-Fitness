@@ -10,6 +10,8 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 export function saveUser(req, res) {
+  console.log("Signup request body:", req.body);
+  
   if (req.body.role == "admin") {
     if (req.user == null) {
       res.status(400).json({
@@ -26,7 +28,7 @@ export function saveUser(req, res) {
     }
   }
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-  console.log(hashedPassword);
+  console.log("Hashed password:", hashedPassword);
 
   const user = new User({
     email: req.body.email,
@@ -34,20 +36,46 @@ export function saveUser(req, res) {
     lastName: req.body.lastName,
     password: hashedPassword,
     phone: req.body.phone,
-    Height: req.body.Height,
-    Weight: req.body.Weight,
+    height: req.body.height,
+    weight: req.body.weight,
     dob: req.body.dob,
+    profilePicture: req.body.profilePicture || "",
+    role: req.body.role || "user",
+    bmi: req.body.bmi || 0,
+    point: req.body.point || 0,
+  });
+
+  console.log("Creating user with data:", {
+    email: req.body.email,
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    phone: req.body.phone,
+    height: req.body.height,
+    weight: req.body.weight,
+    dob: req.body.dob,
+    profilePicture: req.body.profilePicture,
+    role: req.body.role,
+    bmi: req.body.bmi,
+    point: req.body.point,
   });
 
   user
     .save()
-    .then(() => {
+    .then((savedUser) => {
+      console.log("User saved successfully:", savedUser);
       res.status(201).json({
-        message: "User saved sucessfully",
+        message: "User saved successfully",
+        user: {
+          _id: savedUser._id,
+          email: savedUser.email,
+          firstName: savedUser.firstName,
+          lastName: savedUser.lastName,
+          profilePicture: savedUser.profilePicture,
+        }
       });
     })
     .catch((err) => {
-      
+      console.error("Error saving user:", err);
       res.status(500).json({
         message: "Error saving user",
         error: err.message,
@@ -77,10 +105,11 @@ export function loginUser(req, res) {
           lastName: user.lastName,
           role: user.role,
           phone: user.phone,
-          Height: user.Height,
-          Weight: user.Weight,
+          height: user.height,
+          weight: user.weight,
           dob: user.dob,
           profilePicture: user.profilePicture,
+          avatar: user.avatar,
           point: user.point,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
@@ -170,10 +199,11 @@ export async function googleLogin(req, res) {
       lastName: user.lastName,
       role: user.role,
       phone: user.phone,
-      Height: user.Height,
-      Weight: user.Weight,
+      height: user.height,
+      weight: user.weight,
       dob: user.dob,
       profilePicture: user.profilePicture,
+      avatar: user.avatar,
       point: user.point,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

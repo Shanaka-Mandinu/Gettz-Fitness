@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue } from "framer-motion";
 import {
   Dumbbell,
-  Bolt,
   HeartPulse,
   Flame,
   Trophy,
@@ -12,116 +11,142 @@ import {
   ShieldCheck,
   Star,
   Check,
+  Activity,
+  Cpu,
+  Smartphone,
+  QrCode,
+  Headphones,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-/** Brand helpers */
+/** ===== Brand ===== */
 const BRAND = {
   red: "#DF204E",
-  black: "#000000",
+  black: "#0A0A0A",
   white: "#FFFFFF",
 };
 
 export default function GymLandingPage() {
   const [email, setEmail] = useState("");
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="min-h-screen bg-[rgb(10,10,10)] text-white">
       <Hero email={email} setEmail={setEmail} />
-      <TrustBar />
-      <FeatureGrid />
+      <AttributePills />
+      <BentoFeatures />
       <VideoTeaser />
-      <Classes />
+      <Programs />
       <Stats />
-      <Trainers />
+      <Coaches />
       <Pricing />
       <Testimonials />
-      <Cta />
+      <Faq />
+      <FinalCta />
     </div>
   );
 }
 
+/** ===== Layout ===== */
 function Container({ className = "", children }) {
+  return <div className={`mx-auto w-full max-w-7xl px-4 md:px-6 ${className}`}>{children}</div>;
+}
+
+/** ===== Util: 3D Tilt ===== */
+function Tilt3D({ children, max = 12, glare = true }) {
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    rx.set(py * -max);
+    ry.set(px * max);
+  };
+  const reset = () => {
+    rx.set(0);
+    ry.set(0);
+  };
   return (
-    <div className={`mx-auto w-full max-w-7xl px-4 md:px-6 ${className}`}>
+    <motion.div
+      onMouseMove={onMove}
+      onMouseLeave={reset}
+      style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
+      className="transform-gpu will-change-transform relative"
+    >
       {children}
-    </div>
+      {glare && (
+        <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] opacity-20 mix-blend-screen"
+             style={{ background: "linear-gradient(120deg, rgba(255,255,255,.2), transparent 60%)" }}/>
+      )}
+    </motion.div>
   );
 }
 
-/* ---------- HERO (3D + glossy) ---------- */
-
+/** ===== HERO (new look) ===== */
 function Hero({ email, setEmail }) {
-  // subtle parallax spotlight
-  const mx = useMotionValue(0.5);
-  const my = useMotionValue(0.5);
-  const spotlightX = useTransform(mx, (v) => `${v * 100}%`);
-  const spotlightY = useTransform(my, (v) => `${v * 100}%`);
-
-  const onMouseMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width);
-    my.set((e.clientY - r.top) / r.height);
-  };
-
   return (
-    <section className="relative overflow-hidden border-b border-white/10">
-      {/* Red/black gradient fog */}
+    <section className="relative overflow-hidden">
+      {/* background grid + radial glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 -left-40 h-[38rem] w-[38rem] rounded-full blur-3xl opacity-30"
-        style={{ background: `radial-gradient(closest-side, ${BRAND.red}, transparent)` }}
+        className="absolute inset-0 opacity-25"
+        style={{
+          background:
+            "radial-gradient(1000px circle at 10% -10%, rgba(223,32,78,.22), transparent 40%), radial-gradient(900px circle at 110% 60%, rgba(255,255,255,.08), transparent 40%)",
+        }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-40 -right-40 h-[38rem] w-[38rem] rounded-full blur-3xl opacity-20"
-        style={{ background: `radial-gradient(closest-side, #6b7280, transparent)` }}
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(1000px circle at 50% 40%, black, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(1000px circle at 50% 40%, black, transparent 75%)",
+        }}
       />
 
       <Container className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center py-16 md:py-24">
-        {/* Copy */}
+        {/* Content */}
         <div>
           <motion.h1
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-4xl/tight md:text-6xl/tight font-black"
           >
-            Train harder.{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage: `linear-gradient(90deg, ${BRAND.red}, #ff6b81, ${BRAND.red})`,
-              }}
-            >
-              Recover faster.
+            Build power.{" "}
+            <span className="bg-clip-text text-transparent"
+                  style={{ backgroundImage: `linear-gradient(90deg, ${BRAND.red}, #ff7a93, ${BRAND.red})` }}>
+              Recover smarter.
             </span>{" "}
-            Live stronger.
+            Perform longer.
           </motion.h1>
 
           <p className="mt-4 max-w-xl text-neutral-300 md:text-lg">
-            Premium equipment, elite coaching, and data-driven programs. Everything you need to hit your next PR.
+            A precision training club with AI-assisted programming, 3D form feedback, and coaches who care.
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <a
               href="#pricing"
-              className="inline-flex items-center justify-center rounded-2xl px-5 py-3 font-semibold text-white shadow-[0_10px_30px_-10px_rgba(223,32,78,0.8)] transition
-              hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-2xl px-5 py-3 font-semibold shadow-[0_12px_30px_-10px_rgba(223,32,78,0.8)] hover:-translate-y-0.5 transition"
               style={{ background: BRAND.red }}
             >
               Start free week <ArrowRight className="ml-2 h-4 w-4" />
             </a>
             <a
               href="#features"
-              className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-5 py-3 font-semibold text-white hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10"
             >
               Explore features
             </a>
           </div>
 
+          {/* Email capture */}
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="mt-6 flex w-full max-w-md items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-2 backdrop-blur"
+            className="mt-6 flex w-full max-w-md items-center gap-2 rounded-2xl border border-white/12 bg-white/5 p-2 backdrop-blur"
           >
             <input
               type="email"
@@ -130,177 +155,152 @@ function Hero({ email, setEmail }) {
               placeholder="Enter your email"
               className="h-11 flex-1 rounded-xl bg-transparent px-3 outline-none placeholder:text-neutral-400"
             />
-            <button
-              className="h-11 shrink-0 rounded-xl px-4 font-semibold text-white"
-              style={{ background: BRAND.red }}
-            >
+            <button className="h-11 shrink-0 rounded-xl px-4 font-semibold text-white" style={{ background: BRAND.red }}>
               Get updates
             </button>
           </form>
 
           <div className="mt-6 grid grid-cols-3 gap-6 max-w-lg text-sm text-neutral-300">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-white" /> No contracts
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-white" /> 24/7 access
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-white" /> 1k+ 5-star reviews
-            </div>
+            <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-white" /> No contracts</div>
+            <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-white" /> 24/7 access</div>
+            <div className="flex items-center gap-2"><Star className="h-5 w-5 text-white" /> 1k+ 5-star reviews</div>
           </div>
         </div>
 
-        {/* 3D Card */}
-        <div onMouseMove={onMouseMove} className="relative">
+        {/* 3D mockup stack */}
+        <div className="relative">
+          <GlowRings />
           <Tilt3D>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.05 }}
-              className="relative rounded-3xl border border-white/10 bg-neutral-900/60 overflow-hidden shadow-2xl"
-            >
+            <div className="relative rounded-[1.75rem] overflow-hidden border border-white/10 bg-neutral-900/60 shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1920&auto=format&fit=crop"
-                alt="Athlete lifting barbell"
-                className="w-full object-cover"
+                src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                alt="Gym hero"
+                className="w-full h-[420px] object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-transparent to-black/40" />
-              {/* glossy edge */}
-              <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(120deg, transparent, rgba(255,255,255,.25), transparent)" }} />
-
-              {/* Floating badge */}
               <motion.div
-                className="absolute -bottom-6 -left-6 rounded-2xl border border-white/10 bg-neutral-900/80 backdrop-blur p-4 flex items-center gap-3 shadow-xl"
+                className="absolute -bottom-6 -left-6 rounded-2xl border border-white/10 bg-neutral-900/85 backdrop-blur p-4 flex items-center gap-3 shadow-xl"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                <div
-                  className="h-10 w-10 rounded-xl grid place-items-center text-white"
-                  style={{ background: BRAND.red }}
-                >
-                  <Bolt className="h-5 w-5" />
+                <div className="h-10 w-10 rounded-xl grid place-items-center text-white" style={{ background: BRAND.red }}>
+                  <Dumbbell className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Power Program</p>
-                  <p className="text-xs text-neutral-300">12-week strength phase</p>
+                  <p className="text-sm font-semibold">Velocity Blocks</p>
+                  <p className="text-xs text-neutral-300">4-week progressive overload</p>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           </Tilt3D>
 
-          {/* Responsive spotlight following cursor */}
+          {/* floating mini card */}
           <motion.div
-            className="pointer-events-none absolute -inset-8 rounded-[2rem]"
-            style={{
-              background: useTransform(
-                [spotlightX, spotlightY],
-                ([x, y]) =>
-                  `radial-gradient(600px circle at ${x} ${y}, rgba(223,32,78,.12), transparent 40%)`
-              ),
-            }}
-          />
+            className="absolute -top-6 -right-4 rounded-2xl border border-white/10 bg-white/10 backdrop-blur p-4"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 4, repeat: Infinity }}
+          >
+            <div className="text-xs text-neutral-300">HR Zone</div>
+            <div className="mt-1 text-lg font-black" style={{ color: BRAND.red }}>
+              86% (RZ4)
+            </div>
+          </motion.div>
         </div>
       </Container>
     </section>
   );
 }
 
-/* Reusable 3D tilt wrapper */
-function Tilt3D({ children }) {
-  const rx = useMotionValue(0);
-  const ry = useMotionValue(0);
-
-  const onMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    rx.set(py * -10);
-    ry.set(px * 10);
-  };
-
-  const reset = () => {
-    rx.set(0);
-    ry.set(0);
-  };
-
+/** Decorative glow rings */
+function GlowRings() {
   return (
-    <motion.div
-      onMouseMove={onMove}
-      onMouseLeave={reset}
-      style={{
-        rotateX: rx,
-        rotateY: ry,
-        transformStyle: "preserve-3d",
-      }}
-      className="transform-gpu will-change-transform"
-    >
-      {children}
-    </motion.div>
+    <div aria-hidden className="absolute inset-0 -z-10">
+      <div
+        className="absolute -top-10 -left-14 h-56 w-56 rounded-full blur-3xl opacity-40"
+        style={{ background: `radial-gradient(closest-side, ${BRAND.red}, transparent)` }}
+      />
+      <div
+        className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full blur-3xl opacity-25"
+        style={{ background: "radial-gradient(closest-side, #ffffff, transparent)" }}
+      />
+    </div>
   );
 }
 
-/* ---------- TRUST BAR ---------- */
-
-function TrustBar() {
+/** ===== Attribute Pills (new) ===== */
+function AttributePills() {
+  const attrs = [
+    { icon: <Cpu className="h-4 w-4" />, text: "AI Program Builder" },
+    { icon: <Activity className="h-4 w-4" />, text: "Red-Zone HR Tracking" },
+    { icon: <QrCode className="h-4 w-4" />, text: "RFID Entry" },
+    { icon: <Smartphone className="h-4 w-4" />, text: "In-App Booking" },
+    { icon: <Headphones className="h-4 w-4" />, text: "Coach Chat 24/7" },
+    { icon: <ShieldCheck className="h-4 w-4" />, text: "Injury-Safe Progression" },
+  ];
   return (
-    <section className="py-6 border-y border-white/10 bg-neutral-950">
-      <Container className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-70 text-sm">
-        <span className="text-neutral-300">AS FEATURED IN</span>
-        <div className="flex items-center gap-6 text-white">
-          <span className="font-semibold">Men's Health</span>
-          <span className="font-semibold">Runner's World</span>
-          <span className="font-semibold">FitLife</span>
-          <span className="font-semibold">Well+Good</span>
-        </div>
+    <section className="py-6 border-y border-white/10 bg-black/40">
+      <Container className="flex flex-wrap items-center justify-center gap-3">
+        {attrs.map((a, i) => (
+          <span key={i} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-neutral-200">
+            <span className="text-white">{a.icon}</span> {a.text}
+          </span>
+        ))}
       </Container>
     </section>
   );
 }
 
-/* ---------- FEATURES (3D hovering cards) ---------- */
-
-function FeatureGrid() {
-  const items = [
-    { icon: <HeartPulse className="h-6 w-6" />, title: "Smart Coaching", desc: "Personalized plans adapted to your data and progress." },
-    { icon: <Flame className="h-6 w-6" />, title: "Metabolic Tracking", desc: "Monitor calories, HR zones, and recovery in real time." },
-    { icon: <Dumbbell className="h-6 w-6" />, title: "Elite Equipment", desc: "Platform racks, calibrated plates, assault runners & more." },
-    { icon: <Trophy className="h-6 w-6" />, title: "Community & Events", desc: "Weekly comps, workshops, and member challenges." },
+/** ===== Bento Feature Grid (new look) ===== */
+function BentoFeatures() {
+  const tiles = [
+    {
+      title: "Smart Coaching",
+      desc: "Adaptive plans tuned to your recovery and performance.",
+      icon: <HeartPulse className="h-6 w-6" />,
+      img: "https://images.unsplash.com/photo-1554295405-9ec9bc9e3a5e?q=80&w=1920&auto=format&fit=crop",
+      span: "col-span-2",
+    },
+    {
+      title: "Metabolic Tracking",
+      desc: "Calories, HR zones, and readiness—live.",
+      icon: <Flame className="h-6 w-6" />,
+      img: "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1920&auto=format&fit=crop",
+    },
+    {
+      title: "Elite Equipment",
+      desc: "Calibrated plates, platforms, and competition bars.",
+      icon: <Dumbbell className="h-6 w-6" />,
+      img: "https://images.unsplash.com/photo-1558611848-4061b92b0e50?q=80&w=1920&auto=format&fit=crop",
+    },
+    {
+      title: "Community & Events",
+      desc: "Comps, workshops, and member challenges.",
+      icon: <Trophy className="h-6 w-6" />,
+      img: "https://images.unsplash.com/photo-1546484959-f6d8a1dfcf19?q=80&w=1920&auto=format&fit=crop",
+      span: "col-span-2",
+    },
   ];
 
   return (
     <section id="features" className="py-16 md:py-24">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Everything you need to win</h2>
-          <p className="mt-3 text-neutral-300">We blend science, software, and sweat to deliver results that stick.</p>
+          <h2 className="text-3xl md:text-4xl font-black">Engineered to perform</h2>
+          <p className="mt-3 text-neutral-300">Science, software, and sweat—designed for results.</p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {items.map((f, i) => (
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5 auto-rows-[260px]">
+          {tiles.map((t, i) => (
             <Tilt3D key={i}>
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
-                className="rounded-2xl border border-white/10 bg-neutral-900/60 p-6 shadow-[0_15px_40px_-15px_rgba(0,0,0,.8)] hover:shadow-[0_25px_60px_-20px_rgba(223,32,78,.35)]"
-              >
-                <div
-                  className="h-10 w-10 rounded-xl grid place-items-center text-white"
-                  style={{ background: BRAND.red }}
-                >
-                  {f.icon}
+              <article className={`relative rounded-3xl overflow-hidden border border-white/10 bg-neutral-900/60 ${t.span || ""}`}>
+                <img src={t.img} alt={t.title} className="absolute inset-0 h-full w-full object-cover opacity-40" />
+                <div className="relative h-full w-full p-6 flex flex-col justify-end">
+                  <div className="h-10 w-10 rounded-xl grid place-items-center text-white" style={{ background: BRAND.red }}>
+                    {t.icon}
+                  </div>
+                  <h3 className="mt-3 font-bold text-lg">{t.title}</h3>
+                  <p className="mt-1 text-sm text-neutral-300">{t.desc}</p>
                 </div>
-                <h3 className="mt-4 font-bold text-lg">{f.title}</h3>
-                <p className="mt-2 text-sm text-neutral-300">{f.desc}</p>
-                <a
-                  href="#"
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-white"
-                  style={{ color: BRAND.white }}
-                >
-                  Learn more <ArrowRight className="h-4 w-4" />
-                </a>
-              </motion.div>
+              </article>
             </Tilt3D>
           ))}
         </div>
@@ -309,24 +309,21 @@ function FeatureGrid() {
   );
 }
 
-/* ---------- VIDEO TEASER ---------- */
-
+/** ===== Video ===== */
 function VideoTeaser() {
   return (
     <section id="video" className="py-12">
       <Container>
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900 text-white">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900">
           <img
             src="https://images.unsplash.com/photo-1546483875-ad9014c88eba?q=80&w=1920&auto=format&fit=crop"
             alt="Gym ambience"
-            className="absolute inset-0 h-full w-full object-cover opacity-40"
+            className="absolute inset-0 h-full w-full object-cover opacity-35"
           />
           <div className="relative p-8 md:p-14">
             <div className="max-w-xl">
               <h3 className="text-2xl md:text-3xl font-black">Tour the club in 60 seconds</h3>
-              <p className="mt-2 text-neutral-200">
-                Go behind the scenes and see why athletes switch to PulseFit.
-              </p>
+              <p className="mt-2 text-neutral-200">See how our tech and coaching come together.</p>
               <Link
                 to="/videos"
                 target="_blank"
@@ -344,19 +341,18 @@ function VideoTeaser() {
   );
 }
 
-/* ---------- CLASSES ---------- */
-
-function Classes() {
+/** ===== Programs (new cards) ===== */
+function Programs() {
   const items = [
     {
       title: "Strength & Conditioning",
-      img: "https://cdn4.sportngin.com/attachments/photo/9705/7262/MVA_7-24-15-1044_large.jpg",
-      desc: "Compound lifts + accessory work for raw power.",
+      img: "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1920&auto=format&fit=crop",
+      desc: "Compound lifts + accessories for raw power.",
     },
     {
       title: "HIIT & MetCon",
-      img: "https://www.pmotionhealth.com/wp-content/uploads/2024/02/Benefits-and-Risks-of-Metcon-Workouts-1024x585.jpg",
-      desc: "Intervals that torch fat and build capacity.",
+      img: "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1920&auto=format&fit=crop",
+      desc: "Intervals that burn fat and build capacity.",
     },
     {
       title: "Mobility & Recovery",
@@ -364,41 +360,28 @@ function Classes() {
       desc: "Move better, reduce pain, and bulletproof joints.",
     },
   ];
-
   return (
     <section id="classes" className="py-16 md:py-24">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Coached classes, real results</h2>
-          <p className="mt-3 text-neutral-300">Pick your path or mix and match. New blocks start monthly.</p>
+          <h2 className="text-3xl md:text-4xl font-black">Choose your path</h2>
+          <p className="mt-3 text-neutral-300">Pick one focus or mix and match. New blocks monthly.</p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           {items.map((c, i) => (
-            <motion.article
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: i * 0.05 }}
-              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60"
-            >
-              <img
-                src={c.img}
-                alt={c.title}
-                className="h-56 w-full object-cover transition group-hover:scale-105"
-              />
-              <div className="p-5">
-                <h3 className="font-bold text-lg">{c.title}</h3>
-                <p className="mt-1 text-sm text-neutral-300">{c.desc}</p>
-                <a
-                  href="#"
-                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold"
-                  style={{ color: BRAND.red }}
-                >
-                  View schedule <ArrowRight className="h-4 w-4" />
-                </a>
-              </div>
-            </motion.article>
+            <Tilt3D key={i}>
+              <article className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60">
+                <img src={c.img} alt={c.title} className="h-56 w-full object-cover" />
+                <div className="p-5">
+                  <h3 className="font-bold text-lg">{c.title}</h3>
+                  <p className="mt-1 text-sm text-neutral-300">{c.desc}</p>
+                  <a href="#" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: BRAND.red }}>
+                    View schedule <ArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+              </article>
+            </Tilt3D>
           ))}
         </div>
       </Container>
@@ -406,14 +389,13 @@ function Classes() {
   );
 }
 
-/* ---------- STATS ---------- */
-
+/** ===== Stats ===== */
 function Stats() {
   const stats = [
-    { label: "Sq / DL / BP PRs", value: "420 / 520 / 315" },
     { label: "Avg. time to goal", value: "8.5 weeks" },
-    { label: "Member community", value: "12,000+" },
+    { label: "Members", value: "12,000+" },
     { label: "Locations", value: "6 worldwide" },
+    { label: "PR Leaderboard", value: "420 / 520 / 315" },
   ];
   return (
     <section className="py-12">
@@ -431,50 +413,31 @@ function Stats() {
   );
 }
 
-/* ---------- TRAINERS ---------- */
-
-function Trainers() {
+/** ===== Coaches ===== */
+function Coaches() {
   const people = [
-    {
-      name: "Ava Morgan",
-      role: "Strength Coach",
-      img: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-      name: "Leo Carter",
-      role: "Performance Specialist",
-      img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-      name: "Maya Khan",
-      role: "Mobility Expert",
-      img: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1200&auto=format&fit=crop",
-    },
+    { name: "Ava Morgan", role: "Strength Coach", img: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Leo Carter", role: "Performance Specialist", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop" },
+    { name: "Maya Khan", role: "Mobility Expert", img: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1200&auto=format&fit=crop" },
   ];
-
   return (
     <section id="trainers" className="py-16 md:py-24">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Meet the coaches</h2>
-          <p className="mt-3 text-neutral-300">Certified pros who program with purpose and coach with care.</p>
+          <h2 className="text-3xl md:text-4xl font-black">Meet your coaches</h2>
+          <p className="mt-3 text-neutral-300">Certified pros. Human support.</p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           {people.map((p, i) => (
-            <Tilt3D key={i}>
-              <motion.figure
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
-                className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60"
-              >
+            <Tilt3D key={i} max={10}>
+              <figure className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60">
                 <img src={p.img} alt={p.name} className="h-72 w-full object-cover" />
                 <figcaption className="p-5">
                   <div className="font-bold">{p.name}</div>
                   <div className="text-sm text-neutral-300">{p.role}</div>
                 </figcaption>
-              </motion.figure>
+              </figure>
             </Tilt3D>
           ))}
         </div>
@@ -483,16 +446,10 @@ function Trainers() {
   );
 }
 
-/* ---------- PRICING ---------- */
-
+/** ===== Pricing (glass + red highlight) ===== */
 function Pricing() {
   const tiers = [
-    {
-      name: "Starter",
-      price: 29,
-      desc: "Gym access + open floor",
-      perks: ["24/7 key access", "Locker + showers", "App tracking"],
-    },
+    { name: "Starter", price: 29, desc: "Gym access + open floor", perks: ["24/7 key access", "Locker + showers", "App tracking"] },
     {
       name: "Performance",
       price: 59,
@@ -500,12 +457,7 @@ function Pricing() {
       perks: ["Unlimited classes", "Coached sessions", "Monthly check-ins"],
       featured: true,
     },
-    {
-      name: "Elite",
-      price: 99,
-      desc: "1:1 coaching + programming",
-      perks: ["Weekly 1:1", "Custom program", "Priority booking"],
-    },
+    { name: "Elite", price: 99, desc: "1:1 coaching + programming", perks: ["Weekly 1:1", "Custom program", "Priority booking"] },
   ];
 
   return (
@@ -518,50 +470,43 @@ function Pricing() {
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           {tiers.map((t, i) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: i * 0.05 }}
-              className={`rounded-3xl border p-6 md:p-8 bg-neutral-900/60 ${
-                t.featured ? "border-white/30 shadow-[0_30px_80px_-20px_rgba(223,32,78,.35)]" : "border-white/10"
-              }`}
-            >
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-xl font-black">{t.name}</h3>
-                {t.featured && (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs border"
-                    style={{ borderColor: BRAND.red, color: BRAND.red }}
-                  >
-                    Most popular
-                  </span>
-                )}
-              </div>
-              <div className="mt-3 text-4xl font-black">
-                ${t.price}
-                <span className="text-sm font-semibold text-neutral-400">/mo</span>
-              </div>
-              <p className="mt-2 text-sm text-neutral-300">{t.desc}</p>
-              <ul className="mt-4 space-y-2 text-sm">
-                {t.perks.map((p) => (
-                  <li key={p} className="flex items-center gap-2">
-                    <Check className="h-4 w-4" style={{ color: BRAND.red }} /> {p}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="#"
-                className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 font-semibold transition
-                ${t.featured ? "text-white hover:-translate-y-0.5" : "hover:bg-white/5"}`}
-                style={{
-                  background: t.featured ? BRAND.red : "transparent",
-                  border: t.featured ? "none" : "1px solid rgba(255,255,255,.15)",
-                }}
+            <Tilt3D key={t.name} max={8}>
+              <div
+                className={`rounded-3xl p-6 md:p-8 border bg-neutral-900/60 ${
+                  t.featured ? "border-white/30 shadow-[0_30px_80px_-20px_rgba(223,32,78,.35)]" : "border-white/10"
+                }`}
               >
-                Choose {t.name}
-              </a>
-            </motion.div>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-xl font-black">{t.name}</h3>
+                  {t.featured && (
+                    <span className="rounded-full px-2 py-0.5 text-xs border" style={{ borderColor: BRAND.red, color: BRAND.red }}>
+                      Most popular
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 text-4xl font-black">
+                  ${t.price}
+                  <span className="text-sm font-semibold text-neutral-400">/mo</span>
+                </div>
+                <p className="mt-2 text-sm text-neutral-300">{t.desc}</p>
+                <ul className="mt-4 space-y-2 text-sm">
+                  {t.perks.map((p) => (
+                    <li key={p} className="flex items-center gap-2">
+                      <Check className="h-4 w-4" style={{ color: BRAND.red }} /> {p}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#"
+                  className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 font-semibold transition ${
+                    t.featured ? "text-white hover:-translate-y-0.5" : "hover:bg-white/5"
+                  }`}
+                  style={{ background: t.featured ? BRAND.red : "transparent", border: t.featured ? "none" : "1px solid rgba(255,255,255,.15)" }}
+                >
+                  Choose {t.name}
+                </a>
+              </div>
+            </Tilt3D>
           ))}
         </div>
       </Container>
@@ -569,22 +514,12 @@ function Pricing() {
   );
 }
 
-/* ---------- TESTIMONIALS ---------- */
-
+/** ===== Testimonials ===== */
 function Testimonials() {
   const quotes = [
-    {
-      body: "I added 60lbs to my deadlift in 10 weeks. The programming is gold.",
-      name: "Sam R.",
-    },
-    {
-      body: "Coaches actually care. I feel stronger and pain-free for the first time.",
-      name: "Priya D.",
-    },
-    {
-      body: "The vibe is immaculate. Community keeps me consistent.",
-      name: "Luca M.",
-    },
+    { body: "Added 60lbs to my deadlift in 10 weeks. The programming is gold.", name: "Sam R." },
+    { body: "Coaches actually care. I feel stronger and pain-free for the first time.", name: "Priya D." },
+    { body: "The vibe is immaculate. Community keeps me consistent.", name: "Luca M." },
   ];
   return (
     <section className="py-16">
@@ -596,16 +531,11 @@ function Testimonials() {
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
           {quotes.map((q, i) => (
-            <Tilt3D key={i}>
-              <motion.blockquote
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.05 }}
-                className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6"
-              >
+            <Tilt3D key={i} max={6}>
+              <blockquote className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6">
                 <p className="text-neutral-200">“{q.body}”</p>
                 <footer className="mt-4 text-sm font-semibold">{q.name}</footer>
-              </motion.blockquote>
+              </blockquote>
             </Tilt3D>
           ))}
         </div>
@@ -614,9 +544,39 @@ function Testimonials() {
   );
 }
 
-/* ---------- FINAL CTA ---------- */
+/** ===== FAQ (new) ===== */
+function Faq() {
+  const faqs = [
+    { q: "Can I pause or cancel anytime?", a: "Yes — manage your plan in the app. No lock-in contracts." },
+    { q: "Do you have beginner programs?", a: "Absolutely. We onboard with movement screening and a 2-week ramp." },
+    { q: "Is coaching included?", a: "Performance & Elite include coached classes. Elite adds weekly 1:1." },
+  ];
+  return (
+    <section className="py-16">
+      <Container>
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-3xl font-black text-center">Questions, answered</h2>
+          <div className="mt-8 space-y-4">
+            {faqs.map((f, i) => (
+              <details key={i} className="group rounded-2xl border border-white/10 bg-neutral-900/60 p-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between">
+                  <span className="font-semibold">{f.q}</span>
+                  <span className="ml-4 h-6 w-6 grid place-items-center rounded-md border border-white/15 text-sm text-neutral-300">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-neutral-300">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
 
-function Cta() {
+/** ===== Final CTA ===== */
+function FinalCta() {
   return (
     <section className="relative py-16 md:py-24">
       <Container>
@@ -626,8 +586,10 @@ function Cta() {
             alt="Weights rack"
             className="absolute inset-0 h-full w-full object-cover opacity-20"
           />
-          <div className="absolute inset-0 pointer-events-none"
-               style={{ background: "radial-gradient(1000px circle at 10% 10%, rgba(223,32,78,.18), transparent 40%)" }} />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: "radial-gradient(1000px circle at 10% 10%, rgba(223,32,78,.18), transparent 40%)" }}
+          />
           <div className="relative max-w-xl">
             <h3 className="text-2xl md:text-3xl font-black">Ready to transform?</h3>
             <p className="mt-2 text-neutral-300">Book a free consult and get a personalized plan.</p>
@@ -639,10 +601,7 @@ function Cta() {
               >
                 Start free week
               </a>
-              <a
-                href="#"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/30 px-5 py-3 font-semibold hover:bg-white/5"
-              >
+              <a href="#" className="inline-flex items-center justify-center rounded-2xl border border-white/30 px-5 py-3 font-semibold hover:bg-white/5">
                 Talk to a coach
               </a>
             </div>

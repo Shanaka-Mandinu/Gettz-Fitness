@@ -155,3 +155,110 @@ export function getTrainerById(req,res){
     );
 }
 
+// Get trainer profile (for logged-in trainer)
+export function getTrainerProfile(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+    Trainer.findOne({ email: req.user.email }).then(
+        (trainer) => {
+            if (!trainer) {
+                return res.status(404).json({ 
+                    message: 'Trainer profile not found' });
+            }
+            res.status(200).json({
+                message: "Profile retrieved successfully",
+                trainer: trainer
+            });
+        }
+    ).catch(
+        (err) => {
+            res.status(500).json({
+                message: "Error retrieving trainer profile",
+                error: err.message
+            });
+        }
+    );
+}
+
+// Update trainer profile (for logged-in trainer)
+export function updateTrainerProfile(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+    const updateData = {
+        ...req.body,
+        updatedAt: new Date()
+    };
+
+    Trainer.findOneAndUpdate(
+        { email: req.user.email },
+        updateData,
+        { new: true, runValidators: true }
+    ).then(
+        (trainer) => {
+            if (!trainer) {
+                return res.status(404).json({ 
+                    message: 'Trainer profile not found' });
+            }
+            res.status(200).json({
+                message: "Profile updated successfully",
+                trainer: trainer
+            });
+        }
+    ).catch(
+        (err) => {
+            res.status(500).json({
+                message: "Error updating trainer profile",
+                error: err.message
+            });
+        }
+    );
+}
+
+// Get trainer statistics
+export function getTrainerStats(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+    // For now, return mock data. In a real app, you'd query actual data
+    const stats = {
+        totalClients: 0,
+        activeClients: 0,
+        totalSessions: 0,
+        rating: 4.5
+    };
+
+    res.status(200).json({
+        message: "Stats retrieved successfully",
+        stats: stats
+    });
+}
+

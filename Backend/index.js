@@ -43,6 +43,8 @@ import { Server } from "socket.io";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import Member from "./model/memberModel.js";
 import Attendance from "./model/attendanceModel.js";
+import mealTemplateRouter from "./routes/mealTemplateRouter.js"
+import path from "path";
 
 
 dotenv.config();
@@ -95,6 +97,8 @@ app.use("/api/mealPlan", mealPlanRouter);
 app.use("/api/employeeSalary", employeeSalaryRouter);
 app.use("/api/employeeSalarayRecords", employeeSalaryRecordsRouter);
 app.use("/api/mealRequest", mealRequestRouter);
+app.use("/api/mealTemplate",mealTemplateRouter);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/equipment",equipmentRouter);
 app.use("/api/supplement",supplementRouter);
