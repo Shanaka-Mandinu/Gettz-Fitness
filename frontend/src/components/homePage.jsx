@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import {
   Dumbbell,
@@ -18,18 +18,26 @@ import {
   Headphones,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import FeedbackDisplay from "./FeedbackDisplay";
+import axios from "axios";
 
-/** ===== Brand ===== */
+
 const BRAND = {
-  red: "#DF204E",
-  black: "#0A0A0A",
+  red: "#DC2626",
+  darkRed: "#B91C1C",
+  lightRed: "#FEF2F2",
   white: "#FFFFFF",
+  gray: "#F1F5F9",
+  darkGray: "#0F172A",
+  textGray: "#475569",
+  lightGray: "#E2E8F0",
+  cardGray: "#F8FAFC",
 };
 
 export default function GymLandingPage() {
   const [email, setEmail] = useState("");
   return (
-    <div className="min-h-screen bg-[rgb(10,10,10)] text-white">
+    <div className="min-h-screen bg-gray-50 text-slate-800">
       <Hero email={email} setEmail={setEmail} />
       <AttributePills />
       <BentoFeatures />
@@ -38,7 +46,7 @@ export default function GymLandingPage() {
       <Stats />
       <Coaches />
       <Pricing />
-      <Testimonials />
+      <FeedbackDisplay />
       <Faq />
       <FinalCta />
     </div>
@@ -81,17 +89,50 @@ function Tilt3D({ children, max = 12, glare = true }) {
   );
 }
 
-/** ===== HERO (new look) ===== */
+
 function Hero({ email, setEmail }) {
+  const [memberCount, setMemberCount] = useState("1,247");
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE =
+    (import.meta?.env && import.meta.env.VITE_BACKEND_URL) ||
+    (window.location.port === "5173" ? "http://localhost:3000" : window.location.origin);
+
+  useEffect(() => {
+    fetchMemberCount();
+  }, []);
+
+  const fetchMemberCount = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/api/stats/public`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (data.success) {
+        setMemberCount(data.data.activeMembers.toLocaleString());
+      } else {
+        setMemberCount("1,247");
+      }
+    } catch (error) {
+      console.error("Error fetching member count:", error);
+      setMemberCount("1,247");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <section className="relative overflow-hidden">
-      {/* background grid + radial glow */}
+    <section className="relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
+      {/* background pattern */}
       <div
         aria-hidden
-        className="absolute inset-0 opacity-25"
+        className="absolute inset-0 opacity-5"
         style={{
-          background:
-            "radial-gradient(1000px circle at 10% -10%, rgba(223,32,78,.22), transparent 40%), radial-gradient(900px circle at 110% 60%, rgba(255,255,255,.08), transparent 40%)",
+          backgroundImage:
+            "radial-gradient(circle at 25% 25%, #DC2626 0%, transparent 50%), radial-gradient(circle at 75% 75%, #DC2626 0%, transparent 50%)",
         }}
       />
       <div
@@ -99,109 +140,105 @@ function Hero({ email, setEmail }) {
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(1000px circle at 50% 40%, black, transparent 75%)",
-          WebkitMaskImage: "radial-gradient(1000px circle at 50% 40%, black, transparent 75%)",
+            "linear-gradient(rgba(220,38,38,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
         }}
       />
 
       <Container className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center py-16 md:py-24">
-        {/* Content */}
+       
         <div>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-4xl/tight md:text-6xl/tight font-black"
+            className="text-4xl/tight md:text-6xl/tight font-black text-slate-800"
           >
-            Build power.{" "}
-            <span className="bg-clip-text text-transparent"
-                  style={{ backgroundImage: `linear-gradient(90deg, ${BRAND.red}, #ff7a93, ${BRAND.red})` }}>
-              Recover smarter.
+            Transform Your Fitness Journey.{" "}
+            <span className="text-red-600">
+              Achieve Excellence.
             </span>{" "}
-            Perform longer.
+            Build Strength.
           </motion.h1>
 
-          <p className="mt-4 max-w-xl text-neutral-300 md:text-lg">
-            A precision training club with AI-assisted programming, 3D form feedback, and coaches who care.
+          <p className="mt-4 max-w-xl text-slate-600 md:text-lg">
+            Professional gym management system with advanced tracking, personalized training programs, and expert coaching support.
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <a
               href="#pricing"
-              className="inline-flex items-center justify-center rounded-2xl px-5 py-3 font-semibold shadow-[0_12px_30px_-10px_rgba(223,32,78,0.8)] hover:-translate-y-0.5 transition"
+              className="inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               style={{ background: BRAND.red }}
             >
-              Start free week <ArrowRight className="ml-2 h-4 w-4" />
+              Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
             </a>
             <a
               href="#features"
-              className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-xl border-2 border-red-600 text-red-600 px-6 py-3 font-semibold hover:bg-red-600 hover:text-white transition-all duration-300"
             >
-              Explore features
+              Explore Features
             </a>
           </div>
 
           {/* Email capture */}
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="mt-6 flex w-full max-w-md items-center gap-2 rounded-2xl border border-white/12 bg-white/5 p-2 backdrop-blur"
+            className="mt-6 flex w-full max-w-md items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
           >
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="h-11 flex-1 rounded-xl bg-transparent px-3 outline-none placeholder:text-neutral-400"
+              className="h-11 flex-1 rounded-lg bg-transparent px-3 outline-none placeholder:text-slate-400 text-slate-800"
             />
-            <button className="h-11 shrink-0 rounded-xl px-4 font-semibold text-white" style={{ background: BRAND.red }}>
-              Get updates
+            <button className="h-11 shrink-0 rounded-lg px-4 font-semibold text-white shadow-sm hover:shadow-md transition-all duration-300" style={{ background: BRAND.red }}>
+              Subscribe
             </button>
           </form>
 
-          <div className="mt-6 grid grid-cols-3 gap-6 max-w-lg text-sm text-neutral-300">
-            <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-white" /> No contracts</div>
-            <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-white" /> 24/7 access</div>
-            <div className="flex items-center gap-2"><Star className="h-5 w-5 text-white" /> 1k+ 5-star reviews</div>
+          <div className="mt-6 grid grid-cols-3 gap-6 max-w-lg text-sm text-slate-600">
+            <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-red-600" /> No contracts</div>
+            <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-red-600" /> 24/7 access</div>
+            <div className="flex items-center gap-2"><Star className="h-5 w-5 text-red-600" /> 1k+ 5-star reviews</div>
           </div>
         </div>
 
-        {/* 3D mockup stack */}
+        {/* Professional gym image */}
         <div className="relative">
-          <GlowRings />
           <Tilt3D>
-            <div className="relative rounded-[1.75rem] overflow-hidden border border-white/10 bg-neutral-900/60 shadow-2xl">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-xl">
               <img
                 src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                alt="Gym hero"
+                alt="Professional Gym"
                 className="w-full h-[420px] object-cover"
               />
               <motion.div
-                className="absolute -bottom-6 -left-6 rounded-2xl border border-white/10 bg-neutral-900/85 backdrop-blur p-4 flex items-center gap-3 shadow-xl"
+                className="absolute -bottom-6 -left-6 rounded-xl border border-slate-200 bg-white backdrop-blur p-4 flex items-center gap-3 shadow-lg"
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                <div className="h-10 w-10 rounded-xl grid place-items-center text-white" style={{ background: BRAND.red }}>
+                <div className="h-10 w-10 rounded-lg grid place-items-center text-white" style={{ background: BRAND.red }}>
                   <Dumbbell className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Velocity Blocks</p>
-                  <p className="text-xs text-neutral-300">4-week progressive overload</p>
+                  <p className="text-sm font-semibold text-slate-800">Smart Training</p>
+                  <p className="text-xs text-slate-600">AI-powered workout plans</p>
                 </div>
               </motion.div>
             </div>
           </Tilt3D>
 
-          {/* floating mini card */}
+          {/* floating stats card */}
           <motion.div
-            className="absolute -top-6 -right-4 rounded-2xl border border-white/10 bg-white/10 backdrop-blur p-4"
+            className="absolute -top-6 -right-4 rounded-xl border border-slate-200 bg-white backdrop-blur p-4 shadow-lg"
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
           >
-            <div className="text-xs text-neutral-300">HR Zone</div>
-            <div className="mt-1 text-lg font-black" style={{ color: BRAND.red }}>
-              86% (RZ4)
+            <div className="text-xs text-slate-600">Active Members</div>
+            <div className={`mt-1 text-lg font-black text-red-600 ${loading ? 'animate-pulse' : ''}`}>
+              {memberCount}
             </div>
           </motion.div>
         </div>
@@ -215,12 +252,12 @@ function GlowRings() {
   return (
     <div aria-hidden className="absolute inset-0 -z-10">
       <div
-        className="absolute -top-10 -left-14 h-56 w-56 rounded-full blur-3xl opacity-40"
+        className="absolute -top-10 -left-14 h-56 w-56 rounded-full blur-3xl opacity-20"
         style={{ background: `radial-gradient(closest-side, ${BRAND.red}, transparent)` }}
       />
       <div
-        className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full blur-3xl opacity-25"
-        style={{ background: "radial-gradient(closest-side, #ffffff, transparent)" }}
+        className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full blur-3xl opacity-15"
+        style={{ background: `radial-gradient(closest-side, ${BRAND.lightRed}, transparent)` }}
       />
     </div>
   );
@@ -230,18 +267,18 @@ function GlowRings() {
 function AttributePills() {
   const attrs = [
     { icon: <Cpu className="h-4 w-4" />, text: "AI Program Builder" },
-    { icon: <Activity className="h-4 w-4" />, text: "Red-Zone HR Tracking" },
-    { icon: <QrCode className="h-4 w-4" />, text: "RFID Entry" },
-    { icon: <Smartphone className="h-4 w-4" />, text: "In-App Booking" },
-    { icon: <Headphones className="h-4 w-4" />, text: "Coach Chat 24/7" },
-    { icon: <ShieldCheck className="h-4 w-4" />, text: "Injury-Safe Progression" },
+    { icon: <Activity className="h-4 w-4" />, text: "Heart Rate Tracking" },
+    { icon: <QrCode className="h-4 w-4" />, text: "RFID Entry System" },
+    { icon: <Smartphone className="h-4 w-4" />, text: "Mobile App Booking" },
+    { icon: <Headphones className="h-4 w-4" />, text: "24/7 Coach Support" },
+    { icon: <ShieldCheck className="h-4 w-4" />, text: "Safety Monitoring" },
   ];
   return (
-    <section className="py-6 border-y border-white/10 bg-black/40">
+    <section className="py-8 border-y border-slate-200 bg-white">
       <Container className="flex flex-wrap items-center justify-center gap-3">
         {attrs.map((a, i) => (
-          <span key={i} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-neutral-200">
-            <span className="text-white">{a.icon}</span> {a.text}
+          <span key={i} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 shadow-sm hover:shadow-md hover:bg-white transition-all duration-300">
+            <span className="text-red-600">{a.icon}</span> {a.text}
           </span>
         ))}
       </Container>
@@ -249,7 +286,7 @@ function AttributePills() {
   );
 }
 
-/** ===== Bento Feature Grid (new look) ===== */
+
 function BentoFeatures() {
   const tiles = [
     {
@@ -281,24 +318,24 @@ function BentoFeatures() {
   ];
 
   return (
-    <section id="features" className="py-16 md:py-24">
+    <section id="features" className="py-16 md:py-24 bg-slate-50">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Engineered to perform</h2>
-          <p className="mt-3 text-neutral-300">Science, software, and sweat—designed for results.</p>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-800">Professional Gym Management</h2>
+          <p className="mt-3 text-slate-600">Advanced technology, expert coaching, and comprehensive tracking for optimal results.</p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5 auto-rows-[260px]">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[280px]">
           {tiles.map((t, i) => (
             <Tilt3D key={i}>
-              <article className={`relative rounded-3xl overflow-hidden border border-white/10 bg-neutral-900/60 ${t.span || ""}`}>
-                <img src={t.img} alt={t.title} className="absolute inset-0 h-full w-full object-cover opacity-40" />
+              <article className={`relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300 ${t.span || ""}`}>
+                <img src={t.img} alt={t.title} className="absolute inset-0 h-full w-full object-cover opacity-15" />
                 <div className="relative h-full w-full p-6 flex flex-col justify-end">
-                  <div className="h-10 w-10 rounded-xl grid place-items-center text-white" style={{ background: BRAND.red }}>
+                  <div className="h-12 w-12 rounded-xl grid place-items-center text-white shadow-lg" style={{ background: BRAND.red }}>
                     {t.icon}
                   </div>
-                  <h3 className="mt-3 font-bold text-lg">{t.title}</h3>
-                  <p className="mt-1 text-sm text-neutral-300">{t.desc}</p>
+                  <h3 className="mt-4 font-bold text-lg text-slate-800">{t.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600">{t.desc}</p>
                 </div>
               </article>
             </Tilt3D>
@@ -309,7 +346,7 @@ function BentoFeatures() {
   );
 }
 
-/** ===== Video ===== */
+
 function VideoTeaser() {
   return (
     <section id="video" className="py-12">
@@ -391,20 +428,71 @@ function Programs() {
 
 /** ===== Stats ===== */
 function Stats() {
-  const stats = [
-    { label: "Avg. time to goal", value: "8.5 weeks" },
-    { label: "Members", value: "12,000+" },
-    { label: "Locations", value: "6 worldwide" },
-    { label: "PR Leaderboard", value: "420 / 520 / 315" },
-  ];
+  const [stats, setStats] = useState([
+    { label: "Active Members", value: "Loading..." },
+    { label: "Certified Trainers", value: "Loading..." },
+    { label: "Member Reviews", value: "Loading..." },
+    { label: "Average Rating", value: "Loading..." },
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE =
+    (import.meta?.env && import.meta.env.VITE_BACKEND_URL) ||
+    (window.location.port === "5173" ? "http://localhost:3000" : window.location.origin);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/api/stats/public`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (data.success) {
+        setStats([
+          { label: "Active Members", value: data.data.activeMembers.toLocaleString() },
+          { label: "Certified Trainers", value: data.data.totalTrainers },
+          { label: "Member Reviews", value: data.data.totalReviews.toLocaleString() },
+          { label: "Average Rating", value: `${data.data.averageRating}/5.0` },
+        ]);
+      } else {
+        // Fallback stats
+        setStats([
+          { label: "Active Members", value: "1,247" },
+          { label: "Certified Trainers", value: "15" },
+          { label: "Member Reviews", value: "892" },
+          { label: "Average Rating", value: "4.8/5.0" },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      // Fallback stats
+      setStats([
+        { label: "Active Members", value: "1,247" },
+        { label: "Certified Trainers", value: "15" },
+        { label: "Member Reviews", value: "892" },
+        { label: "Average Rating", value: "4.8/5.0" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <section className="py-12">
+    <section className="py-12 bg-white">
       <Container>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 rounded-3xl border border-white/10 bg-neutral-900/60 p-6 md:p-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 rounded-2xl border border-slate-200 bg-white shadow-lg p-6 md:p-10">
           {stats.map((s, i) => (
             <div key={i} className="text-center">
-              <div className="text-2xl md:text-3xl font-black">{s.value}</div>
-              <div className="mt-1 text-xs md:text-sm text-neutral-300">{s.label}</div>
+              <div className={`text-2xl md:text-3xl font-black text-slate-800 ${loading ? 'animate-pulse' : ''}`}>
+                {s.value}
+              </div>
+              <div className="mt-1 text-xs md:text-sm text-slate-600">{s.label}</div>
             </div>
           ))}
         </div>
@@ -415,27 +503,164 @@ function Stats() {
 
 /** ===== Coaches ===== */
 function Coaches() {
-  const people = [
-    { name: "Ava Morgan", role: "Strength Coach", img: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Leo Carter", role: "Performance Specialist", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop" },
-    { name: "Maya Khan", role: "Mobility Expert", img: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1200&auto=format&fit=crop" },
-  ];
+  const [trainers, setTrainers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE =
+    (import.meta?.env && import.meta.env.VITE_BACKEND_URL) ||
+    (window.location.port === "5173" ? "http://localhost:3000" : window.location.origin);
+
+  useEffect(() => {
+    fetchTrainers();
+  }, []);
+
+  const fetchTrainers = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${API_BASE}/api/trainer/public`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (data.success) {
+        setTrainers(data.data);
+      } else {
+        // Fallback to default trainers if API fails
+        setTrainers([
+          { 
+            name: "Professional Trainer", 
+            specialization: "General Fitness", 
+            profilePicture: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop",
+            experienceYears: 5,
+            rating: 4.8
+          },
+          { 
+            name: "Fitness Expert", 
+            specialization: "Weight Loss", 
+            profilePicture: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop",
+            experienceYears: 7,
+            rating: 4.9
+          },
+          { 
+            name: "Strength Coach", 
+            specialization: "Muscle Gain", 
+            profilePicture: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1200&auto=format&fit=crop",
+            experienceYears: 6,
+            rating: 4.7
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching trainers:", error);
+      // Fallback trainers
+      setTrainers([
+        { 
+          name: "Professional Trainer", 
+          specialization: "General Fitness", 
+          profilePicture: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop",
+          experienceYears: 5,
+          rating: 4.8
+        },
+        { 
+          name: "Fitness Expert", 
+          specialization: "Weight Loss", 
+          profilePicture: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1200&auto=format&fit=crop",
+          experienceYears: 7,
+          rating: 4.9
+        },
+        { 
+          name: "Strength Coach", 
+          specialization: "Muscle Gain", 
+          profilePicture: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=1200&auto=format&fit=crop",
+          experienceYears: 6,
+          rating: 4.7
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, index) => (
+      <span
+        key={index}
+        className={`text-sm ${
+          index < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"
+        }`}
+      >
+        ★
+      </span>
+    ));
+  };
+
+  if (loading) {
+    return (
+      <section id="trainers" className="py-16 md:py-24 bg-white">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-800">Meet your coaches</h2>
+            <p className="mt-3 text-slate-600">Certified professionals. Human support.</p>
+          </div>
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl border border-slate-200 bg-white p-6 animate-pulse">
+                <div className="h-72 bg-gray-200 rounded-xl mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+    );
+  }
+
   return (
-    <section id="trainers" className="py-16 md:py-24">
+    <section id="trainers" className="py-16 md:py-24 bg-white">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Meet your coaches</h2>
-          <p className="mt-3 text-neutral-300">Certified pros. Human support.</p>
+          <h2 className="text-3xl md:text-4xl font-black text-slate-800">Meet your coaches</h2>
+          <p className="mt-3 text-slate-600">Certified professionals. Human support.</p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {people.map((p, i) => (
+          {trainers.map((trainer, i) => (
             <Tilt3D key={i} max={10}>
-              <figure className="overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60">
-                <img src={p.img} alt={p.name} className="h-72 w-full object-cover" />
-                <figcaption className="p-5">
-                  <div className="font-bold">{p.name}</div>
-                  <div className="text-sm text-neutral-300">{p.role}</div>
+              <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
+                <img 
+                  src={trainer.profilePicture || "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=1200&auto=format&fit=crop"} 
+                  alt={trainer.name} 
+                  className="h-72 w-full object-cover" 
+                />
+                <figcaption className="p-6">
+                  <div className="font-bold text-slate-800 text-lg">{trainer.name}</div>
+                  <div className="text-sm text-slate-600 mb-2">{trainer.specialization}</div>
+                  
+                  {/* Experience and Rating */}
+                  <div className="flex items-center justify-between text-sm text-slate-500 mb-3">
+                    <span>{trainer.experienceYears || 0} years experience</span>
+                    <div className="flex items-center gap-1">
+                      {renderStars(trainer.rating || 0)}
+                      <span className="ml-1">({trainer.rating || 0})</span>
+                    </div>
+                  </div>
+
+                  {/* Certifications */}
+                  {trainer.certifications && trainer.certifications.length > 0 && (
+                    <div className="text-xs text-slate-500">
+                      <span className="font-medium">Certifications:</span> {trainer.certifications.slice(0, 2).join(", ")}
+                      {trainer.certifications.length > 2 && " +" + (trainer.certifications.length - 2) + " more"}
+                    </div>
+                  )}
+
+                  {/* Bio preview */}
+                  {trainer.bio && (
+                    <div className="text-xs text-slate-600 mt-2 line-clamp-2">
+                      {trainer.bio.length > 100 ? trainer.bio.substring(0, 100) + "..." : trainer.bio}
+                    </div>
+                  )}
                 </figcaption>
               </figure>
             </Tilt3D>
@@ -514,35 +739,6 @@ function Pricing() {
   );
 }
 
-/** ===== Testimonials ===== */
-function Testimonials() {
-  const quotes = [
-    { body: "Added 60lbs to my deadlift in 10 weeks. The programming is gold.", name: "Sam R." },
-    { body: "Coaches actually care. I feel stronger and pain-free for the first time.", name: "Priya D." },
-    { body: "The vibe is immaculate. Community keeps me consistent.", name: "Luca M." },
-  ];
-  return (
-    <section className="py-16">
-      <Container>
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Members love us</h2>
-          <p className="mt-3 text-neutral-300">Real stories from our community.</p>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {quotes.map((q, i) => (
-            <Tilt3D key={i} max={6}>
-              <blockquote className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6">
-                <p className="text-neutral-200">“{q.body}”</p>
-                <footer className="mt-4 text-sm font-semibold">{q.name}</footer>
-              </blockquote>
-            </Tilt3D>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
 
 /** ===== FAQ (new) ===== */
 function Faq() {
@@ -575,7 +771,7 @@ function Faq() {
   );
 }
 
-/** ===== Final CTA ===== */
+
 function FinalCta() {
   return (
     <section className="relative py-16 md:py-24">

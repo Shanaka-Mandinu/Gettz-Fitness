@@ -16,8 +16,19 @@ export default function ContactUs() {
     inquiry_message: "",
   });
 
+  const [feedbackForm, setFeedbackForm] = useState({
+    email: "",
+    name: "",
+    rating: 5,
+    feedback_type: "General",
+    feedback_message: "",
+    is_anonymous: false,
+  });
+
   const [submitting, setSubmitting] = useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [serverMsg, setServerMsg] = useState(null);
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
 
   const maxChars = 500;
   const charsLeft = maxChars - form.inquiry_message.length;
@@ -26,6 +37,14 @@ export default function ContactUs() {
     const { name, value } = e.target;
     if (name === "inquiry_message" && value.length > maxChars) return;
     setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleFeedbackChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFeedbackForm((f) => ({ 
+      ...f, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -96,6 +115,56 @@ export default function ContactUs() {
     }
   };
 
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    setFeedbackMsg(null);
+
+    if (!feedbackForm.email.trim() || !feedbackForm.rating || !feedbackForm.feedback_type || !feedbackForm.feedback_message.trim()) {
+      setFeedbackMsg({
+        type: "error",
+        text: "Please provide your Email, rating, feedback type, and message.",
+      });
+      return;
+    }
+
+    setFeedbackSubmitting(true);
+    try {
+      const token = localStorage.getItem("token");
+      
+      const { data } = await axios.post(`${API_BASE}/api/feedback/submit`, feedbackForm, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+      });
+
+      toast.success("Feedback submitted successfully");
+      setFeedbackMsg({
+        type: "success",
+        text: data?.message || "Feedback submitted successfully.",
+      });
+
+      setFeedbackForm({
+        email: feedbackForm.email,
+        name: "",
+        rating: 5,
+        feedback_type: "General",
+        feedback_message: "",
+        is_anonymous: false,
+      });
+
+    } catch (err) {
+      toast.error("An error occurred while submitting the feedback.");
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+      setFeedbackMsg({ type: "error", text: msg });
+      console.error(err);
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
 
   // FAQ items
   const faqs = [
@@ -164,7 +233,7 @@ export default function ContactUs() {
             </div>
           </div>
 
-          {/* ===== Right: Form Card ===== */}
+          
           <div
             id="contact-form"
             className="bg-white rounded-2xl shadow-xl border border-red-600/20 p-6 md:p-8 scroll-mt-24 md:scroll-mt-32"
@@ -174,7 +243,7 @@ export default function ContactUs() {
               Logged-in members can submit inquiries directly.
             </p>
 
-            {/* Server message */}
+            
             {serverMsg && (
               <div
                 className={`mt-4 rounded-lg px-4 py-3 text-sm ${
@@ -227,7 +296,7 @@ export default function ContactUs() {
                 </select>
               </div>
 
-              {/* inquiry_message */}
+             
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Message <span className="text-red-600">*</span>
@@ -246,7 +315,7 @@ export default function ContactUs() {
                 </div>
               </div>
 
-              {/* Submit */}
+            
               <button
                 type="submit"
                 disabled={submitting}
@@ -255,6 +324,176 @@ export default function ContactUs() {
                 }`}
               >
                 {submitting ? "Submitting..." : "Submit Inquiry"}
+              </button>
+
+              <p className="text-[11px] text-gray-500 text-center">
+                By submitting, you agree to our{" "}
+                <a href="#" className="text-[#FF0000] underline underline-offset-2">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-[#FF0000] underline underline-offset-2">
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+     
+      <section className="bg-[#FAF9F6] py-12">
+        <div className="max-w-4xl mx-auto px-6 md:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#FF0000]">
+              Share Your Experience
+            </h2>
+            <p className="text-gray-700 mt-4 max-w-2xl mx-auto">
+              Help us improve by sharing your feedback and rating. Your input helps us provide better service to our community.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-red-600/20 p-6 md:p-8">
+            <h3 className="text-2xl font-bold mb-2">Feedback & Rating</h3>
+            <p className="text-gray-600 mb-6">
+              Rate your experience and let us know how we can improve.
+            </p>
+
+            {/* Feedback message */}
+            {feedbackMsg && (
+              <div
+                className={`mb-6 rounded-lg px-4 py-3 text-sm ${
+                  feedbackMsg.type === "success"
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {feedbackMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Email <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={feedbackForm.email}
+                  onChange={handleFeedbackChange}
+                  placeholder="you@example.com"
+                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
+                  required
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={feedbackForm.name}
+                  onChange={handleFeedbackChange}
+                  placeholder="Your name"
+                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
+                />
+              </div>
+
+              {/* Rating */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Rating <span className="text-red-600">*</span>
+                </label>
+                <div className="flex items-center space-x-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFeedbackForm(f => ({ ...f, rating: star }))}
+                      className={`text-3xl transition-colors ${
+                        star <= feedbackForm.rating
+                          ? "text-yellow-400"
+                          : "text-gray-300 hover:text-yellow-300"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">
+                    {feedbackForm.rating === 1 && "Poor"}
+                    {feedbackForm.rating === 2 && "Fair"}
+                    {feedbackForm.rating === 3 && "Good"}
+                    {feedbackForm.rating === 4 && "Very Good"}
+                    {feedbackForm.rating === 5 && "Excellent"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Feedback Type */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Feedback Type <span className="text-red-600">*</span>
+                </label>
+                <select
+                  name="feedback_type"
+                  value={feedbackForm.feedback_type}
+                  onChange={handleFeedbackChange}
+                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
+                  required
+                >
+                  {["General", "Service", "Facility", "Staff", "Equipment", "Other"].map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Feedback Message */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Feedback Message <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  name="feedback_message"
+                  value={feedbackForm.feedback_message}
+                  onChange={handleFeedbackChange}
+                  placeholder="Tell us about your experience..."
+                  rows={4}
+                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000] resize-none"
+                  required
+                />
+              </div>
+
+              {/* Anonymous Checkbox */}
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_anonymous"
+                  checked={feedbackForm.is_anonymous}
+                  onChange={handleFeedbackChange}
+                  className="rounded border-red-600/30 text-[#FF0000] focus:ring-[#FF0000]"
+                />
+                <label className="ml-2 text-sm text-gray-700">
+                  Submit anonymously
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={feedbackSubmitting}
+                className={`w-full rounded-lg bg-[#FF0000] text-white font-semibold py-3 hover:opacity-90 ${
+                  feedbackSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                {feedbackSubmitting ? "Submitting..." : "Submit Feedback"}
               </button>
 
               <p className="text-[11px] text-gray-500 text-center">
