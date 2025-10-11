@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
@@ -6,7 +7,11 @@ import add from "../../assets/plus.png";
 
 /* Small inline icons */
 function IconUser() {
-  return <img src={add} className="icon h-5 w-5 inline-block object-contain" />;
+  return (
+    <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
 }
 function IconCalendar() {
   return (
@@ -38,9 +43,7 @@ function Pill({ children, tone = "gray" }) {
 
 function RequestCard({ row, onUpdate, onDelete }) {
   const id = row.request_id ?? "-";
-  const started = row.request_date
-    ? String(row.request_date).slice(0, 10)
-    : "-";
+  const status = row.status ?? "normal";
   
   const mealType = row.mealType ?? "-";
   const weight = row.weight ?? "-";
@@ -55,72 +58,110 @@ function RequestCard({ row, onUpdate, onDelete }) {
       : "gray";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-sm">
       {/* Header */}
-      <div className="flex items-start gap-3 p-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 ring-1 ring-gray-200">
-          <IconUser />
+      <div className="relative flex items-start gap-4 p-6">
+        {/* Enhanced Icon */}
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 ring-1 ring-blue-200/50">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+            <IconUser />
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold text-gray-900">
+          {/* Title and Status */}
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            <h3 className="text-lg text-gray-900">
               Meal Request #{id}
             </h3>
             <Pill tone={tone}>{mealType}</Pill>
           </div>
-          <p className="mt-1 text-sm text-gray-600 break-words">
-            {weight} kg · {height} cm
-          </p>
-          <p className="mt-1 text-sm text-gray-600 break-words">
-            {description}
-          </p>
+          
+          {/* Description */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 leading-relaxed break-words line-clamp-2">
+              {description}
+            </p>
+          </div>
         </div>
 
-        {/* Actions */}
+        {/* Enhanced Actions */}
         <div className="shrink-0 flex gap-2">
           <button
             type="button"
             onClick={() => onUpdate(row)}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm"
           >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
             Update
           </button>
           <button
             type="button"
             onClick={() => onDelete(row)}
-            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm"
           >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Delete
           </button>
         </div>
       </div>
 
-      {/* Meta strip */}
-      <div className="flex flex-wrap items-center gap-3 border-t border-gray-200 px-5 py-3">
-        <Pill>
-          <span className="inline-flex items-center gap-1">
-            <IconCalendar />
-            <span className="text-gray-600">Requested:</span>
-            <span className="font-medium text-gray-800">{started}</span>
-          </span>
-        </Pill>
-        <Pill>
-          <span className="inline-flex items-center gap-1">
-            <span className="text-gray-600">W/H:</span>
-            <span className="font-medium text-gray-800">
-              {weight} kg / {height} cm
-            </span>
-          </span>
-        </Pill>
+      {/* Enhanced Meta Strip */}
+      <div className="relative border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white px-6 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm border border-gray-200/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+              <IconCalendar />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Status</p>
+              <p className={`text-sm font-semibold ${
+                status === 'urgent' ? 'text-red-600' : 'text-green-600'
+              }`}>
+                {status === 'urgent' ? 'Urgent' : 'Normal'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm border border-gray-200/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-orange-100 text-orange-600">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Weight</p>
+              <p className="text-sm font-semibold text-gray-800">{weight} kg</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm border border-gray-200/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-green-100 text-green-600">
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Height</p>
+              <p className="text-sm font-semibold text-gray-800">{height} cm</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 export default function RequestMeals() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [mealTypeFilter, setMealTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -130,7 +171,7 @@ export default function RequestMeals() {
     user_id: "",
     user_name: "",
     last_name: "",
-    request_date: "",
+    status: "normal",
     description: "",
     mealType: "Non-Vegan",
     weight: "",
@@ -162,6 +203,13 @@ export default function RequestMeals() {
     fetchRequests();
   }, []);
 
+  // Filter requests based on meal type and status
+  const filteredRequests = requests.filter(request => {
+    const mealTypeMatch = mealTypeFilter === "all" || request.mealType === mealTypeFilter;
+    const statusMatch = statusFilter === "all" || request.status === statusFilter;
+    return mealTypeMatch && statusMatch;
+  });
+
   const isValidDate = (str) => {
     if (!str) return false;
     const d = new Date(str);
@@ -175,9 +223,8 @@ export default function RequestMeals() {
       e.user_name = "First name is required.";
     if (!String(v.last_name || "").trim())
       e.last_name = "Last name is required.";
-    if (!String(v.request_date || "").trim())
-      e.request_date = "Request date is required.";
-    else if (!isValidDate(v.request_date)) e.request_date = "Invalid date.";
+    if (!v.status || (v.status !== 'urgent' && v.status !== 'normal'))
+      e.status = "Status is required.";
     if (!String(v.description || "").trim())
       e.description = "Description is required.";
     if (!String(v.mealType || "").trim()) e.mealType = "Meal type is required.";
@@ -193,19 +240,21 @@ export default function RequestMeals() {
   };
 
   const handleOpenUpdate = (row) => {
-    setEditForm({
+    // Store the request data in localStorage for the edit page
+    localStorage.setItem('editRequestData', JSON.stringify({
       request_id: row.request_id ?? "",
       user_id: row.user_id ?? "",
       user_name: row.user_name ?? "",
       last_name: row.last_name ?? "",
-      request_date: row.request_date ?? "",
+      status: row.status ?? "normal",
       description: row.description ?? "",
       mealType: row.mealType ?? "Non-Vegan",
       weight: row.weight ?? "",
       height: row.height ?? "",
-    });
-    setErrors({});
-    setOpen(true);
+    }));
+    
+    // Navigate to the edit page
+    navigate('/userDashboard/edit-meal-request');
   };
 
   const handleSubmitUpdate = async (e) => {
@@ -224,7 +273,7 @@ export default function RequestMeals() {
       user_id: editForm.user_id,
       user_name: editForm.user_name,
       last_name: editForm.last_name,
-      request_date: editForm.request_date,
+      status: editForm.status,
       description: editForm.description,
       mealType: editForm.mealType,
       weight: editForm.weight,
@@ -276,16 +325,14 @@ export default function RequestMeals() {
 
     try {
       setSaving(true);
+      const token = localStorage.getItem("token");
       await axios.delete(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/api/mealRequest/${encodeURIComponent(row.request_id)}`
+        }/api/mealRequest/${encodeURIComponent(row.request_id)}`,
+        { headers: { Authorization: "Bearer " + token } }
       );
-      await Swal.fire({
-        title: "Deleted!",
-        text: "The record has been deleted.",
-        icon: "success",
-      });
+      toast.success("The record has been deleted.");
       fetchRequests();
     } catch (err) {
       const msg =
@@ -305,35 +352,155 @@ export default function RequestMeals() {
     "w-full border border-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2";
 
   return (
-    <div className="p-6">
-      <div className="mx-auto w-full max-w-screen-2xl">
-        <div className="mb-4">
-          <h1 className="text-xl font-semibold text-black">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="mx-auto max-w-4xl px-4">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Manage Your Meal Requests
           </h1>
+          <p className="text-sm text-gray-600">
+            View and manage your meal plan requests for Gettz Fitness.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Filter Section */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-4">
+            {/* Meal Type Filter */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700 self-center">Meal Type:</span>
+              <button
+                onClick={() => setMealTypeFilter("all")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  mealTypeFilter === "all"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setMealTypeFilter("Vegan")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  mealTypeFilter === "Vegan"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Vegan
+              </button>
+              <button
+                onClick={() => setMealTypeFilter("Non-Vegan")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  mealTypeFilter === "Non-Vegan"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Non-Vegan
+              </button>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-gray-700 self-center">Status:</span>
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  statusFilter === "all"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setStatusFilter("urgent")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  statusFilter === "urgent"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Urgent
+              </button>
+              <button
+                onClick={() => setStatusFilter("normal")}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  statusFilter === "normal"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Normal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Cards List */}
+        <div className="space-y-6">
           {busy && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-neutral-500 col-span-full">
-              Loading…
+            <div className="max-w-4xl">
+              <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="flex flex-col items-center">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <svg className="h-6 w-6 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading...</h3>
+                  <p className="text-gray-500">Please wait while we fetch your requests.</p>
+                </div>
+              </div>
             </div>
           )}
 
-          {!busy && requests.length === 0 && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-neutral-500 col-span-full">
-              No requests found
+          {!busy && filteredRequests.length === 0 && (
+            <div className="max-w-4xl">
+              <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <div className="flex flex-col items-center">
+                  <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {requests.length === 0 ? "No Requests Found" : "No Matching Requests"}
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {requests.length === 0 
+                      ? "You haven't made any meal requests yet. Create your first request to get started."
+                      : "No requests match your current filter criteria. Try adjusting your filters."
+                    }
+                  </p>
+                  {requests.length === 0 && (
+                    <button 
+                      onClick={() => navigate('/mealPlan')}
+                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Create Request
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           {!busy &&
-            requests.map((r) => (
-              <RequestCard
-                key={r._id ?? r.request_id}
-                row={r}
-                onUpdate={handleOpenUpdate}
-                onDelete={handleDelete}
-              />
+            filteredRequests.map((r) => (
+              <div key={r._id ?? r.request_id} className="max-w-4xl">
+                <RequestCard
+                  row={r}
+                  onUpdate={handleOpenUpdate}
+                  onDelete={handleDelete}
+                />
+              </div>
             ))}
         </div>
       </div>
@@ -362,25 +529,23 @@ export default function RequestMeals() {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
-                  <label className={label}>Request Date</label>
-                  <p className={sub}>Date you added the request.</p>
-                  <input
-                    type="date"
-                    value={
-                      editForm.request_date
-                        ? String(editForm.request_date).slice(0, 10)
-                        : ""
-                    }
+                  <label className={label}>Request Status</label>
+                  <p className={sub}>Whether this request is urgent or normal.</p>
+                  <select
+                    value={editForm.status}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, request_date: e.target.value })
+                      setEditForm({ ...editForm, status: e.target.value })
                     }
                     className={`${input} ${
-                      errors.request_date ? "border-red-500" : ""
+                      errors.status ? "border-red-500" : ""
                     }`}
-                  />
-                  {errors.request_date && (
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                  {errors.status && (
                     <p className="mt-1 text-sm text-red-600">
-                      {errors.request_date}
+                      {errors.status}
                     </p>
                   )}
                 </div>

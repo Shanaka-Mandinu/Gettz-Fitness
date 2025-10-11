@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Dumbbell, CalendarClock, Video,
   Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy,
-  LogOut, User
+  LogOut, User, ChefHat
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
 import Swal from "sweetalert2";
@@ -18,6 +18,7 @@ const idleStyle =
 const navItems = [
   { to: "/trainerDashboard/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/trainerDashboard/reqMeals", label: "User Requests", icon: HandPlatter  },
+  { to: "/trainerDashboard/mealTemplate", label: "Meal Templates", icon: ChefHat},
   { to: "/trainerDashboard/challenges", label: "Challenges", icon: Trophy },
   { to: "/trainerDashboard/profile", label: "Profile", icon: User },
 ];
@@ -66,7 +67,7 @@ export default function TrainerSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="px-2 pt-2 space-y-1 flex-1">
+      <nav className="px-2 pt-2 space-y-1 flex-1 flex-1">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}

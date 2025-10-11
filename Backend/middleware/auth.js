@@ -9,9 +9,12 @@ function verifyJWT(req,res,next){
         jwt.verify(token,process.env.JWT_KEY,(err,decoded)=>{
             if(decoded !=null){
                 req.user = decoded;
-                
+            } else {
+                req.user = null;
             }
         })
+    } else {
+        req.user = null;
     }
     next()
 }
