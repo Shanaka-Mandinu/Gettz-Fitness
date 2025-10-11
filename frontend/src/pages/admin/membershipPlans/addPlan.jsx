@@ -10,7 +10,7 @@ export default function AddPlanForm() {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState([]);
-  const [errors, setErrors] = useState({}); // ✅ CHANGED: hold per-field errors
+  const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -46,13 +46,13 @@ export default function AddPlanForm() {
       nextErrors.features = "Add at least one feature.";
     }
 
-    setErrors(nextErrors); // ✅ CHANGED: set per-field errors
+    setErrors(nextErrors); 
     return Object.keys(nextErrors).length === 0;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!validate()) return; // ✅ CHANGED: stop here; errors show inline
+    if (!validate()) return; 
 
     const planData = {
       plan_name: plan_name.trim(),
@@ -115,7 +115,7 @@ export default function AddPlanForm() {
                   id="plan_name"
                   name="plan_name"
                   type="text"
-                  value={plan_name} // ✅ CHANGED: controlled
+                  value={plan_name} 
                   onChange={(e) => setPlanName(e.target.value)}
                   className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-red-500
                     ${
@@ -145,7 +145,7 @@ export default function AddPlanForm() {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={price} // ✅ CHANGED: controlled
+                  value={price} 
                   onChange={(e) => setPrice(e.target.value)}
                   className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-red-500
                     ${
@@ -173,7 +173,7 @@ export default function AddPlanForm() {
                   type="number"
                   min="1"
                   step="1"
-                  value={duration} // ✅ CHANGED: controlled
+                  value={duration} 
                   onChange={(e) => setDuration(e.target.value)}
                   className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-red-500
                     ${
@@ -201,7 +201,7 @@ export default function AddPlanForm() {
                 id="description"
                 name="description"
                 rows={4}
-                value={description} // ✅ CHANGED: controlled
+                value={description} 
                 onChange={(e) => setDescription(e.target.value)}
                 className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-red-500
                   ${
@@ -266,7 +266,7 @@ export default function AddPlanForm() {
               <button
                 type="button"
                 onClick={() => {
-                  // ✅ CHANGED: proper reset (setForm didn’t exist)
+                  
                   setPlanName("");
                   setPrice("");
                   setDuration("");

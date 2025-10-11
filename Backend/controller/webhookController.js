@@ -35,10 +35,9 @@ export async function handleWebhook(req, res) {
           { new: true }
         );
 
-        // 2) Create/activate subscription in YOUR system (now safe)
+        // 2) Create/activate subscription 
         try {
-          const userId = session.metadata?.userId; // optional if you want to pass one
-          console.log(userId);
+          const userId = session.metadata?.userId; 
           const planId = session.metadata?.planId;
           const email = session.customer_details?.email;
           const sub = await Subscription.findOneAndUpdate(
@@ -48,6 +47,8 @@ export async function handleWebhook(req, res) {
 
           const user = await User.findById(userId);
           user.role = "member";
+          console.log("Points to deduction: ", session.metadata?.appliedPoints);
+          user.point = (user.point || 0) - (parseInt(session.metadata?.appliedPoints) || 0);
           await user.save();
           const top = await Subscription.aggregate([
             { $match: { status: "active" } },
@@ -75,7 +76,7 @@ export async function handleWebhook(req, res) {
             "Sub creation failed:",
             subErr?.response?.data || subErr.message
           );
-          // you might want to queue retry
+          
         }
         break;
       }
@@ -89,7 +90,7 @@ export async function handleWebhook(req, res) {
         break;
       }
 
-      // (Optional safety) If you also receive payment_intent events:
+      
       case "payment_intent.payment_failed": {
         console.log("Canceled Called");
         const pi = event.data.object;
@@ -106,14 +107,14 @@ export async function handleWebhook(req, res) {
       }
 
       default:
-        // ignore
+        
         break;
     }
 
     return res.status(200).json({ received: true });
   } catch (err) {
     console.error("Webhook handler error:", err);
-    // still 2xx so Stripe doesn’t retry forever if it’s your bug
+   
     return res.status(200).json({ received: true });
   }
 }

@@ -9,32 +9,42 @@ export default function PaymentSuccess() {
   const [loaded, setLoaded] = useState(false);
 
   const [planName, setPlanName] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [currency, setCurrency] = useState("LKR");
   const [date, setDate] = useState("");
   const [paymentId, setPaymentId] = useState("");
+  const [status, setStatus] = useState("");
+  const [paymentAllData, setPaymentAllData] = useState(null);
+
   const sessionId = searchParams.get("session_id");
-  const [paymentAllData,setPaymentAllData]= useState(null);
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const fullName= userData.firstName +" "+userData.lastName
-  
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const fullName = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ");
+
   useEffect(() => {
-    if (!loaded) {
+    if (!loaded && sessionId) {
       axios
-        .get(
-          import.meta.env.VITE_BACKEND_URL +
-            "/api/pay/fetchPayment/" +
-            sessionId
-        )
+        .get(`${import.meta.env.VITE_BACKEND_URL}/api/pay/fetchPayment/${sessionId}`)
         .then((res) => {
-          setPaymentAllData(res.data);
-          setPlanName(res.data.subscription_id.plan_id.plan_name);
-          setAmount(res.data.amount);
-          setDate(res.data.createdAt.split("T")[0]);
-          setPaymentId(res.data.payment_id);
+          const p = res.data;
+          setPaymentAllData(p);
+          setPlanName(p?.subscription_id?.plan_id?.plan_name || p?.planName || "Membership Plan");
+          setAmount(Number(p?.amount || 0));
+          setDiscount(Number(p?.discount || 0));
+          setPaidAmount(Number(p?.paid_amount || 0));
+          setCurrency(p?.currency || "LKR");
+          setDate((p?.paid_at || p?.createdAt || "").split("T")[0] || "");
+          setPaymentId(p?.payment_id || "");
+          setStatus(p?.status || "");
           setLoaded(true);
-        });
+        })
+        .catch(() => setLoaded(true));
     }
-  }, []);
+  }, [loaded, sessionId]);
+
+  const money = (n) =>
+    `${currency}. ${Number(n || 0).toLocaleString("en-LK", { maximumFractionDigits: 2 })}`;
 
   return (
     <div className="min-h-full bg-white text-[#0f172a] flex flex-col">
@@ -47,46 +57,47 @@ export default function PaymentSuccess() {
           </h1>
 
           <p className="mt-5 max-w-xl text-slate-600">
-            Payment successful — your membership plan is now active! We’ve
-            emailed your receipt and updated your account with full member
-            benefits. Head to your dashboard to book meal plans, explore
-            training programs, and manage your plan or billing details. Welcome
-            to Gettz Fitness — let’s get to work!
+            Payment successful — your membership plan is now active! We’ve emailed your receipt and
+            updated your account with full member benefits. Head to your dashboard to explore
+            training programs and manage your plan or billing details. Welcome to Gettz Fitness — let’s get to work!
           </p>
 
           {/* RECEIPT */}
           <div className="mt-8 w-full max-w-xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-bold text-slate-700 text-center">
-              Payment receipt
-            </h2>
+            <h2 className="font-bold text-slate-700 text-center">Payment receipt</h2>
             <hr className="my-2 border-slate-200 mx-auto" />
 
             <div className="mt-4 space-y-2 text-sm">
+              <Row label="Product" value={planName} />
+              <Row label="Customer" value={fullName || "-"} />
+              <Row label="Transaction ID" value={`#TA_${paymentId}`} mono />
+              <Row label="Date" value={date || "-"} />
+              <Row label="Status" value={status?.toUpperCase()} />
+
+              <div className="my-3 border-t border-slate-200" />
+
+              {/* Price breakdown */}
+              <Row label="Subtotal" value={money(amount)} />
+              <Row label="Discount" value={`- ${money(discount)}`} />
+
+              {/* --- Separator line between discount & paid amount --- */}
+              <div className="mt-2 mb-1 border-t border-slate-400" />
+
+              {/* Paid Amount */}
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Product</span>
-                <span className="font-medium text-slate-800">{planName}</span>
+                <span className="text-slate-500">Paid amount</span>
+                <span className="font-bold text-slate-900">{money(paidAmount)}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Transaction ID</span>
-                <span className="font-medium tracking-tight">
-                  #TA_{paymentId}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Date</span>
-                <span className="font-medium">{date}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Amount</span>
-                <span className="font-semibold text-slate-900">
-                  LKR.{amount}
-                </span>
+              {/* --- Double underline under Paid amount (math style) --- */}
+              <div className="mt-1">
+                <div className="border-t border-slate-400" />
+                <div className="mt-0.5 border-t-2 border-slate-600" />
               </div>
             </div>
           </div>
 
-          {/* ⭐ Buttons moved OUTSIDE the receipt box */}
+          {/* Buttons */}
           <div className="mt-6 flex gap-3 justify-center">
             <Link
               to="/"
@@ -96,21 +107,22 @@ export default function PaymentSuccess() {
             </Link>
             <button
               type="button"
-              onClick={() => generateReceiptPDF(paymentAllData,fullName)}
+              onClick={() => generateReceiptPDF(paymentAllData, fullName)}
               className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-100"
+              disabled={!paymentAllData}
             >
               Download receipt
             </button>
           </div>
         </section>
 
-        {/* RIGHT: GIF*/}
+        {/* RIGHT: GIF */}
         <aside className="relative overflow-hidden bg-[#FFFFFF]">
           <div className="flex h-full items-center justify-center pt-16 pb-28">
-            <CardIllustration gifSrc={successGif} /> {/* GIF */}
+            <CardIllustration gifSrc={successGif} />
           </div>
           <div className="absolute top-8 right-0 left-0 text-left px-6">
-            <p className="text-xl  font-bold text-red-600">Thank you</p>
+            <p className="text-xl font-bold text-red-600">Thank you</p>
             <h3 className="text-xl font-bold">
               For Choosing <span className="text-red-600">Getzz</span> Fitness
             </h3>
@@ -121,11 +133,20 @@ export default function PaymentSuccess() {
   );
 }
 
-// Card illustration component
+function Row({ label, value, mono = false }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-slate-500">{label}</span>
+      <span className={`font-medium text-slate-800 ${mono ? "tracking-tight font-mono" : ""}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function CardIllustration({ gifSrc = successGif }) {
   return (
     <div className="relative w-full max-w-[520px]">
-      {/* GIF overlay (centered) */}
       <img
         src={gifSrc}
         alt=""
