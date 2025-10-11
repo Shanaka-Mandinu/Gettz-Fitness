@@ -122,7 +122,6 @@ export async function createOrder(req, res) {
   }
 }
 export async function fetchOrder(req, res) {
-  console.log("Fetch order called with ID:", req.params.id);
   const session_id = req.params.id;
   try {
     const order = await Order.findOne({ session_id: session_id });
