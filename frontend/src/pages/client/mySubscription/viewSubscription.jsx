@@ -62,6 +62,9 @@ export default function ViewSubscription() {
         }
       )
       .then(() => {
+        userData.role = "user"; 
+        localStorage.setItem("user", JSON.stringify(userData));
+
         setLoaded(false);
       });
   }

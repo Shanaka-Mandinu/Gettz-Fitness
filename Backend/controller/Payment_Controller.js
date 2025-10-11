@@ -38,7 +38,7 @@ export async function createPayment(req, res) {
                 product_data: {
                   name: plan.plan_name,
                 },
-                unit_amount: plan.price * 100,
+                unit_amount: req.body.finalAmount * 100,
               },
               quantity: 1,
             },
@@ -48,14 +48,17 @@ export async function createPayment(req, res) {
           metadata: {
             userId: req.user._id,
             planId: req.params.id,
+            appliedPoints: req.body.pointsToUse || 0
           },
         });
-
+  console.log("Points to use: ", req.body.pointsToUse);
         const subInfo = await Subscription.findOne({ user_id: req.user._id });
         const paymentData = {
           payment_id: 0,
           user_id: req.user._id,
           amount: plan.price,
+          paid_amount: req.body.finalAmount,
+          discount: plan.price - req.body.finalAmount,
           session_id: session.id,
           subscription_id: subInfo._id,
           planName:plan.plan_name

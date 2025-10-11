@@ -7,11 +7,12 @@ const paymentSchema = new mongoose.Schema({
     subscription_id: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription"},
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     amount: { type: Number, required: true, min: 0 },
+    paid_amount: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: "LKR" },
-    //method: { type: String, enum: ["card", "wallet", "bank", "cash"], required: true },
     session_id: { type: String, unique: true, required: true },
     status: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
     paid_at: { type: Date },
+    discount: { type: Number, default: 0, min: 0 },
     planName: { type: String, default: "" },
     notes: { type: String, default: "" }
   },

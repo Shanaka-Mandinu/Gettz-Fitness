@@ -38,7 +38,6 @@ export async function handleWebhook(req, res) {
         // 2) Create/activate subscription 
         try {
           const userId = session.metadata?.userId; 
-          console.log(userId);
           const planId = session.metadata?.planId;
           const email = session.customer_details?.email;
           const sub = await Subscription.findOneAndUpdate(
@@ -48,6 +47,8 @@ export async function handleWebhook(req, res) {
 
           const user = await User.findById(userId);
           user.role = "member";
+          console.log("Points to deduction: ", session.metadata?.appliedPoints);
+          user.point = (user.point || 0) - (parseInt(session.metadata?.appliedPoints) || 0);
           await user.save();
           const top = await Subscription.aggregate([
             { $match: { status: "active" } },
