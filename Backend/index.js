@@ -45,6 +45,8 @@ import attendanceRoutes from "./routes/attendanceRoutes.js";
 import Member from "./model/memberModel.js";
 import Attendance from "./model/attendanceModel.js";
 import mealTemplateRouter from "./routes/mealTemplateRouter.js"
+import feedbackRouter from "./routes/feedbackRoute.js"
+import statsRouter from "./routes/statsRoute.js"
 import path from "path";
 
 
@@ -125,6 +127,8 @@ app.use("/api/inquiry",inqRouter);
 app.use('/api/notification',notificationRouter)
 app.use("/api/members", memberRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/feedback", feedbackRouter);
+app.use("/api/stats", statsRouter);
 
 
 // const port = new SerialPort({ path: "COM5", baudRate: 9600 }); // Replace COM5 with your port

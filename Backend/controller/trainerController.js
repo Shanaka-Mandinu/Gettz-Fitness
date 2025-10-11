@@ -62,6 +62,26 @@ export function getAllTrainers(req,res){
         }
     );
 }
+
+
+export function getPublicTrainers(req, res) {
+    Trainer.find({ isActive: true, isDisabled: false })
+        .select('name profilePicture specialization experienceYears certifications rating bio')
+        .limit(6)
+        .then((trainers) => {
+            res.status(200).json({
+                success: true,
+                data: trainers
+            });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                success: false,
+                message: "Error retrieving trainers",
+                error: err.message
+            });
+        });
+}
 export function loginTrainer(req, res) {
     req.body.role = 'trainer';  
     return loggingController(req, res);
@@ -190,7 +210,7 @@ export function getTrainerProfile(req, res) {
     );
 }
 
-// Update trainer profile (for logged-in trainer)
+
 export function updateTrainerProfile(req, res) {
     if (!req.user) {
         return res.status(401).json({
@@ -234,7 +254,6 @@ export function updateTrainerProfile(req, res) {
     );
 }
 
-// Get trainer statistics
 export function getTrainerStats(req, res) {
     if (!req.user) {
         return res.status(401).json({
@@ -248,7 +267,7 @@ export function getTrainerStats(req, res) {
         });
     }
 
-    // For now, return mock data. In a real app, you'd query actual data
+
     const stats = {
         totalClients: 0,
         activeClients: 0,
