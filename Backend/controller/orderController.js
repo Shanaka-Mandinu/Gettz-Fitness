@@ -1,7 +1,7 @@
 import Order from "../model/order.js";
 import User from "../model/user.js";
 import Stripe from "stripe";
-import express from "express";
+import { sendStoreOrderReceipt } from "../utils/mailer.js";
 const stripe = new Stripe(process.env.SECRET_KEY2);
 
 // Create a new supplement order and Stripe session
@@ -37,18 +37,14 @@ export async function createOrder(req, res) {
     );
     const appliedPoints = Math.min(pointsToUse || 0, maxPoints);
     if (pointsToUse && pointsToUse > availablePoints) {
-      return res
-        .status(400)
-        .json({
-          message: `You do not have enough points. Available: ${availablePoints}`,
-        });
+      return res.status(400).json({
+        message: `You do not have enough points. Available: ${availablePoints}`,
+      });
     }
     if (pointsToUse && pointsToUse > maxPoints) {
-      return res
-        .status(400)
-        .json({
-          message: `You can only use up to ${maxPoints} points for this order.`,
-        });
+      return res.status(400).json({
+        message: `You can only use up to ${maxPoints} points for this order.`,
+      });
     }
     const discount = appliedPoints * POINT_VALUE_LKR;
     const paidAmount = Math.max(0, subtotal - discount);
@@ -125,6 +121,16 @@ export async function createOrder(req, res) {
     }
   }
 }
+export async function fetchOrder(req, res) {
+  const session_id = req.params.id;
+  try {
+    const order = await Order.findOne({ session_id: session_id });
+
+    res.status(200).json(order);
+  } catch (err) {
+    res.status(500).json({ message: err });
+  }
+}
 
 // Stripe webhook handler
 export async function stripeWebhook(req, res) {
@@ -147,12 +153,17 @@ export async function stripeWebhook(req, res) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
+        const email = session.customer_details?.email;
         // Supplement order payment success
         const order = await Order.findOne({ session_id: session.id });
         if (order) {
           order.status = "paid";
           order.paymentIntent = session.payment_intent;
+          // after marking order "paid" in checkout.session.completed:
+          
+
           await order.save();
+          await sendStoreOrderReceipt(email, session.id);
         } else {
           console.warn("Order not found for session:", session.id);
         }
