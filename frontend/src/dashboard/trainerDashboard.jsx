@@ -5,6 +5,7 @@ import TrainerSidebar from "../components/TrainerSidebar.jsx";
 import RequestedMeals from "../pages/trainer/requestedMeals.jsx";
 import Dashboard from "../pages/trainer/dashboard.jsx";
 import Challenges from "../pages/trainer/challenges.jsx";
+import Profile from "../pages/trainer/profile.jsx";
 import MealTemplate from "../pages/trainer/mealTemplate.jsx";
 import AddMealTemplate from "../pages/trainer/addMealTemplate.jsx";
 import EditMealTemplate from "../pages/trainer/editMealTemplate.jsx";
@@ -37,6 +38,7 @@ export default function TrainerLayout() {
                       <Route path="/add-meal-template" element={<AddMealTemplate />} />
                       <Route path="/edit-meal-template/:id" element={<EditMealTemplate />} />
                       <Route path="/challenges" element={<Challenges />} />
+                      <Route path="/profile" element={<Profile />} />
 
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Dumbbell, CalendarClock, Video,
   Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy,
-  LogOut, ChefHat
+  LogOut, User, ChefHat
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
 import Swal from "sweetalert2";
@@ -20,7 +20,7 @@ const navItems = [
   { to: "/trainerDashboard/reqMeals", label: "User Requests", icon: HandPlatter  },
   { to: "/trainerDashboard/mealTemplate", label: "Meal Templates", icon: ChefHat},
   { to: "/trainerDashboard/challenges", label: "Challenges", icon: Trophy },
-
+  { to: "/trainerDashboard/profile", label: "Profile", icon: User },
 ];
 
 export default function TrainerSidebar() {
@@ -50,6 +50,7 @@ export default function TrainerSidebar() {
         open ? "w-64" : "w-16"
       } sticky top-0 h-screen shrink-0 border-r bg-white transition-all flex flex-col`}
     >
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-2">
           <img src={GymLogo} alt="Gettz" className="h-9 w-9 rounded-full" />
@@ -65,7 +66,8 @@ export default function TrainerSidebar() {
         </button>
       </div>
 
-      <nav className="px-2 pt-2 space-y-1 flex-1">
+      {/* Navigation */}
+      <nav className="px-2 pt-2 space-y-1 flex-1 flex-1">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -80,10 +82,11 @@ export default function TrainerSidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="px-3 space-y-3">
-        {/* Logout */}
+
+      {/* Logout Button - Fixed at bottom */}
+      <div className="p-3 border-t border-gray-200">
         <button
-          className={`mb-10 flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 shadow-sm transition-colors ${
+          className={`w-full flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 shadow-sm transition-colors ${
             open ? "justify-start" : "justify-center"
           }`}
           title={!open ? "Logout" : undefined}

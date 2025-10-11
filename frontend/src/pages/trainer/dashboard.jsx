@@ -1,244 +1,257 @@
-import React from "react";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Award, 
-  Star, 
-  Calendar, 
-  Target, 
-  Activity,
-  Clock,
-  Users,
-  Shield,
-  MessageSquare,
-  FileText,
-  Trophy
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { HandPlatter, Trophy, Users, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function Dashboard() {
-  // Hardcoded trainer data
-  const trainerData = {
-    name: "John Smith",
-    trainerId: "Trainer12345",
-    email: "john.smith@getzzfitness.com",
-    phoneNumber: "+1 (555) 123-4567",
-    profilePicture: null,
-    role: "trainer",
-    certifications: ["Certified Personal Trainer", "Nutrition Specialist", "Yoga Instructor"],
-    experienceYears: 8,
-    specialization: "Weight Loss",
-    rating: 4.8,
-    reviews: [
-      { member: "user1", comment: "Great trainer!", rating: 5 },
-      { member: "user2", comment: "Very helpful", rating: 4 },
-      { member: "user3", comment: "Excellent guidance", rating: 5 }
-    ],
-    isActive: true,
-    isDisabled: false,
-    createdAt: "2023-01-15T00:00:00.000Z",
-    updatedAt: "2024-01-15T00:00:00.000Z",
-    lastLogin: "2024-01-20T10:30:00.000Z"
+  const [mealRequests, setMealRequests] = useState([]);
+  const [challenges, setChallenges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalMealRequests: 0,
+    pendingMealRequests: 0,
+    totalChallenges: 0,
+    activeChallenges: 0,
+  });
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      // Fetch meal requests
+      const mealResponse = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/mealRequest`,
+        { headers }
+      );
+      const mealData = Array.isArray(mealResponse.data?.response) ? mealResponse.data.response : [];
+      setMealRequests(mealData);
+
+      // Fetch challenges
+      const challengeResponse = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/challenge`,
+        { headers }
+      );
+      const challengeData = Array.isArray(challengeResponse.data) ? challengeResponse.data : [];
+      setChallenges(challengeData);
+
+      // Calculate stats
+      const pendingMeals = mealData.filter(meal => !meal.isAssigned).length;
+      const activeChallenges = challengeData.filter(challenge => challenge.isActive).length;
+
+      setStats({
+        totalMealRequests: mealData.length,
+        pendingMealRequests: pendingMeals,
+        totalChallenges: challengeData.length,
+        activeChallenges: activeChallenges,
+      });
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Hardcoded stats
-  const stats = {
-    totalMembers: 45,
-    activeMealPlans: 23,
-    averageRating: 4.8
-  };
+  const recentMealRequests = mealRequests
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
 
-  // New stats for left section
-  const leftSectionStats = {
-    currentRequests: 12,
-    createdMealTemplates: 8,
-    approvedChallenges: 15
-  };
+  const recentChallenges = challenges
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Trainer Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {trainerData.name}!</p>
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <p className="text-gray-600">Overview of your trainer activities</p>
       </div>
 
-      {/* Main Content - Side by Side Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Trainer Profile Card - Takes 2/3 width on large screens */}
-        <div className="xl:col-span-2">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden min-h-[500px]">
-            <div className="flex flex-col lg:flex-row h-full">
-              {/* Left Section - Profile Image and Basic Info */}
-              <div className="lg:w-1/3 bg-gradient-to-br from-red-50 to-red-100 p-6 flex flex-col items-center justify-center min-h-[500px]">
-                <div className="relative mb-4">
-                  {trainerData.profilePicture ? (
-                    <img
-                      src={`${import.meta.env.VITE_BACKEND_URL}/${trainerData.profilePicture}`}
-                      alt={trainerData.name}
-                      className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                    />
-                  ) : (
-                    <div className="w-32 h-32 rounded-full bg-red-600 flex items-center justify-center border-4 border-white shadow-lg">
-                      <User className="w-16 h-16 text-white" />
-                    </div>
-                  )}
-                  <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">{trainerData.name}</h2>
-                <p className="text-red-600 font-semibold mb-2">ID: {trainerData.trainerId}</p>
-
-                {/* Status Badge */}
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  trainerData.isActive && !trainerData.isDisabled 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {trainerData.isActive && !trainerData.isDisabled ? 'Active' : 'Inactive'}
-                </div>
-              </div>
-
-              {/* Right Section - Detailed Information */}
-              <div className="lg:w-2/3 p-6 flex flex-col justify-center min-h-[500px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Contact Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <User className="w-5 h-5 text-red-600" />
-                      Contact Information
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Email</p>
-                          <p className="font-medium text-gray-900">{trainerData.email}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Phone</p>
-                          <p className="font-medium text-gray-900">{trainerData.phoneNumber || "Not provided"}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Member Since</p>
-                          <p className="font-medium text-gray-900">
-                            {new Date(trainerData.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Professional Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <Award className="w-5 h-5 text-red-600" />
-                      Professional Details
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Target className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Specialization</p>
-                          <p className="font-medium text-gray-900">{trainerData.specialization}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Experience</p>
-                          <p className="font-medium text-gray-900">
-                            {trainerData.experienceYears} years
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Award className="w-5 h-5 text-gray-500" />
-                        <div>
-                          <p className="text-sm text-gray-500">Certifications</p>
-                          <p className="font-medium text-gray-900">
-                            {trainerData.certifications?.length > 0 
-                              ? trainerData.certifications.join(", ")
-                              : "No certifications listed"
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Certifications List */}
-                {trainerData.certifications?.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Certifications</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {trainerData.certifications.map((cert, index) => (
-                        <span 
-                          key={index}
-                          className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium"
-                        >
-                          {cert}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Meal Requests Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Meal Requests</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalMealRequests}</p>
             </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <HandPlatter className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-sm">
+            <AlertCircle className="h-4 w-4 text-orange-500 mr-1" />
+            <span className="text-gray-600">{stats.pendingMealRequests} pending</span>
           </div>
         </div>
 
-        {/* Stats Cards - Takes 1/3 width on large screens */}
-        <div className="xl:col-span-1 flex flex-col h-full min-h-[500px]">
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex-1 min-h-[150px]">
-            <div className="flex items-center justify-between h-full">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Current User Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{leftSectionStats.currentRequests}</p>
-              </div>
-              <MessageSquare className="w-8 h-8 text-blue-600" />
+        {/* Challenges Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Challenges</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalChallenges}</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <Trophy className="h-6 w-6 text-green-600" />
             </div>
           </div>
+          <div className="mt-4 flex items-center text-sm">
+            <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+            <span className="text-gray-600">{stats.activeChallenges} active</span>
+          </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex-1 mt-6 min-h-[150px]">
-            <div className="flex items-center justify-between h-full">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Created Meal Templates</p>
-                <p className="text-2xl font-bold text-gray-900">{leftSectionStats.createdMealTemplates}</p>
-              </div>
-              <FileText className="w-8 h-8 text-green-600" />
+        {/* Pending Requests Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending Requests</p>
+              <p className="text-2xl font-bold text-orange-600">{stats.pendingMealRequests}</p>
+            </div>
+            <div className="p-3 bg-orange-100 rounded-full">
+              <Clock className="h-6 w-6 text-orange-600" />
             </div>
           </div>
+          <div className="mt-4 flex items-center text-sm">
+            <span className="text-gray-600">Requires attention</span>
+          </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex-1 mt-6 min-h-[150px]">
-            <div className="flex items-center justify-between h-full">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Approved Challenges</p>
-                <p className="text-2xl font-bold text-gray-900">{leftSectionStats.approvedChallenges}</p>
-              </div>
-              <Trophy className="w-8 h-8 text-yellow-600" />
+        {/* Active Challenges Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Challenges</p>
+              <p className="text-2xl font-bold text-green-600">{stats.activeChallenges}</p>
             </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Users className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-sm">
+            <span className="text-gray-600">Currently running</span>
           </div>
         </div>
       </div>
 
+      {/* Recent Activities Table */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Recent Meal Requests */}
+              {recentMealRequests.map((request, index) => (
+                <tr key={`meal-${request._id || index}`} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <HandPlatter className="h-4 w-4 text-blue-600 mr-2" />
+                      <span className="text-sm text-gray-900">Meal Request</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      Request #{request.request_id || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {request.user_name || 'Unknown User'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      request.isAssigned 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {request.isAssigned ? 'Assigned' : 'Pending'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A'}
+                  </td>
+                </tr>
+              ))}
 
+              {/* Recent Challenges */}
+              {recentChallenges.map((challenge, index) => (
+                <tr key={`challenge-${challenge._id || index}`} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 text-green-600 mr-2" />
+                      <span className="text-sm text-gray-900">Challenge</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {challenge.title || 'Untitled Challenge'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {challenge.participantCount || 0} participants
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      challenge.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {challenge.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {challenge.createdAt ? new Date(challenge.createdAt).toLocaleDateString() : 'N/A'}
+                  </td>
+                </tr>
+              ))}
+
+              {/* Empty State */}
+              {recentMealRequests.length === 0 && recentChallenges.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                    No recent activities found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

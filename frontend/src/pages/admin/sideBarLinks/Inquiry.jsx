@@ -176,32 +176,6 @@ export default function InquiryPage() {
     }
   }
 
-  function confirmDelete(inquiry_id) {
-    toast.custom((t) => (
-      <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-4 flex flex-col gap-3 w-72">
-        <p className="text-sm text-gray-800">
-          Delete inquiry #{inquiry_id}? This cannot be undone.
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 rounded-md border text-sm hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              deleteInquiry(inquiry_id);
-            }}
-            className="px-3 py-1 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
-          >
-            Yes, Delete
-          </button>
-        </div>
-      </div>
-    ));
-  }
 
   async function deleteInquiry(inquiry_id) {
     const token = localStorage.getItem("token") || localStorage.getItem("jwt");
@@ -420,12 +394,7 @@ export default function InquiryPage() {
                       >
                         View
                       </button>
-                      <button
-                        onClick={() => confirmDelete(q.inquiry_id)}
-                        className="rounded-md bg-[#e30613] px-2 py-1 text-white hover:opacity-90"
-                      >
-                        Delete
-                      </button>
+                  
                     </div>
                   </td>
                 </tr>
