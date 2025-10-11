@@ -17,6 +17,7 @@ import challengeRouter from './routes/challengeRouter.js'
 import comPostRouter from './routes/comPostRouter.js'
 import equipmentRouter from './routes/equipmentRoute.js';
 import supplementRouter from './routes/supplementRoute.js';
+import orderRouter from './routes/orderRoute.js';
 import maintenanceLogsRouter from './routes/maintenanceLogsRoute.js';
 import purchaseRouter from './routes/purchaseRoute.js';
 import authRoutes from './routes/auth.js';
@@ -45,6 +46,7 @@ import Member from "./model/memberModel.js";
 import Attendance from "./model/attendanceModel.js";
 import mealTemplateRouter from "./routes/mealTemplateRouter.js"
 import path from "path";
+
 
 
 dotenv.config();
@@ -102,6 +104,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/equipment",equipmentRouter);
 app.use("/api/supplement",supplementRouter);
+app.use("/api/order", orderRouter);
 app.use("/api/purchase",purchaseRouter);
 app.use("/api/maintenanceLogs",maintenanceLogsRouter);
 

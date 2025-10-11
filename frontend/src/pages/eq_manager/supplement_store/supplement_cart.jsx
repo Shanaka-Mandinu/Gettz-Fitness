@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingBag, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -127,7 +128,6 @@ export function CartProvider({ children }) {
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
-
 export function useCart() {
     const ctx = useContext(CartContext);
     if (!ctx) throw new Error("useCart must be used inside <CartProvider>");
@@ -136,6 +136,7 @@ export function useCart() {
 
 export default function SupplementCart() {
     const { items, removeItem, updateQty, clearCart, subtotal } = useCart();
+    const navigate = useNavigate();
 
     if (!items.length) {
         return (
@@ -282,7 +283,7 @@ export default function SupplementCart() {
                     <button
                         type="button"
                         className="w-full bg-red-700 md:hover:orange-200 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg md:hover:shadow-xl "
-                        onClick={""}
+                        onClick={() => navigate("/supplement/checkout", { state: { cart: items } })}
                     >
                         Checkout
                     </button>
