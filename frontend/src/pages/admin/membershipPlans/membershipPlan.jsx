@@ -160,8 +160,8 @@ export default function MembershipPlans() {
                     <td className="w-40 px-4 py-3 font-medium text-gray-900">
                       {plan.plan_name}
                     </td>
-                    <td className="w-28 px-4 py-3">{plan.price}</td>
-                    <td className="w-28 px-4 py-3">{plan.duration}</td>
+                    <td className="w-28 px-4 py-3">LKR.{plan.price}.00</td>
+                    <td className="w-28 px-4 py-3">{plan.duration} Days</td>
                     <td className="w-[200px] px-4 py-3 whitespace-pre-line break-words">
                       {plan.description}
                     </td>
