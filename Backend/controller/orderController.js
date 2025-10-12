@@ -1,5 +1,6 @@
 import Order from "../model/order.js";
 import User from "../model/user.js";
+import Supplement from "../model/supplement.js";
 import Stripe from "stripe";
 import { sendStoreOrderReceipt } from "../utils/mailer.js";
 const stripe = new Stripe(process.env.SECRET_KEY2);
@@ -132,6 +133,20 @@ export async function fetchOrder(req, res) {
   }
 }
 
+// List orders for the authenticated user (supplement purchases)
+export async function listMyOrders(req, res) {
+  try {
+    if (!req.user?._id) return res.status(401).json({ message: "Unauthorized" });
+    const orders = await Order.find({ user_id: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.status(200).json({ data: orders });
+  } catch (err) {
+    console.error("listMyOrders error:", err);
+    res.status(500).json({ message: "Failed to fetch orders" });
+  }
+}
+
 // Stripe webhook handler
 export async function stripeWebhook(req, res) {
   // With express.raw(), req.body is a Buffer – do NOT JSON.parse it.
@@ -157,11 +172,34 @@ export async function stripeWebhook(req, res) {
         // Supplement order payment success
         const order = await Order.findOne({ session_id: session.id });
         if (order) {
+          const wasAlreadyPaid = String(order.status).toLowerCase() === "paid";
+
+          // Decrement supplement stock only once per order (idempotent against webhook retries)
+          if (!wasAlreadyPaid && Array.isArray(order.cart) && order.cart.length > 0) {
+            for (const it of order.cart) {
+              try {
+                const codeRaw = it?.Sup_code ?? it?.id;
+                const code = Number(codeRaw);
+                const qty = Math.max(0, Number(it?.qty || 0));
+                if (!Number.isFinite(code) || qty <= 0) continue;
+
+                // Load current supplement, adjust quantity and status
+                const doc = await Supplement.findOne({ Sup_code: code });
+                if (!doc) continue;
+                const current = Number(doc.Sup_quantity) || 0;
+                const nextQty = Math.max(0, current - qty);
+                const nextStatus = nextQty === 0 ? "Out of stock" : "In stock";
+                doc.Sup_quantity = nextQty;
+                doc.Sup_status = nextStatus;
+                await doc.save();
+              } catch (invErr) {
+                console.error("Inventory decrement failed for item:", it, invErr?.message || invErr);
+              }
+            }
+          }
+
           order.status = "paid";
           order.paymentIntent = session.payment_intent;
-          // after marking order "paid" in checkout.session.completed:
-          
-
           await order.save();
           await sendStoreOrderReceipt(email, session.id);
         } else {

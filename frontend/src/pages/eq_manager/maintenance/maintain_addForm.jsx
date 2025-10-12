@@ -75,9 +75,9 @@ export default function MaintenanceLogAddPage() {
 
     // When choosing from the dropdown, auto-fill Eq_ID and name
     function handlePickEquipment(e) {
-        const id = e.target.value;
-        setEqId(id);
-        const found = equipment.find((x) => String(x?._id) === String(id));
+        const code = e.target.value;
+        setEqId(String(code));
+        const found = equipment.find((x) => String(x?.Eq_code) === String(code));
         if (found?.Eq_name && !M_Eq_name) {
             setEqName(found.Eq_name);
         }
@@ -168,7 +168,7 @@ export default function MaintenanceLogAddPage() {
                                         {eqLoaded ? "Select from equipment…" : "Loading equipment…"}
                                     </option>
                                     {equipment.map((eq) => (
-                                        <option key={eq?._id} value={eq?._id}>
+                                        <option key={eq?._id} value={eq?.Eq_code}>
                                             {eq?.Eq_code ? `${eq.Eq_code} — ` : ""}
                                             {eq?.Eq_name || "-"}
                                         </option>
@@ -185,7 +185,7 @@ export default function MaintenanceLogAddPage() {
                             <input
                                 value={Eq_ID}
                                 onChange={(e) => setEqId(e.target.value)}
-                                placeholder="Equipment document _id"
+                                placeholder="Equipment code (Eq_code)"
                                 className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
                             />
                         </div>

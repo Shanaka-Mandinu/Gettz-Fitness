@@ -111,6 +111,10 @@ export function CartProvider({ children }) {
         toast.success("All items removed");
     };
 
+    const clearCartSilently = () => {
+        setItems([]);
+    };
+
     const subtotal = useMemo(
         () => items.reduce((sum, i) => sum + i.price * i.qty, 0),
         [items]
@@ -122,6 +126,7 @@ export function CartProvider({ children }) {
         removeItem,
         updateQty,
         clearCart,
+        clearCartSilently,
         subtotal,
         count: items.reduce((n, i) => n + i.qty, 0),
     };
