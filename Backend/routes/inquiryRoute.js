@@ -7,12 +7,9 @@ inqRouter.post('/submit', createInquiry);
 inqRouter.get('/viewAll', getAllInquiry);
 inqRouter.put('/update/:inquiry_id', updateInquiry);
 inqRouter.delete('/delete/:inquiry_id', deleteInquiry);
-inqRouter.get('/user', getUserInquiries); // user fetch own inquiries
+inqRouter.get('/user', getUserInquiries);
 inqRouter.get('/:inquiry_id', getInquiryById);
-
-// New endpoints
-inqRouter.post('/reply/:inquiry_id', replyInquiry); // admin reply
-inqRouter.get('/user', getUserInquiries); // user fetch own inquiries
+inqRouter.post('/reply/:inquiry_id', replyInquiry);
 
 
 export default inqRouter;
