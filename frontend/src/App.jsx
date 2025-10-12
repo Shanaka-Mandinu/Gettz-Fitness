@@ -54,7 +54,7 @@ function App() {
           <Route path="/videos" element={<VideoPortal />} />
           <Route path="/videos/:videoId" element={<VideoDetails />} />
           <Route path="/meal-templates" element={<PredefinedMealTemplates />} />
-          <Route path="/" element={<Homepage />} />
+          <Route path="/*" element={<Homepage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
