@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import successGif from "../../../assets/payment-success.gif";
 import axios from "axios";
 import { Link, useSearchParams } from "react-router-dom";
 import { generateReceiptPDF } from "../../../utils/paymentReciept";
 import { generateStoreReceiptPDF } from "../../../utils/storePaymentReciept";
+import { useCart } from "./supplement_cart";
 
 export default function SupplementPaymentSuccess() {
   const [searchParams] = useSearchParams();
   const [loaded, setLoaded] = useState(false);
+  const { clearCartSilently } = useCart();
+  const clearedRef = useRef(false);
 
   
   const [amount, setAmount] = useState(0);
@@ -39,6 +42,18 @@ export default function SupplementPaymentSuccess() {
           setPaymentId(p?.order_id || "");
           setStatus(p?.status || "");
           setLoaded(true);
+
+          
+          const paid = String(p?.status || "").toLowerCase() === "paid";
+          if (paid && !clearedRef.current) {
+            try {
+              clearCartSilently();
+            } catch {
+              // ignore if cart context unavailable
+            } finally {
+              clearedRef.current = true;
+            }
+          }
         })
         .catch(() => setLoaded(true));
     }

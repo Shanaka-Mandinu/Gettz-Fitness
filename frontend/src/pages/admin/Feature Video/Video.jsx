@@ -111,7 +111,7 @@ export default function VideoDetailsPage() {
       styles: { fontSize: 9 },
     });
 
-    
+   
     const sorted = [...video].sort((a, b) => (b.viewCount + b.likeCount) - (a.viewCount + a.likeCount));
     const popular = sorted.slice(0, 5);
     let y = doc.lastAutoTable.finalY + 10;

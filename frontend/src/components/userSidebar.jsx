@@ -7,7 +7,7 @@ import {
   LogOut,
   CreditCard,
   FileText,
-  
+  ShoppingCart,
   ArrowDownToDot,
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
@@ -51,6 +51,11 @@ const navItems = [
     to: "/userDashboard/mysubscription",
     label: "My Subscription",
     icon: FileText,
+  },
+  {
+    to: "/userDashboard/myOrders",
+    label: "My Orders",
+    icon: ShoppingCart,
   },
 ];
 
