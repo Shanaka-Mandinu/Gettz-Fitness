@@ -24,6 +24,7 @@ import AddCompetition from "./admin/competitions/addCompetition";
 import UpdateCompetition from "./admin/competitions/updateCompetition";
 import Inquiry from "./admin/sideBarLinks/Inquiry";
 import AdminProfile from "../pages/admin/sideBarLinks/adminProfile";
+import AdminPaymentPage from "./admin/payment/AdminPaymentPage";
 
 export default function AdminLayout() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -60,6 +61,7 @@ export default function AdminLayout() {
               <Route path="/supplement" element={<h1>Supplement</h1>} />
 
               <Route path="/membership" element={<MembershipPlans/>} />
+              <Route path="/payment" element={<AdminPaymentPage />} />
               <Route path="/announcements" element={<AnnouncementDetailsPage />} />
               <Route path="/announcement/upload" element={<AnnouncementAdd />} />
               <Route path="/announcement/edit/:annId" element={<EditAnnouncement />} />
