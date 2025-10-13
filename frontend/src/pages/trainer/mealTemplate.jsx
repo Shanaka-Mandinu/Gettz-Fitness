@@ -1,3 +1,4 @@
+// Trainer: Manage meal templates (list, delete, export PDF, navigate to add/edit)
 import { useState, useEffect } from "react";
 import { Plus, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +12,10 @@ export default function MealTemplates() {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState([]);
 
-  // Fetch templates 
+  // Fetch templates (trainer/admin only endpoints)
   async function fetchTemplates() {
     try {
+      
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: "Bearer " + token } : undefined;
       
@@ -21,22 +23,18 @@ export default function MealTemplates() {
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate`,
         { headers }
       );
+      // Controller returns an array of templates; guard to avoid crashes
       const items = Array.isArray(data) ? data : [];
       setTemplates(items);
       console.log("Fetched templates:", items);
     } catch (err) {
       console.error("Failed to fetch meal templates:", err);
-      
-      // Handle authentication errors
-      if (err.response?.status === 401) {
-        const errorMessage = err.response?.data?.message || "Authentication required";
-        if (errorMessage.includes("Trainer or Admin authorization")) {
-          toast.error("You need admin or trainer authorization");
-        } else {
-          toast.error("You need admin or trainer authorization");
-        }
+      const status = err?.response?.status;
+      const errorMessage = err?.response?.data?.message || err?.message || "Failed to load meal templates";
+      if (status === 401) {
+        toast.error("You need admin or trainer authorization");
       } else {
-        toast.error("Failed to load meal templates. Please try again.");
+        toast.error(errorMessage);
       }
     }
   }
@@ -46,7 +44,7 @@ export default function MealTemplates() {
   }, []);
 
 
-  // Delete
+  // Delete a template (trainer/admin only)
   async function deleteTemplate(t) {
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -65,10 +63,12 @@ export default function MealTemplates() {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: "Bearer " + token } : undefined;
         
+        // Delete by Mongo _id as per controller and router
         await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate/${t._id}`,
           { headers }
         );
+        // Optimistic UI update
         setTemplates(templates.filter((x) => x._id !== t._id));
         
         Swal.fire({
@@ -81,19 +81,14 @@ export default function MealTemplates() {
         });
       } catch (err) {
         console.error("Failed to delete template:", err);
-        
-        // Handle authentication errors
-        if (err.response?.status === 401) {
-          const errorMessage = err.response?.data?.message || "Authentication required";
-          if (errorMessage.includes("Trainer or Admin authorization")) {
-            toast.error("You need admin or trainer authorization");
-          } else {
-            toast.error("You need admin or trainer authorization");
-          }
+        const status = err?.response?.status;
+        const errorMessage = err?.response?.data?.message || err?.message || 'Failed to delete the meal template.';
+        if (status === 401) {
+          toast.error("You need admin or trainer authorization");
         } else {
           Swal.fire({
             title: 'Error!',
-            text: 'Failed to delete the meal template. Please try again.',
+            text: errorMessage,
             icon: 'error',
             confirmButtonColor: '#dc2626'
           });
@@ -102,7 +97,7 @@ export default function MealTemplates() {
     }
   }
 
-  // PDF Download
+  // PDF Download for all templates in the table
   const handleDownloadPDF = () => {
     // Check if user has templates to download
     if (templates.length === 0) {
@@ -143,6 +138,7 @@ export default function MealTemplates() {
           "Duration"
         ]
       ],
+      // Render basic info table rows
       body: templates.map((template, index) => [
         index + 1,
         template.templateName || "-",
@@ -188,6 +184,7 @@ export default function MealTemplates() {
           "Diet Category"
         ]
       ],
+      // Render nutritional info table rows
       body: templates.map((template, index) => [
         index + 1,
         template.templateName || "-",
@@ -264,7 +261,7 @@ export default function MealTemplates() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table of templates */}
         <div className="rounded-2xl border border-gray-200 bg-white overflow-x-auto">
           <table className="min-w-full table-fixed text-sm text-left text-gray-700">
             <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">

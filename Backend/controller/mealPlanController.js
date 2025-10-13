@@ -1,7 +1,7 @@
-import meal from "../model/mealplan.js";
 import MealPlan from "../model/mealplan.js";
 import path from "path";
 import { createNotificationForUser } from "./notificatinController.js";
+
 
 export const getMealPlan = (req, res) => {
   req.user = { role: "trainer" };
@@ -20,21 +20,16 @@ export const getMealPlan = (req, res) => {
   }
 };
 
+
 export const getOneMealPlan = (req, res) => {
-  console.log("getOneMealPlan - req.user:", req.user);
-  
   if (!req.user) {
-    console.log("getOneMealPlan - no user authentication");
     return res.status(401).json({
       message: "Authentication required...",
     });
   }
   
   const user = req.user._id;
-  console.log("getOneMealPlan - user ID:", user);
-  
   if (req.user.role == "user" || req.user.role == "member") {
-    console.log("getOneMealPlan - searching for meal plans with user_id:", user);
     // Try both ObjectId and string matching
     MealPlan.find({ 
       $or: [
@@ -43,27 +38,22 @@ export const getOneMealPlan = (req, res) => {
       ]
     })
       .then((response) => {
-        console.log("getOneMealPlan - found meal plans:", response);
         res.json({ response });
       })
       .catch((error) => {
-        console.log("getOneMealPlan - error:", error);
         res.json({ error: error });
       });
   } else {
-    console.log("getOneMealPlan - unauthorized role:", req.user.role);
     res.status(401).json({
       message: "You need User authorization...",
     });
   }
 };
 
+
 export const addMealPlan = (req, res) => {
   req.user = { role: "trainer" };
   if (req.user.role == "trainer") {
-    console.log("addMealPlan - req.body.user_id:", req.body.user_id);
-    console.log("addMealPlan - req.body.user_name:", req.body.user_name);
-    
     const mealplan = new MealPlan({
       // User information
       user_name: req.body.user_name,
@@ -126,6 +116,7 @@ export const addMealPlan = (req, res) => {
   }
 };
 
+
 export const updateMealPlan = (req, res) => {
   req.user = { role: "trainer" };
   if (req.user.role == "trainer") {
@@ -182,6 +173,7 @@ export const updateMealPlan = (req, res) => {
     });
   }
 };
+
 
 export const deleteMeal = (req, res) => {
   req.user = { role: "trainer" };

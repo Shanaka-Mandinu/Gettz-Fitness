@@ -35,7 +35,6 @@ export default function MealPlan() {
   };
 
   // --- Validation helpers ---
-  const todayISO = new Date().toISOString().slice(0, 10);
 
   function validateField(name, value, allValues = form) {
     switch (name) {
@@ -146,6 +145,12 @@ export default function MealPlan() {
       return;
     }
 
+    // Guard: backend URL must be configured
+    if (!import.meta.env.VITE_BACKEND_URL) {
+      toast.error("Backend URL not configured. Set VITE_BACKEND_URL.");
+      return;
+    }
+
     const payload = {
       user_id: derivedUserId,
       user_name: form.user_name.trim(),
@@ -253,7 +258,7 @@ export default function MealPlan() {
             )}
           </div>
 
-          {/* Last Name | Request Date */}
+          {/* Last Name | Request Status */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block mb-1 text-sm font-medium text-black">

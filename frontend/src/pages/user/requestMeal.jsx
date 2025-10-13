@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
-import add from "../../assets/plus.png";
+
 
 /* Small inline icons */
+// Small inline user avatar icon
 function IconUser() {
   return (
     <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,6 +14,7 @@ function IconUser() {
     </svg>
   );
 }
+// Small inline calendar icon used in meta strip
 function IconCalendar() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -26,6 +28,7 @@ function IconCalendar() {
   );
 }
 
+// Colored pill badge; tone selects Tailwind classes
 function Pill({ children, tone = "gray" }) {
   const tones = {
     gray: "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200",
@@ -41,6 +44,7 @@ function Pill({ children, tone = "gray" }) {
   );
 }
 
+// A single request card displaying key fields with Update/Delete actions
 function RequestCard({ row, onUpdate, onDelete }) {
   const id = row.request_id ?? "-";
   const status = row.status ?? "normal";
@@ -156,6 +160,7 @@ function RequestCard({ row, onUpdate, onDelete }) {
   );
 }
 
+// Main page: lists current user's meal requests with filters
 export default function RequestMeals() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
@@ -178,6 +183,7 @@ export default function RequestMeals() {
     height: "",
   });
 
+  // Load current user's requests
   async function fetchRequests() {
     const token = localStorage.getItem("token");
     try {
@@ -199,6 +205,7 @@ export default function RequestMeals() {
     }
   }
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchRequests();
   }, []);
@@ -210,13 +217,10 @@ export default function RequestMeals() {
     return mealTypeMatch && statusMatch;
   });
 
-  const isValidDate = (str) => {
-    if (!str) return false;
-    const d = new Date(str);
-    return !Number.isNaN(d.getTime());
-  };
+  // Simple numeric validation helper
   const isPositive = (v) => Number.isFinite(Number(v)) && Number(v) > 0;
 
+  // Validate edit form values (used if in-page update is used)
   const validate = (v) => {
     const e = {};
     if (!String(v.user_name || "").trim())
@@ -239,6 +243,7 @@ export default function RequestMeals() {
     return e;
   };
 
+  // Navigate to a dedicated edit page, passing data via localStorage
   const handleOpenUpdate = (row) => {
     // Store the request data in localStorage for the edit page
     localStorage.setItem('editRequestData', JSON.stringify({
@@ -257,6 +262,7 @@ export default function RequestMeals() {
     navigate('/userDashboard/edit-meal-request');
   };
 
+  // Optional in-place update handler (kept for reuse); not used by this page UI
   const handleSubmitUpdate = async (e) => {
     e.preventDefault();
     if (!editForm.request_id) {
@@ -281,11 +287,13 @@ export default function RequestMeals() {
     };
     try {
       setSaving(true);
+      const token = localStorage.getItem("token");
       await axios.put(
         `${
           import.meta.env.VITE_BACKEND_URL
         }/api/mealRequest/${encodeURIComponent(editForm.request_id)}`,
-        payload
+        payload,
+        { headers: { Authorization: "Bearer " + token } }
       );
       Swal.fire({
         position: "center",
@@ -308,6 +316,7 @@ export default function RequestMeals() {
   };
 
 
+  // Delete a request after confirmation; requires auth token
   async function handleDelete(row) {
     if (!row.request_id) {
       toast.error("Missing request ID");
@@ -347,11 +356,7 @@ export default function RequestMeals() {
     }
   }
 
-  
-  const label = "block mb-1 text-sm font-medium text-black";
-  const sub = "text-xs text-gray-500 mb-2";
-  const input =
-    "w-full border border-black/20 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2";
+  // Removed unused style constants to avoid linter warnings
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

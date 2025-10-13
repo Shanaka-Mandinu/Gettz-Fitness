@@ -13,7 +13,7 @@ export default function PredefinedMealTemplates() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
 
-  // Fetch meal templates from database
+  // Fetch meal templates from backend (public endpoint)
   useEffect(() => {
     fetchTemplates();
   }, []);
@@ -21,15 +21,18 @@ export default function PredefinedMealTemplates() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
+      // Guard: backend URL must be configured
+      if (!import.meta.env.VITE_BACKEND_URL) {
+        setError("Backend URL not configured. Set VITE_BACKEND_URL.");
+        return;
+      }
       const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate/public`
       );
-      console.log("Fetched templates data:", data);
-      console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
       setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError("Failed to load meal templates");
-      console.error("Error fetching templates:", err);
+      const msg = err?.response?.data?.message || err?.message || "Failed to load meal templates";
+      setError(String(msg));
     } finally {
       setLoading(false);
     }
@@ -169,12 +172,10 @@ function MealTemplateCard({ template }) {
             src={`${import.meta.env.VITE_BACKEND_URL}/${template.photo}`}
             alt={template.templateName}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error("Image failed to load:", `${import.meta.env.VITE_BACKEND_URL}/${template.photo}`);
-              console.error("Template photo field:", template.photo);
+            onError={() => {
+              // Hide broken image and show fallback icon
               setImageError(true);
             }}
-            onLoad={() => console.log("Image loaded successfully:", `${import.meta.env.VITE_BACKEND_URL}/${template.photo}`)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -258,11 +259,35 @@ function MealTemplateCard({ template }) {
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Action Button: store selected template in localStorage per user for later use (requires login) */}
         <button
           onClick={() => {
-            // Save selected template to localStorage
-            const selectedTemplates = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
+            // Read current user to namespace storage per user
+            let currentUserId = null;
+            try {
+              const uStr = localStorage.getItem('user');
+              if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
+            } catch {}
+            // Enforce login: prevent saving to a generic key
+            if (!currentUserId) {
+              Swal.fire({
+                title: "Login Required",
+                text: "Please log in to add templates to your dashboard.",
+                icon: "info",
+                timer: 2000,
+                showConfirmButton: false
+              });
+              return;
+            }
+            const storageKey = `selectedMealTemplates:${currentUserId}`;
+
+            // Safely parse stored templates (default to [])
+            let selectedTemplates = [];
+            try {
+              selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            } catch {
+              selectedTemplates = [];
+            }
             const templateData = {
               ...template,
               selectedDate: new Date().toISOString(),
@@ -273,7 +298,7 @@ function MealTemplateCard({ template }) {
             const exists = selectedTemplates.some(t => t._id === template._id);
             if (!exists) {
               selectedTemplates.push(templateData);
-              localStorage.setItem('selectedMealTemplates', JSON.stringify(selectedTemplates));
+              localStorage.setItem(storageKey, JSON.stringify(selectedTemplates));
               
               // Show success message
               Swal.fire({
