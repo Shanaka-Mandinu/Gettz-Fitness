@@ -90,7 +90,7 @@ export async function handleWebhook(req, res) {
             });
 
             
-            //await sendPaymentReciept(email, session.id);
+            await sendPaymentReciept(email, session.id);
           }
         } catch (subErr) {
           console.error(

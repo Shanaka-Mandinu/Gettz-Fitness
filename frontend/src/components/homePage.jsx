@@ -126,7 +126,6 @@ function Hero({ email, setEmail }) {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
-      {/* background pattern */}
       <div
         aria-hidden
         className="absolute inset-0 opacity-5"

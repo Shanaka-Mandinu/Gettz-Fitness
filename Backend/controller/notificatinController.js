@@ -146,7 +146,7 @@ export async function createNotificationForUser(req, res) {
 }
 
 
-export function updateNotification(req, res) {
+export async function updateNotification(req, res) {
   const id = req.params.id;
 
   Notification.findOneAndUpdate(
@@ -192,4 +192,59 @@ export async function markAsRead(req, res) {
     console.error('markAsRead error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+}
+
+export async function filterNotifications(req,res){
+
+  try{
+    const {type, date} = req.query;
+
+    const query = {}
+
+    if (type && type !== "all"){
+      query.type = type
+    }
+
+    if (date && date !== "all"){
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      switch(date){
+        
+        case "today":
+          const todayStart = new Date(today)
+          const todayEnd = new Date(today)
+          todayEnd.setHours(23, 59, 59, 999)
+          //gte = greater than or equals, lte = less tHAN OR equal
+          query.createdAt = {$gte: todayStart, $lte: todayEnd}
+          //Only return documents, createdAt is between todayStart and todayEnd
+          break
+
+        case "last7days":
+          const weekAgo = new Date(today)
+          weekAgo.setDate(today.getDate() - 7)
+          query.createdAt = {$gte: weekAgo}
+          break
+
+        case "last30days":
+          const monthAgo = new Date(today)
+          monthAgo.setDate(today.getDate() - 30)
+          query.createdAt = {$gte: monthAgo}
+          break
+
+      }
+    }
+
+    const notifications = await Notification.find(query).sort({createdAt: -1})
+    res.json(notifications)
+  } 
+  
+  catch (err) {
+    console.log("Notification filtering failed : " , err)
+    res.status(500).json({
+      message: "Error of filtering notifications : "
+    })
+  }
+
 }
