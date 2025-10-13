@@ -58,8 +58,8 @@ export default function MealPlan() {
       case "height":
         if (!value && value !== 0) return "Height is required";
         if (Number.isNaN(Number(value))) return "Height must be a number";
-        if (Number(value) < 50 || Number(value) > 250)
-          return "Height must be between 50–250 cm";
+        if (Number(value) < 100 || Number(value) > 250)
+          return "Height must be between 100–250 cm";
         return null;
 
       case "weight":
@@ -371,8 +371,9 @@ export default function MealPlan() {
                 value={form.height}
                 onChange={(e) => handleChange("height", e.target.value)}
                 onBlur={() => handleBlur("height")}
-                min={50}
+                min={100}
                 max={250}
+                step="0.1"
                 aria-invalid={!!errors.height}
                 aria-describedby={errId("height")}
                 className={`w-full border rounded-lg px-3 py-2 ${
@@ -404,6 +405,7 @@ export default function MealPlan() {
                 onBlur={() => handleBlur("weight")}
                 min={20}
                 max={300}
+                step="0.1"
                 aria-invalid={!!errors.weight}
                 aria-describedby={errId("weight")}
                 className={`w-full border rounded-lg px-3 py-2 ${

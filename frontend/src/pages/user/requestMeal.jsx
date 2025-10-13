@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 
-/* Small inline icons */
 // Small inline user avatar icon
 function IconUser() {
   return (
@@ -219,6 +218,7 @@ export default function RequestMeals() {
 
   // Simple numeric validation helper
   const isPositive = (v) => Number.isFinite(Number(v)) && Number(v) > 0;
+  const inRange = (num, min, max) => Number.isFinite(num) && num >= min && num <= max;
 
   // Validate edit form values (used if in-page update is used)
   const validate = (v) => {
@@ -234,12 +234,20 @@ export default function RequestMeals() {
     if (!String(v.mealType || "").trim()) e.mealType = "Meal type is required.";
     else if (!["Vegan", "Non-Vegan"].includes(v.mealType))
       e.mealType = "Choose Vegan or Non-Vegan.";
+    // Height
     if (!String(v.height).trim()) e.height = "Height is required.";
-    else if (!isPositive(v.height))
-      e.height = "Height must be a number greater than 0.";
+    else {
+      const h = Number(v.height);
+      if (!isPositive(h)) e.height = "Height must be a positive number.";
+      else if (!inRange(h, 100, 250)) e.height = "Height should be between 100 and 250 cm.";
+    }
+    // Weight
     if (!String(v.weight).trim()) e.weight = "Weight is required.";
-    else if (!isPositive(v.weight))
-      e.weight = "Weight must be a number greater than 0.";
+    else {
+      const w = Number(v.weight);
+      if (!isPositive(w)) e.weight = "Weight must be a positive number.";
+      else if (!inRange(w, 20, 300)) e.weight = "Weight should be between 20 and 300 kg.";
+    }
     return e;
   };
 

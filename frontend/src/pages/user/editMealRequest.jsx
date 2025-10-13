@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 
 export default function EditMealRequest() {
 
-  
+
   const navigate = useNavigate();
   // UI/validation state
   const [saving, setSaving] = useState(false);
@@ -42,6 +42,7 @@ export default function EditMealRequest() {
   
   // Simple numeric validation helper
   const isPositive = (v) => Number.isFinite(Number(v)) && Number(v) > 0;
+  const inRange = (num, min, max) => Number.isFinite(num) && num >= min && num <= max;
 
   // Validate the form prior to sending the update to backend
   const validate = (v) => {
@@ -57,12 +58,20 @@ export default function EditMealRequest() {
     if (!String(v.mealType || "").trim()) e.mealType = "Meal type is required.";
     else if (!["Vegan", "Non-Vegan"].includes(v.mealType))
       e.mealType = "Choose Vegan or Non-Vegan.";
+    // Height
     if (!String(v.height).trim()) e.height = "Height is required.";
-    else if (!isPositive(v.height))
-      e.height = "Height must be a number greater than 0.";
+    else {
+      const h = Number(v.height);
+      if (!isPositive(h)) e.height = "Height must be a positive number.";
+      else if (!inRange(h, 100, 250)) e.height = "Height should be between 100 and 250 cm.";
+    }
+    // Weight
     if (!String(v.weight).trim()) e.weight = "Weight is required.";
-    else if (!isPositive(v.weight))
-      e.weight = "Weight must be a number greater than 0.";
+    else {
+      const w = Number(v.weight);
+      if (!isPositive(w)) e.weight = "Weight must be a positive number.";
+      else if (!inRange(w, 20, 300)) e.weight = "Weight should be between 20 and 300 kg.";
+    }
     return e;
   };
 
@@ -187,7 +196,8 @@ export default function EditMealRequest() {
                   <label className={label}>Height</label>
                   <p className={sub}>Your height in centimeters (cm).</p>
                   <input
-                    type="text"
+                    type="number"
+                    inputMode="decimal"
                     value={editForm.height}
                     onChange={(e) =>
                       setEditForm({ ...editForm, height: e.target.value })
@@ -195,6 +205,9 @@ export default function EditMealRequest() {
                     className={`${input} ${
                       errors.height ? "border-red-500" : ""
                     }`}
+                    min={100}
+                    max={250}
+                    step="0.1"
                   />
                   {errors.height && (
                     <p className="mt-1 text-sm text-red-600">{errors.height}</p>
@@ -204,7 +217,8 @@ export default function EditMealRequest() {
                   <label className={label}>Weight</label>
                   <p className={sub}>Your weight in kilograms (kg).</p>
                   <input
-                    type="text"
+                    type="number"
+                    inputMode="decimal"
                     value={editForm.weight}
                     onChange={(e) =>
                       setEditForm({ ...editForm, weight: e.target.value })
@@ -212,6 +226,9 @@ export default function EditMealRequest() {
                     className={`${input} ${
                       errors.weight ? "border-red-500" : ""
                     }`}
+                    min={20}
+                    max={300}
+                    step="0.1"
                   />
                   {errors.weight && (
                     <p className="mt-1 text-sm text-red-600">{errors.weight}</p>
