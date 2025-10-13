@@ -49,7 +49,7 @@ export function CartProvider({ children }) {
         if (!id) return;
 
 
-        // If product is out of stock, silently ignore the add (no toast)
+        // If product is out of stock, silently ignore the add
         if (product.Sup_status === "Out of stock") {
             return;
         }
