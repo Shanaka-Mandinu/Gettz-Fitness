@@ -70,6 +70,7 @@ export default function EditMealTemplate() {
     }
     fetchTemplate();
   }, [id, navigate]);
+  
 
   // Helper to build FormData
   function buildFormData() {
@@ -260,7 +261,7 @@ export default function EditMealTemplate() {
                 </div>
               </div>
 
-              {/* RIGHT: Nutritional Information */}
+              {/*Nutritional Information */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">

@@ -236,6 +236,7 @@ export default function MealTemplates() {
 
     doc.save("meal_templates_report.pdf");
   };
+  
 
   return (
     <div className="p-6">

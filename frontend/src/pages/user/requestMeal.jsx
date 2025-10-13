@@ -85,7 +85,7 @@ function RequestCard({ row, onUpdate, onDelete }) {
           </div>
         </div>
 
-        {/* Enhanced Actions */}
+        {/* Actions */}
         <div className="shrink-0 flex gap-2">
           <button
             type="button"
@@ -110,7 +110,7 @@ function RequestCard({ row, onUpdate, onDelete }) {
         </div>
       </div>
 
-      {/* Enhanced Meta Strip */}
+      {/* Meta Strip */}
       <div className="relative border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white px-6 py-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm border border-gray-200/50">
@@ -307,6 +307,7 @@ export default function RequestMeals() {
     }
   };
 
+
   async function handleDelete(row) {
     if (!row.request_id) {
       toast.error("Missing request ID");
@@ -346,6 +347,7 @@ export default function RequestMeals() {
     }
   }
 
+  
   const label = "block mb-1 text-sm font-medium text-black";
   const sub = "text-xs text-gray-500 mb-2";
   const input =
@@ -504,161 +506,6 @@ export default function RequestMeals() {
             ))}
         </div>
       </div>
-
-      {/* Form */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-3">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl mt-13">
-            <div className="flex items-center justify-between rounded-t-xl border-b px-4 py-3">
-              <h2 className="text-base font-semibold text-black">
-                Update Meal Request
-              </h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmitUpdate}
-              className="space-y-4 p-4"
-              noValidate
-            >
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <label className={label}>Request Status</label>
-                  <p className={sub}>Whether this request is urgent or normal.</p>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, status: e.target.value })
-                    }
-                    className={`${input} ${
-                      errors.status ? "border-red-500" : ""
-                    }`}
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                  {errors.status && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.status}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className={label}>Height</label>
-                  <p className={sub}>Your height in centimeters (cm).</p>
-                  <input
-                    type="text"
-                    value={editForm.height}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, height: e.target.value })
-                    }
-                    className={`${input} ${
-                      errors.height ? "border-red-500" : ""
-                    }`}
-                  />
-                  {errors.height && (
-                    <p className="mt-1 text-sm text-red-600">{errors.height}</p>
-                  )}
-                </div>
-                <div>
-                  <label className={label}>Weight</label>
-                  <p className={sub}>Your weight in kilograms (kg).</p>
-                  <input
-                    type="text"
-                    value={editForm.weight}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, weight: e.target.value })
-                    }
-                    className={`${input} ${
-                      errors.weight ? "border-red-500" : ""
-                    }`}
-                  />
-                  {errors.weight && (
-                    <p className="mt-1 text-sm text-red-600">{errors.weight}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className={label}>Description</label>
-                <p className={sub}>Add any notes or special requirements.</p>
-                <textarea
-                  rows="3"
-                  value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, description: e.target.value })
-                  }
-                  className={`${input} ${
-                    errors.description ? "border-red-500" : ""
-                  }`}
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.description}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className={label}>Meal Type</label>
-                <p className={sub}>Choose the type of meal preference.</p>
-                <div className="mt-1 flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="mealType"
-                      value="Vegan"
-                      checked={editForm.mealType === "Vegan"}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, mealType: e.target.value })
-                      }
-                    />
-                    Vegan
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="mealType"
-                      value="Non-Vegan"
-                      checked={editForm.mealType === "Non-Vegan"}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, mealType: e.target.value })
-                      }
-                    />
-                    Non-Vegan
-                  </label>
-                </div>
-                {errors.mealType && (
-                  <p className="mt-1 text-sm text-red-600">{errors.mealType}</p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-5">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
