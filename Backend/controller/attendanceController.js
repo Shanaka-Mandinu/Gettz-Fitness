@@ -71,3 +71,23 @@ export const getAttendance = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Get attendance records for a specific user
+export const getUserAttendance = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const records = await Attendance.find({ userId })
+      .sort({ time: -1 })
+      .populate('userId', 'firstName lastName email');
+    
+    res.json(records);
+  } catch (err) {
+    console.error("Error fetching user attendance:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
