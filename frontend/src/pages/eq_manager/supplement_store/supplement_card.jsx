@@ -16,7 +16,10 @@ export default function Supplement_card({ product, onAddToCart }) {
         }
     }, [priceNumber]);
 
+    const isOutOfStock = product?.Sup_status === 'Out of stock' || (Number(product?.Sup_quantity || 0) <= 0);
+
     const handleAdd = () => {
+        if (isOutOfStock) return; // silently ignore
         if (typeof onAddToCart === 'function') {
             onAddToCart({ product, quantity });
             toast.success("Item added to your cart!");
@@ -106,10 +109,11 @@ export default function Supplement_card({ product, onAddToCart }) {
                 <button
                     type="button"
                     onClick={handleAdd}
-                    className="w-full bg-gradient-to-r from-red-700 to-red-500 md:hover:from-red-400 md:hover:to-red-600 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg md:hover:shadow-xl "
+                    disabled={isOutOfStock}
+                    className={`w-full ${isOutOfStock ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-red-700 to-red-500 md:hover:from-red-400 md:hover:to-red-600 text-white'} font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${isOutOfStock ? '' : 'shadow-lg md:hover:shadow-xl'}`}
                 >
-                    <ShoppingCart className="w-5 h-5"/>
-                    <span className="text-sm sm:text-base">Add to Cart</span>
+                    <ShoppingCart className={`w-5 h-5 ${isOutOfStock ? 'text-gray-400' : ''}`} />
+                    <span className="text-sm sm:text-base">{isOutOfStock ? 'Out of stock' : 'Add to Cart'}</span>
                 </button>
             </div>
         </div>
