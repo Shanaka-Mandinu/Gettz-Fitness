@@ -3,6 +3,7 @@ import User from "../model/user.js";
 import Supplement from "../model/supplement.js";
 import Stripe from "stripe";
 import { sendStoreOrderReceipt } from "../utils/mailer.js";
+import Revenue from "../model/revenue.js";
 const stripe = new Stripe(process.env.SECRET_KEY2);
 
 // Create a new supplement order and Stripe session
@@ -103,6 +104,26 @@ export async function createOrder(req, res) {
     });
     await order.save();
 
+    // Upsert a pending revenue entry for this order so it appears in the admin table
+    try {
+      await Revenue.findOneAndUpdate(
+        { referenceId: Number(order.order_id) },
+        {
+          referenceId: Number(order.order_id),
+          type: "order",
+          user_id: order.user_id,
+          discount: order.discount || 0,
+          paidAmount: order.paidAmount || 0,
+          status: "pending",
+          paidAt: order.createdAt || new Date(),
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (revErr) {
+      console.error("Revenue upsert (order pending) failed:", revErr?.message || revErr);
+    }
+    
+
     // Deduct points immediately (optional: or after payment success in webhook)
     if (appliedPoints > 0) {
       user.point = availablePoints - appliedPoints;
@@ -201,6 +222,24 @@ export async function stripeWebhook(req, res) {
           order.status = "paid";
           order.paymentIntent = session.payment_intent;
           await order.save();
+          // Update Revenue to paid for this order
+          try {
+            await Revenue.findOneAndUpdate(
+              { referenceId: Number(order.order_id) },
+              {
+                referenceId: Number(order.order_id),
+                type: "order",
+                user_id: order.user_id,
+                discount: order.discount || 0,
+                paidAmount: order.paidAmount || 0,
+                status: "paid",
+                paidAt: new Date(),
+              },
+              { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+          } catch (revErr) {
+            console.error("Revenue update failed (order paid):", revErr?.message || revErr);
+          }
           await sendStoreOrderReceipt(email, session.id);
         } else {
           console.warn("Order not found for session:", session.id);
@@ -214,6 +253,16 @@ export async function stripeWebhook(req, res) {
         if (order) {
           order.status = "canceled";
           await order.save();
+          // Update Revenue to canceled for this order
+          try {
+            await Revenue.findOneAndUpdate(
+              { referenceId: Number(order.order_id) },
+              { status: "canceled", paidAt: new Date() },
+              { upsert: true }
+            );
+          } catch (revErr) {
+            console.error("Revenue update failed (order canceled):", revErr?.message || revErr);
+          }
         }
         break;
       }
@@ -230,6 +279,16 @@ export async function stripeWebhook(req, res) {
           if (order) {
             order.status = "failed";
             await order.save();
+            // Update Revenue to failed for this order
+            try {
+              await Revenue.findOneAndUpdate(
+                { referenceId: Number(order.order_id) },
+                { status: "failed", paidAt: new Date() },
+                { upsert: true }
+              );
+            } catch (revErr) {
+              console.error("Revenue update failed (order failed):", revErr?.message || revErr);
+            }
           }
         }
         break;
