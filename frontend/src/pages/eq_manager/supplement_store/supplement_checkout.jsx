@@ -95,7 +95,7 @@ export default function SupplementCheckout() {
         }
       }
     }
-    if (cvvDigits && !/^\d{3,4}$/.test(cvvDigits)) newErrors.cvv = "CVV must be 3 or 4 digits";
+    if (cvvDigits && !/^\d{3}$/.test(cvvDigits)) newErrors.cvv = "CVV must be 3 digits";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -279,7 +279,7 @@ export default function SupplementCheckout() {
               <label className="mb-2 block text-sm font-medium text-gray-700">Name on card</label>
               <input
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                placeholder="Wasika Anusanga"
+                placeholder="Name on card"
                 value={nameOnCard}
                 onChange={(e) => setNameOnCard(e.target.value)}
               />
@@ -316,7 +316,7 @@ export default function SupplementCheckout() {
                   placeholder="123"
                   value={cvv}
                   onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                  maxLength={4}
+                  maxLength={3}
                   inputMode="numeric"
                 />
                 {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
