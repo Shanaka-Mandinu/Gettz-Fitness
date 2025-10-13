@@ -13,21 +13,7 @@ export default function PlanCard(props) {
       navigate("/login");
       return
     }
-    console.log("Choose plans runs");
-    Swal.fire({
-      title: "Are you sure?",
-      text: "Are you sure you want to choose this plan?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, Choose it!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        navigate("/membership/card", { state: { plan: plan } });
-        
-      }
-    });
+    navigate("/membership/card", { state: { plan: plan } });
   }
   return (
     <article

@@ -15,17 +15,15 @@ export default function Payment() {
   const [cvv, setCvv] = useState("");
   const [saveCard, setSaveCard] = useState(false);
   const [loaded, setLoaded] = useState(false);
-
-  // validation errors
   const [errors, setErrors] = useState({});
 
-  // Guard + normalize plan props
+  
   const plan = state?.plan?.plan_name ?? "Membership";
   const priceRaw = state?.plan?.price ?? 0;
   const price = Number(priceRaw) || 0;
   const features = Array.isArray(state?.plan?.features) ? state.plan.features : [];
 
-  // ---------- Prefill from saved card ----------
+  
   useEffect(() => {
     if (!loaded) {
       setCardNumber(state?.cards?.card_number ?? "");
@@ -35,9 +33,6 @@ export default function Payment() {
     }
   }, [loaded, state?.cards]);
 
-  // =====================================================
-  // ⭐ POINTS: fetch from API + UI (design-only calculation)
-  // =====================================================
   const [availablePoints, setAvailablePoints] = useState(0);
   const [pointsLoading, setPointsLoading] = useState(true);
   const [usePoints, setUsePoints] = useState(false);
@@ -65,9 +60,9 @@ export default function Payment() {
     })();
   }, []);
 
-  // Config (adjust as needed)
-  const POINT_VALUE_LKR = 1;      // 1 point = LKR 1
-  const MAX_DISCOUNT_RATIO = 0.5; // cap 50% of plan price via points
+  
+  const POINT_VALUE_LKR = 1;     
+  const MAX_DISCOUNT_RATIO = 0.5; 
 
   const maxPointsAllowedByPrice = Math.floor((price * MAX_DISCOUNT_RATIO) / POINT_VALUE_LKR);
   const maxPoints = Math.max(0, Math.min(availablePoints, maxPointsAllowedByPrice));
@@ -123,7 +118,7 @@ export default function Payment() {
       }
     }
 
-    if (cvvDigits && !/^\d{3,4}$/.test(cvvDigits)) newErrors.cvv = "CVV must be 3 or 4 digits";
+    if (cvvDigits && !/^\d{3}$/.test(cvvDigits)) newErrors.cvv = "CVV must be 3 digits";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -139,7 +134,7 @@ export default function Payment() {
       card_name: nameOnCard,
       expiry_date: expiry,
     };
-
+    
     try {
       if (saveCard) {
         await axios.post(
@@ -313,7 +308,7 @@ export default function Payment() {
               <label className="mb-2 block text-sm font-medium text-gray-700">Name on card</label>
               <input
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                placeholder="Wasika Anusanga"
+                placeholder="Card Name"
                 value={nameOnCard}
                 onChange={(e) => setNameOnCard(e.target.value)}
               />
@@ -352,7 +347,7 @@ export default function Payment() {
                   placeholder="123"
                   value={cvv}
                   onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                  maxLength={4}
+                  maxLength={3}
                   inputMode="numeric"
                 />
                 {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}

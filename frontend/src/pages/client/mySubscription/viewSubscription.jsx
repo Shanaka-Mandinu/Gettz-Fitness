@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Loader from "../../../components/loader-animate2";
+import Swal from "sweetalert2";
 
 export default function ViewSubscription() {
   const [loaded, setLoaded] = useState(false);
@@ -51,22 +52,34 @@ export default function ViewSubscription() {
     console.log("runs handling subs");
     const token = localStorage.getItem("token");
 
-    axios
-      .post(
-        import.meta.env.VITE_BACKEND_URL + "/api/sub/cancelSub",
-        {},
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        }
-      )
-      .then(() => {
-        userData.role = "user";
-        localStorage.setItem("user", JSON.stringify(userData));
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Are you sure you want to Cancel this subscription?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, Cancel it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .post(
+            import.meta.env.VITE_BACKEND_URL + "/api/sub/cancelSub",
+            {},
+            {
+              headers: {
+                Authorization: "Bearer " + token,
+              },
+            }
+          )
+          .then(() => {
+            userData.role = "user";
+            localStorage.setItem("user", JSON.stringify(userData));
 
-        setLoaded(false);
-      });
+            setLoaded(false);
+          });
+      }
+    });
   }
 
   return (
