@@ -23,6 +23,7 @@ export default function EditMealTemplate() {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [errors, setErrors] = useState({});
 
   // Fetch template data once by id
   useEffect(() => {
@@ -101,6 +102,47 @@ export default function EditMealTemplate() {
   // Update template on submit (requires trainer/admin JWT)
   async function handleSubmit(e) {
     e.preventDefault();
+    // Basic numeric validation with sensible caps
+    const newErrors = {};
+    const c = Number(form.calories);
+    const p = form.protein === "" ? "" : Number(form.protein);
+    const cb = form.carbs === "" ? "" : Number(form.carbs);
+    const f = form.fats === "" ? "" : Number(form.fats);
+
+    if (!form.calories) {
+      newErrors.calories = "Calories are required.";
+    } else if (isNaN(c) || c <= 0) {
+      newErrors.calories = "Please enter a valid number of calories.";
+    } else if (c > 5000) {
+      newErrors.calories = "Calories cannot exceed 5000.";
+    }
+
+    if (form.protein === "") {
+      newErrors.protein = "Protein is required.";
+    } else {
+      if (isNaN(p) || p < 0) newErrors.protein = "Please enter a valid protein amount.";
+      else if (p > 500) newErrors.protein = "Protein cannot exceed 500g.";
+    }
+
+    if (form.carbs === "") {
+      newErrors.carbs = "Carbs are required.";
+    } else {
+      if (isNaN(cb) || cb < 0) newErrors.carbs = "Please enter a valid carbs amount.";
+      else if (cb > 1000) newErrors.carbs = "Carbs cannot exceed 1000g.";
+    }
+
+    if (form.fats === "") {
+      newErrors.fats = "Fats are required.";
+    } else {
+      if (isNaN(f) || f < 0) newErrors.fats = "Please enter a valid fats amount.";
+      else if (f > 300) newErrors.fats = "Fats cannot exceed 300g.";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please correct the highlighted fields.");
+      return;
+    }
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -279,8 +321,15 @@ export default function EditMealTemplate() {
                         setForm({ ...form, calories: e.target.value })
                       }
                       placeholder="e.g. 450"
-                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm"
+                      className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
+                        errors.calories ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      min={0}
+                      max={5000}
                     />
+                    {errors.calories && (
+                      <p className="mt-1 text-xs text-red-600">{errors.calories}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
@@ -293,8 +342,16 @@ export default function EditMealTemplate() {
                           setForm({ ...form, protein: e.target.value })
                         }
                         placeholder="e.g. 20"
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm"
+                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
+                          errors.protein ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        min={0}
+                        max={500}
+                        required
                       />
+                      {errors.protein && (
+                        <p className="mt-1 text-xs text-red-600">{errors.protein}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block mb-2 text-sm font-semibold text-gray-700">Carbs (g)</label>
@@ -305,8 +362,16 @@ export default function EditMealTemplate() {
                           setForm({ ...form, carbs: e.target.value })
                         }
                         placeholder="e.g. 60"
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm"
+                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
+                          errors.carbs ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        min={0}
+                        max={1000}
+                        required
                       />
+                      {errors.carbs && (
+                        <p className="mt-1 text-xs text-red-600">{errors.carbs}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block mb-2 text-sm font-semibold text-gray-700">Fats (g)</label>
@@ -317,8 +382,16 @@ export default function EditMealTemplate() {
                           setForm({ ...form, fats: e.target.value })
                         }
                         placeholder="e.g. 12"
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm"
+                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
+                          errors.fats ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        min={0}
+                        max={300}
+                        required
                       />
+                      {errors.fats && (
+                        <p className="mt-1 text-xs text-red-600">{errors.fats}</p>
+                      )}
                     </div>
                   </div>
 

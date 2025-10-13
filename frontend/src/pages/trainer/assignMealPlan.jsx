@@ -59,7 +59,7 @@ export default function AssignMealPlan() {
       newErrors.duration = "Please provide a more specific duration.";
     }
 
-    // Calories validation
+    // Calories validation (cap at 5000)
     if (!form.calories) {
       newErrors.calories = "Calories are required.";
     } else if (isNaN(form.calories) || Number(form.calories) <= 0) {
@@ -75,19 +75,31 @@ export default function AssignMealPlan() {
       newErrors.foodItems = "Please provide more detailed food items (at least 10 characters).";
     }
 
-    // Protein validation
-    if (form.protein && (isNaN(form.protein) || Number(form.protein) < 0)) {
+    // Protein validation (required, 0 - 500g)
+    if (form.protein === "") {
+      newErrors.protein = "Protein is required.";
+    } else if (isNaN(form.protein) || Number(form.protein) < 0) {
       newErrors.protein = "Please enter a valid protein amount.";
+    } else if (Number(form.protein) > 500) {
+      newErrors.protein = "Protein cannot exceed 500g.";
     }
 
-    // Carbs validation
-    if (form.carbs && (isNaN(form.carbs) || Number(form.carbs) < 0)) {
+    // Carbs validation (required, 0 - 1000g)
+    if (form.carbs === "") {
+      newErrors.carbs = "Carbs are required.";
+    } else if (isNaN(form.carbs) || Number(form.carbs) < 0) {
       newErrors.carbs = "Please enter a valid carbs amount.";
+    } else if (Number(form.carbs) > 1000) {
+      newErrors.carbs = "Carbs cannot exceed 1000g.";
     }
 
-    // Fats validation
-    if (form.fats && (isNaN(form.fats) || Number(form.fats) < 0)) {
+    // Fats validation (required, 0 - 300g)
+    if (form.fats === "") {
+      newErrors.fats = "Fats are required.";
+    } else if (isNaN(form.fats) || Number(form.fats) < 0) {
       newErrors.fats = "Please enter a valid fats amount.";
+    } else if (Number(form.fats) > 300) {
+      newErrors.fats = "Fats cannot exceed 300g.";
     }
 
     // Diet Category validation
@@ -422,6 +434,8 @@ export default function AssignMealPlan() {
                           errors.calories ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={5000}
+                        required
                       />
                       {errors.calories && (
                         <p className="mt-1 text-sm text-red-600">{errors.calories}</p>
@@ -464,6 +478,8 @@ export default function AssignMealPlan() {
                           errors.protein ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={500}
+                        required
                       />
                       {errors.protein && (
                         <p className="mt-1 text-sm text-red-600">{errors.protein}</p>
@@ -483,6 +499,8 @@ export default function AssignMealPlan() {
                           errors.carbs ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={1000}
+                        required
                       />
                       {errors.carbs && (
                         <p className="mt-1 text-sm text-red-600">{errors.carbs}</p>
@@ -502,6 +520,8 @@ export default function AssignMealPlan() {
                           errors.fats ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={300}
+                        required
                       />
                       {errors.fats && (
                         <p className="mt-1 text-sm text-red-600">{errors.fats}</p>
