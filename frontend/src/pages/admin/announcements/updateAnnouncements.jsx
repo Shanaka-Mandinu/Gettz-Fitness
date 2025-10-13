@@ -149,7 +149,7 @@ export default function EditAnnouncement() {
             >
               <option value="promotional">Promotional</option>
               <option value="warning">Warning</option>
-              <option value="membership">Membership</option>
+              <option value="alert">Alert</option>
             </select>
           </div>
         </div>

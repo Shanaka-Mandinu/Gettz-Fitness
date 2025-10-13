@@ -27,7 +27,7 @@ const notificationSchema = new mongoose.Schema(
     type: { 
       type: String, 
       required: true, 
-      default: 'info' 
+      default: 'promotional' 
     },
 
     status: { 
