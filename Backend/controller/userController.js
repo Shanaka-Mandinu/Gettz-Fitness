@@ -354,4 +354,28 @@ export function updateUserRole(req, res) {
         error: err.message,
       });
     });
+
+    
 }
+
+export const getMyPoints = async (req, res) => {
+  try {
+    // Requires auth middleware to set req.user.id
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findById(userId).select("_id firstName lastName point");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      points: user.point ?? 0,
+    });
+  } catch (err) {
+    console.error("getMyPoints error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

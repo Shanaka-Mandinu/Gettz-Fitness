@@ -5,7 +5,7 @@ export function addCard(req, res) {
   // req.user="admin";
   console.log("card adding runs");
   //
-  if (req.user.role != "user") {
+  if (req.user.role != "user" && req.user.role != "member") {
     res.status(401).json({
       message: "You need to Login as a User",
     });
@@ -68,7 +68,7 @@ export function getCards(req, res) {
     });
 }
 
-export function updateCard(req, res) {
+export async function updateCard(req, res) {
   console.log("card updates runs");
 
   if (req.user == null) {
@@ -80,21 +80,29 @@ export function updateCard(req, res) {
       message: "You are needed to login as user",
     });
   } else {
-    const cardId = req.params.id;
+    const cardId = Number(req.params.id);
     console.log(req.body);
-    CreditCard.findOneAndUpdate(
-      {
-        user_id: req.user._id,
-        card_id: cardId,
-      },
-      req.body
-    )
-      .then(() => {
-        res.status(200).json({ message: "Card Update successful." });
-      })
-      .catch((err) => {
-        res.status(500).json({ message: "Card Update Failed." });
-      });
+    try {
+      const card = await CreditCard.findOne(
+        {
+          user_id: req.user._id,
+          card_id: cardId,
+        },
+        req.body
+      );
+      if (!card) {
+        return res.status(404).json({ message: "Card not found." });
+      }
+      card.card_name = req.body.card_name;
+      card.card_number = req.body.card_number;
+      card.expiry_date = req.body.expiry_date;
+      console.log("Card Update successful.");
+      res.status(200).json({ message: "Card Update successful." });
+
+      await card.save();
+    } catch (err) {
+      res.status(500).json({ message: "Card Update Failed." + err });
+    }
   }
 }
 

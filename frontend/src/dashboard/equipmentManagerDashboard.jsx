@@ -14,8 +14,6 @@ import SupplementAddForm from "../pages/eq_manager/supplement/supplement_addForm
 import SupplementEditPage from "../pages/eq_manager/supplement/supplement_editForm.jsx";
 import EquipmentDashboard from "../pages/eq_manager/EquipmentDashboard.jsx";
 
-const OrdersPage = () => <h1>Orders</h1>;
-
 export default function EquipmentManagerLayout() {
   // const user = JSON.parse(localStorage.getItem("user") || "{}");
   // // Allow access if role is one of the expected equipment-manager roles (adjust to your auth model)
@@ -58,7 +56,6 @@ export default function EquipmentManagerLayout() {
               <Route path="purchases" element={<PurchaseListPage />} />
               <Route path="purchases/add" element={<PurchaseAddPage />} />
               <Route path="purchases/edit/:code" element={<PurchaseEditPage />} />
-              <Route path="orders" element={<OrdersPage />} />
               
 
               {/* fallback */}

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Trash2, Minus, Plus, ShoppingBag, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -47,9 +48,9 @@ export function CartProvider({ children }) {
         const id = product.Sup_code;
         if (!id) return;
 
-        //if out of stock
+
+        // If product is out of stock, silently ignore the add (no toast)
         if (product.Sup_status === "Out of stock") {
-            toast.error("This item is currently out of stock.");
             return;
         }
 
@@ -110,6 +111,10 @@ export function CartProvider({ children }) {
         toast.success("All items removed");
     };
 
+    const clearCartSilently = () => {
+        setItems([]);
+    };
+
     const subtotal = useMemo(
         () => items.reduce((sum, i) => sum + i.price * i.qty, 0),
         [items]
@@ -121,13 +126,13 @@ export function CartProvider({ children }) {
         removeItem,
         updateQty,
         clearCart,
+        clearCartSilently,
         subtotal,
         count: items.reduce((n, i) => n + i.qty, 0),
     };
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
-
 export function useCart() {
     const ctx = useContext(CartContext);
     if (!ctx) throw new Error("useCart must be used inside <CartProvider>");
@@ -136,6 +141,7 @@ export function useCart() {
 
 export default function SupplementCart() {
     const { items, removeItem, updateQty, clearCart, subtotal } = useCart();
+    const navigate = useNavigate();
 
     if (!items.length) {
         return (
@@ -176,7 +182,7 @@ export default function SupplementCart() {
                                 <p className="font-semibold text-gray-900 leading-tight line-clamp-2">
                                     {item.name}
                                 </p>
-                                
+
                             </div>
                             {item.type && (
                                 <p className="text-sm text-gray-500 mt-0.5">{item.type}</p>
@@ -282,7 +288,7 @@ export default function SupplementCart() {
                     <button
                         type="button"
                         className="w-full bg-red-700 md:hover:orange-200 text-white font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg md:hover:shadow-xl "
-                        onClick={""}
+                        onClick={() => navigate("/supplement/checkout", { state: { cart: items } })}
                     >
                         Checkout
                     </button>

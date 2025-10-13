@@ -6,12 +6,12 @@ import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function MembershipPlans() {
-  // ✅ changed: split source data (allPlans) from view data (plans)
-  const [allPlans, setAllPlans] = useState([]); // ✅ added
+  //  split source data (allPlans) from view data (plans)
+  const [allPlans, setAllPlans] = useState([]); 
   const [plans, setPlans] = useState([]);
   const [loaded, setLoaded] = useState(false);
 
-  // ✅ added: search state
+  //  search state
   const [query, setQuery] = useState("");
 
   const navigate = useNavigate();
@@ -21,8 +21,8 @@ export default function MembershipPlans() {
       axios
         .get(import.meta.env.VITE_BACKEND_URL + "/api/plan/")
         .then((res) => {
-          setAllPlans(res.data); // ✅ added
-          setPlans(res.data);     // ✅ moved
+          setAllPlans(res.data); // added
+          setPlans(res.data);     // moved
           setLoaded(true);
         })
         .catch((err) => console.log("message:", err));
@@ -69,7 +69,7 @@ export default function MembershipPlans() {
     });
   }
 
-  // ✅ added: lightweight debounce + filter
+  //  lightweight debounce + filter
   useEffect(() => {
     const t = setTimeout(() => {
       const q = query.trim().toLowerCase();
@@ -86,8 +86,6 @@ export default function MembershipPlans() {
         const features = Array.isArray(p?.features)
           ? p.features.join(" ").toLowerCase()
           : String(p?.features ?? "").toLowerCase();
-
-        // ✅ fields covered: ID, Name, Description, Features, Duration, Price
         return [id, name, desc, features, duration, price].some((field) =>
           field.includes(q)
         );
@@ -109,16 +107,16 @@ export default function MembershipPlans() {
             </h1>
 
             <div className="flex items-center gap-2">
-              {/* ✅ changed: wired up search box */}
+              {/*  wired up search box */}
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
-                  value={query} // ✅ added
-                  onChange={(e) => setQuery(e.target.value)} // ✅ added
+                  value={query} //  added
+                  onChange={(e) => setQuery(e.target.value)} //  added
                   placeholder="Search by ID, name, features, price, duration…"
                   className="w-72 rounded-xl border border-gray-300 bg-white pl-9 pr-9 py-2 text-sm outline-none focus:border-red-500"
                 />
-                {/* ✅ added: clear button */}
+                {/*  clear button */}
                 {query && (
                   <button
                     type="button"
@@ -201,7 +199,7 @@ export default function MembershipPlans() {
                   </tr>
                 ))}
 
-                {/* ✅ added: empty state for no matches */}
+                
                 {plans.length === 0 && (
                   <tr>
                     <td
