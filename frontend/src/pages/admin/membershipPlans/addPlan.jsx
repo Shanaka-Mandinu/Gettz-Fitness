@@ -34,8 +34,11 @@ export default function AddPlanForm() {
     const nextErrors = {};
 
     if (!plan_name.trim()) nextErrors.plan_name = "Plan name is required.";
-    if (price === "" || Number(price) < 0)
-      nextErrors.price = "Price must be 0 or greater.";
+    if (price === "" || !/^\d+$/.test(String(price))) {
+      nextErrors.price = "Price must be a whole number (no cents).";
+    } else if (Number(price) < 300) {
+      nextErrors.price = "Price must be at least LKR 300.";
+    }
     if (duration === "" || Number(duration) < 1)
       nextErrors.duration = "Duration must be at least 1 day.";
     if (!description.trim())
@@ -137,14 +140,16 @@ export default function AddPlanForm() {
                   htmlFor="price"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Price <span className="text-red-600">*</span>
+                  Price (LKR) <span className="text-red-600">*</span>
                 </label>
                 <input
                   id="price"
                   name="price"
                   type="number"
-                  min="0"
-                  step="0.01"
+                      min="300"
+                    step="1"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                   value={price} 
                   onChange={(e) => setPrice(e.target.value)}
                   className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-red-500
@@ -153,7 +158,7 @@ export default function AddPlanForm() {
                         ? "border-red-500"
                         : "border-gray-300 bg-white"
                     }`}
-                  placeholder="e.g., 49.99"
+                      placeholder="e.g.,LKR 300 or higher"
                 />
                 {errors.price && (
                   <p className="mt-1 text-xs text-red-600">{errors.price}</p>

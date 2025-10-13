@@ -69,6 +69,7 @@ export const addMealTemplate = async (req, res) => {
   }
 };
 
+
 export const updateMealTemplate = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({
@@ -125,6 +126,7 @@ export const updateMealTemplate = async (req, res) => {
   }
 };
 
+
 export const getAllMealTemplates = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({
@@ -156,6 +158,7 @@ export const getPublicMealTemplates = async (req, res) => {
   }
 };
 
+
 export const getOneMealTemplate = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({
@@ -179,6 +182,8 @@ export const getOneMealTemplate = async (req, res) => {
     return res.status(400).json({ error: err.message });
   }
 };
+
+
 
 export const deleteMealTemplate = async (req, res) => {
   if (!req.user) {

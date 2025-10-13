@@ -3,6 +3,7 @@ import Payment from "../model/Payment_Model.js";
 import Stripe from "stripe";
 import MembershipPlan from "../model/Membership_Plans_Model.js";
 import axios from "axios";
+import Revenue from "../model/revenue.js";
 const stripe = new Stripe(process.env.SECRET_KEY);
 
 export async function createPayment(req, res) {
@@ -51,7 +52,7 @@ export async function createPayment(req, res) {
             appliedPoints: req.body.pointsToUse || 0
           },
         });
-  console.log("Points to use: ", req.body.pointsToUse);
+ 
         const subInfo = await Subscription.findOne({ user_id: req.user._id });
         const paymentData = {
           payment_id: 0,
@@ -72,8 +73,28 @@ export async function createPayment(req, res) {
           paymentData.payment_id = lastPaymentId + 1;
         }
 
-        const payment = await new Payment(paymentData);
-        payment.save();
+        const payment = new Payment(paymentData);
+        const savedPayment = await payment.save();
+
+        // Upsert a pending Revenue entry so it appears in the Admin Payment table
+        try {
+          await Revenue.findOneAndUpdate(
+            { referenceId: Number(savedPayment.payment_id) },
+            {
+              referenceId: Number(savedPayment.payment_id),
+              type: "membership",
+              user_id: savedPayment.user_id,
+              discount: savedPayment.discount || 0,
+              paidAmount: savedPayment.paid_amount || 0,
+              status: "pending",
+              paidAt: savedPayment.createdAt || new Date(),
+            },
+            { upsert: true, setDefaultsOnInsert: true }
+          );
+        } catch (revErr) {
+          console.error("Revenue upsert (pending) failed:", revErr?.message || revErr);
+        }
+        
 
         res.json({ id: session.id });
       } catch (err) {
@@ -101,14 +122,6 @@ export async function fetchPayment(req, res) {
   } catch (err) {
     res.status(500).json({ message: err });
   }
-
-  // Subscription.find({user_id:req.user._id,status:{$in: ["active", "pending"] }}).populate("plan_id")
-  //   .then((sub)=>{
-  //       res.status(200).json(sub)
-  //   })
-  //   .catch((err)=>{
-  //       res.status(500).json({message:"Server Error when finding the subscription "+err})
-  //   })
 }
 
 export function fetchUserPayment(req,res){

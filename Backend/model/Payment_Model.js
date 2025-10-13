@@ -10,7 +10,7 @@ const paymentSchema = new mongoose.Schema({
     paid_amount: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: "LKR" },
     session_id: { type: String, unique: true, required: true },
-    status: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
+    status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
     paid_at: { type: Date },
     discount: { type: Number, default: 0, min: 0 },
     planName: { type: String, default: "" },

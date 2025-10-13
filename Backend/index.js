@@ -47,6 +47,7 @@ import Attendance from "./model/attendanceModel.js";
 import mealTemplateRouter from "./routes/mealTemplateRouter.js"
 import feedbackRouter from "./routes/feedbackRoute.js"
 import statsRouter from "./routes/statsRoute.js"
+import revenueRouter from "./routes/revenueRoute.js"
 import path from "path";
 import initRFIDListener from "./serial/rfidListener.js"; 
 
@@ -129,6 +130,7 @@ app.use("/api/members", memberRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/feedback", feedbackRouter);
 app.use("/api/stats", statsRouter);
+app.use("/api/revenue", revenueRouter);
 
 io.on("connection", (socket) => {
   console.log("🟢 Dashboard connected");

@@ -415,7 +415,7 @@ export default function MealPlan() {
             </div>
           </div>
 
-          {/* Birth Day | Meal Type */}
+          {/* Meal Type */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block mb-1 text-sm font-medium text-black">

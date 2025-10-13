@@ -4,6 +4,7 @@ import Payment from "../model/Payment_Model.js";
 import MembershipPlan from "../model/Membership_Plans_Model.js";
 import { sendPaymentReciept } from "../utils/mailer.js";
 import User from "../model/user.js";
+import Revenue from "../model/revenue.js";
 const stripe = new Stripe(process.env.SECRET_KEY);
 
 export async function handleWebhook(req, res) {
@@ -34,7 +35,27 @@ export async function handleWebhook(req, res) {
           },
           { new: true }
         );
-
+        // 1b) Update Revenue row (pending -> paid)
+        try {
+          if (pay) {
+            await Revenue.findOneAndUpdate(
+              { referenceId: Number(pay.payment_id) },
+              {
+                referenceId: Number(pay.payment_id),
+                type: "membership",
+                user_id: pay.user_id,
+                discount: pay.discount || 0,
+                paidAmount: pay.paid_amount || 0,
+                status: "paid",
+                paidAt: pay.paid_at || new Date(),
+              },
+              { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+          }
+        } catch (revErr) {
+          console.error("Revenue update failed (completed):", revErr?.message || revErr);
+        }
+        
         // 2) Create/activate subscription 
         try {
           const userId = session.metadata?.userId; 
@@ -68,8 +89,8 @@ export async function handleWebhook(req, res) {
               $set: { popular: true },
             });
 
-            // (optional) Send receipt here
-            await sendPaymentReciept(email, session.id);
+            
+            //await sendPaymentReciept(email, session.id);
           }
         } catch (subErr) {
           console.error(
@@ -83,26 +104,50 @@ export async function handleWebhook(req, res) {
 
       case "checkout.session.expired": {
         const session = event.data.object;
-        await Payment.findOneAndUpdate(
+        const pay = await Payment.findOneAndUpdate(
           { session_id: session.id },
-          { status: "canceled" }
+          { status: "failed" },
+          { new: true }
         );
+        try {
+          if (pay) {
+            await Revenue.findOneAndUpdate(
+              { referenceId: Number(pay.payment_id) },
+              { status: "failed", paidAt: new Date() },
+              { upsert: true }
+            );
+          }
+        } catch (revErr) {
+          console.error("Revenue update failed (expired):", revErr?.message || revErr);
+        }
+        
         break;
       }
 
       
       case "payment_intent.payment_failed": {
-        console.log("Canceled Called");
         const pi = event.data.object;
         const sessions = await stripe.checkout.sessions.list({
           payment_intent: pi.id,
           limit: 1,
         });
         const sessionId = sessions.data?.[0]?.id;
-        await Payment.findOneAndUpdate(
+        const pay = await Payment.findOneAndUpdate(
           { session_id: sessionId },
-          { status: "failed" }
+          { status: "failed" },
+          { new: true }
         );
+        try {
+          if (pay) {
+            await Revenue.findOneAndUpdate(
+              { referenceId: Number(pay.payment_id) },
+              { status: "failed", paidAt: new Date() },
+              { upsert: true }
+            );
+          }
+        } catch (revErr) {
+          console.error("Revenue update failed (payment_failed):", revErr?.message || revErr);
+        }
         break;
       }
 
