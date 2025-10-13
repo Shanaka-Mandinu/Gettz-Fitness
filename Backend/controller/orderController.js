@@ -234,8 +234,8 @@ export async function stripeWebhook(req, res) {
             console.error("Revenue update failed (order paid):", revErr?.message || revErr);
           }
 
-          const user = await User.findById(order.user_id);
-          user.point = user.point - appliedPoints;
+          const user = await User.findById(session.metadata?.userId);
+          user.point = user.point - session.metadata?.appliedPoints;
           await user.save();
 
           await sendStoreOrderReceipt(email, session.id);
