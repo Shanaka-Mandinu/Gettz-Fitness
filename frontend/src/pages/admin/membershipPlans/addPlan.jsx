@@ -232,9 +232,9 @@ export default function AddPlanForm() {
                 <button
                   type="button"
                   onClick={addFeature}
-                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 " />
                   Add Feature
                 </button>
               </div>
@@ -279,14 +279,14 @@ export default function AddPlanForm() {
                   setFeatures([]);
                   setErrors({});
                 }}
-                className="rounded-xl border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+                className="rounded-xl border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700 disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" />
                 {submitting ? "Saving..." : "Create Plan"}

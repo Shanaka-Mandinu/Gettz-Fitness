@@ -72,7 +72,7 @@ export default function PlanCard(props) {
         onClick={() => {
           choosePlan(plan);
         }}
-        className={`mt-auto w-full rounded-xl border px-4 py-3 text-sm font-semibold transition
+        className={`mt-auto w-full rounded-xl border px-4 py-3 text-sm font-semibold transition cursor-pointer
           ${
             plan.popular
               ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
