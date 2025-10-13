@@ -66,9 +66,13 @@ export default function AnnouncementDetailsPage() {
       );
       toast.success("Announcement deleted successfully");
       setLoaded(false);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/notification`);
+      setAnnouncement(response.data || []);
+      setLoaded(true);
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete announcement");
+      setLoaded(true);
     }
   }
 
@@ -137,15 +141,14 @@ export default function AnnouncementDetailsPage() {
     autoTable(doc, {
       startY: 35,
       head: [[
-        'No', 'Announcement ID', 'Type', 'Title', 'Delivery To', 'Created By', 'Sent Date'
+        'No', 'Announcement ID', 'Type', 'Title', 'Delivery To', 'Sent Date'
       ]],
       body: filteredAnnouncements.map((notifi, idx) => [
         idx + 1,
-        notifi.notificationID,
-        notifi.type,
-        notifi.title,
-        notifi.deliveryTo,
-        // notifi.createdBy,
+        notifi.notificationID || '-',
+        notifi.type || '-',
+        notifi.title || '-',
+        notifi.deliveryTo || '-',
         new Date(notifi.createdAt).toLocaleDateString(),
       ]),
       theme: 'grid',
@@ -164,7 +167,12 @@ export default function AnnouncementDetailsPage() {
     autoTable(doc, {
       startY: y + 3,
       head: [[ 'Title', 'Type', 'Delivery To', 'Sent Date' ]],
-      body: recent.map(a => [a.title, a.type, a.deliveryTo, new Date(a.createdAt).toLocaleDateString()]),
+      body: recent.map(a => [
+        a.title || '-', 
+        a.type || '-', 
+        a.deliveryTo || '-', 
+        new Date(a.createdAt).toLocaleDateString()
+      ]),
       theme: 'striped',
       headStyles: { fillColor: [227, 6, 19] },
       styles: { fontSize: 9 },

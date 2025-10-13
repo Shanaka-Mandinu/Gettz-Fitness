@@ -11,11 +11,24 @@ export default function TrainerChallenges() {
   const [participations, setParticipations] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return participations;
-    return participations.filter((p) => {
+    let filteredData = participations;
+    
+    // Apply status filter first
+    if (statusFilter !== "all") {
+      filteredData = participations.filter((p) => {
+        if (statusFilter === "pending") return !p.completed;
+        if (statusFilter === "approved") return p.completed;
+        return true;
+      });
+    }
+    
+    // Then apply search filter
+    if (!q) return filteredData;
+    return filteredData.filter((p) => {
       const challengeId = String(p.challengeID ?? "").toLowerCase();
       const title = String(p.title ?? "").toLowerCase();
       const points = String(p.points ?? "").toLowerCase();
@@ -31,7 +44,7 @@ export default function TrainerChallenges() {
         status.includes(q)
       );
     });
-  }, [query, participations]);
+  }, [query, participations, statusFilter]); // Add statusFilter to dependencies
 
   const handleDownloadPDF = async () => {
     const list = filtered;
@@ -120,7 +133,7 @@ export default function TrainerChallenges() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Challenge approved and points awarded!");
-      fetchParticipations();
+      fetchParticipations(); // Refetch all data
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
@@ -133,7 +146,12 @@ export default function TrainerChallenges() {
 
   useEffect(() => {
     fetchParticipations();
-  }, []);
+  }, []); // Remove statusFilter dependency
+
+  const handleFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    // No need to refetch - filtering is done in frontend
+  };
 
   return (
     <div className="p-6">
@@ -160,6 +178,42 @@ export default function TrainerChallenges() {
                 className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700"
               >
                 Download PDF
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Section */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleFilterChange("all")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                  statusFilter === "all" 
+                    ? "bg-red-500 text-white border-red-500" 
+                    : "bg-white text-gray-700 border-gray-300 hover:border-red-300"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => handleFilterChange("pending")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                  statusFilter === "pending" 
+                    ? "bg-yellow-500 text-white border-yellow-500" 
+                    : "bg-white text-gray-700 border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => handleFilterChange("approved")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                  statusFilter === "approved" 
+                    ? "bg-green-500 text-white border-green-500" 
+                    : "bg-white text-gray-700 border-gray-300 hover:border-red-300"
+                }`}
+              >
+                Approved
               </button>
             </div>
           </div>

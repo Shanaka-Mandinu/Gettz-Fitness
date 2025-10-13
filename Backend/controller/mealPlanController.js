@@ -92,7 +92,7 @@ export const addMealPlan = (req, res) => {
 
           const mockReq = {
             body: {
-              title: "Meal Plan Created✅",
+              title: "Meal Plan Created!",
               body: "Your requested meal plan is ready",
               type: "alert",
               userId: req.body.user_id,

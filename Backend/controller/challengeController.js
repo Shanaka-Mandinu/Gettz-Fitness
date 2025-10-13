@@ -253,7 +253,7 @@ export async function completeUserChallenge(req, res) {
 
     const mockReq = {
       body: {
-        title: `Earned ${challenge.points} Points 🎖️🎉`,
+        title: `Earned ${challenge.points} Points!`,
         body: `You earned points for completing the "${challenge.title}" challenge!`,
         type: "promotional",
         userId: userId.toString()
@@ -309,4 +309,33 @@ export async function getAllUserChallengeParticipations(req, res) {
     console.error("getAllUserChallengeParticipations error:", e);
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
+}
+
+export async function filterChallenges(req, res){
+
+  try{
+    const {completed} = req.query
+
+    const query = {}
+
+    if (completed && completed !== "all"){
+      
+      if (completed == "pending"){
+        query.completed = false
+      } else {
+        query.completed = true
+      }
+
+    }
+
+    const challenges = await UserChallenge.find(query)
+    res.json(challenges)
+
+  }catch(err){
+    console.log("Error of filter challenges :- ",err)
+    res.status(500).json({
+      message : "Error of fltering challenges"
+    })
+  }
+
 }

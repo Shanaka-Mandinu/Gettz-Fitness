@@ -36,6 +36,10 @@ export default function CompetitionAdd() {
       return toast.error("All fields are required");
     }
 
+    if (points < 10) {
+      return toast.error("Points must be at least 10");
+    }
+
     // Validation: startDate >= today, endDate >= startDate
     const todayStr = getTodayStr();
     if (startDate < todayStr) {
