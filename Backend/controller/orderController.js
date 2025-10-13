@@ -103,7 +103,7 @@ export async function createOrder(req, res) {
     });
     await order.save();
 
-    // Deduct points immediately (optional: or after payment success in webhook)
+    // Deduct points 
     if (appliedPoints > 0) {
       user.point = availablePoints - appliedPoints;
       await user.save();
@@ -133,7 +133,7 @@ export async function fetchOrder(req, res) {
   }
 }
 
-// List orders for the authenticated user (supplement purchases)
+// List supplement orders for the authenticated user
 export async function listMyOrders(req, res) {
   try {
     if (!req.user?._id) return res.status(401).json({ message: "Unauthorized" });
@@ -174,7 +174,7 @@ export async function stripeWebhook(req, res) {
         if (order) {
           const wasAlreadyPaid = String(order.status).toLowerCase() === "paid";
 
-          // Decrement supplement stock only once per order (idempotent against webhook retries)
+          // Decrement supplement stock only once per order
           if (!wasAlreadyPaid && Array.isArray(order.cart) && order.cart.length > 0) {
             for (const it of order.cart) {
               try {
@@ -235,7 +235,7 @@ export async function stripeWebhook(req, res) {
         break;
       }
       default:
-        // No-op for other event types you’re not using
+        
         break;
     }
 

@@ -18,7 +18,6 @@ const orderSchema = new mongoose.Schema(
         name: String,
         qty: Number,
         price: Number,
-        // add more fields as needed
       }
     ],
       subtotal: {

@@ -31,7 +31,6 @@ export const addMaintenanceLog = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // Resolve equipment ObjectId: frontend may send Eq_code instead of _id
         let equipmentId = Eq_ID;
         const isObjectId = mongoose.Types.ObjectId.isValid(String(Eq_ID));
         if (!isObjectId) {
