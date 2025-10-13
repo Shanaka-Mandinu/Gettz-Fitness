@@ -47,6 +47,10 @@ export default function Leaderboard() {
               />
             ))}
           </div>
+        ) : leaders.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-gray-300 bg-white/70 p-10 text-center text-gray-600">
+            <p className="text-lg">No leaderboard entries yet. Start earning points to appear here!</p>
+          </div>
         ) : (
           <div className="overflow-hidden rounded-3xl border border-rose-200 shadow-xl bg-white/90 backdrop-blur">
             <table className="min-w-full divide-y divide-gray-200">
