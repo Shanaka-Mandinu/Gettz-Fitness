@@ -54,12 +54,7 @@ export default function SupplementSavedCards() {
             >
               ← Back
             </button>
-            <button
-              onClick={() => navigate("/cards/new")}
-              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
-            >
-              Add new card
-            </button>
+            
           </div>
         </div>
         {cards.length === 0 && loaded && (

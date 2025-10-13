@@ -126,8 +126,7 @@ export async function createOrder(req, res) {
 
     // Deduct points immediately (optional: or after payment success in webhook)
     if (appliedPoints > 0) {
-      user.point = availablePoints - appliedPoints;
-      await user.save();
+      
     }
 
     res.json({ id: session.id });
@@ -240,6 +239,11 @@ export async function stripeWebhook(req, res) {
           } catch (revErr) {
             console.error("Revenue update failed (order paid):", revErr?.message || revErr);
           }
+
+          const user = await User.findById(order.user_id);
+          user.point = user.point - appliedPoints;
+          await user.save();
+
           await sendStoreOrderReceipt(email, session.id);
         } else {
           console.warn("Order not found for session:", session.id);

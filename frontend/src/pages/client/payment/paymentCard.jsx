@@ -215,8 +215,8 @@ export default function Payment() {
               </p>
             </div>
             <div className="rounded-lg bg-gray-100 px-4 py-2 text-right">
-              <div className="text-xs text-gray-500">Price LKR</div>
-              <div className="text-lg font-semibold">{price}</div>
+              <div className="text-xs text-gray-500">Price</div>
+              <div className="text-lg font-semibold">LKR.{price}</div>
             </div>
           </div>
 
@@ -308,7 +308,7 @@ export default function Payment() {
               <label className="mb-2 block text-sm font-medium text-gray-700">Name on card</label>
               <input
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                placeholder="Card Name"
+                placeholder="Name on card"
                 value={nameOnCard}
                 onChange={(e) => setNameOnCard(e.target.value)}
               />
