@@ -46,14 +46,14 @@ export default function MaintenanceLogAddPage() {
     const [M_date, setDate] = useState(todayInputDate());
     const [Eq_ID, setEqId] = useState("");
 
-    // Equipment list (to help pick Eq_ID easily)
+    // Equipment list 
     const [equipment, setEquipment] = useState([]);
     const [eqLoaded, setEqLoaded] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const navigate = useNavigate();
 
-    // Load equipment for dropdown (optional helper)
+    // Load equipment for dropdown
     useEffect(() => {
         if (eqLoaded) return;
         axios
@@ -68,12 +68,11 @@ export default function MaintenanceLogAddPage() {
                 setEqLoaded(true);
             })
             .catch(() => {
-                // Not fatal if equipment list fails; user can still type Eq_ID manually
                 setEqLoaded(true);
             });
     }, [eqLoaded]);
 
-    // When choosing from the dropdown, auto-fill Eq_ID and name
+    // Auto-fill Eq_ID and name
     function handlePickEquipment(e) {
         const code = e.target.value;
         setEqId(String(code));
@@ -83,8 +82,7 @@ export default function MaintenanceLogAddPage() {
         }
     }
 
-    async function handleSave() {
-        // Model requires both Eq_ID and M_Eq_name (per your schema), plus description & date
+    async function handleSave() {e
         if (!Eq_ID.trim()) return toast.error("Equipment (Eq_ID) is required");
         if (!M_Eq_name.trim()) return toast.error("Equipment name is required");
         if (!M_description.trim()) return toast.error("Description is required");
@@ -149,7 +147,7 @@ export default function MaintenanceLogAddPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                     {/* Left column */}
                     <div className="space-y-4">
-                        {/* Equipment Picker (helps fill Eq_ID) */}
+                        {/* Equipment Picker */}
                         <div>
                             <label className="block text-sm font-medium mb-1">
                                 Pick Equipment
@@ -177,7 +175,7 @@ export default function MaintenanceLogAddPage() {
                             </div>
                         </div>
 
-                        {/* Eq_ID (required) */}
+                        {/* Eq_ID  */}
                         <div>
                             <label className="block text-sm font-medium mb-1">
                                 Eq_ID <span className="text-red-600">*</span>
@@ -190,7 +188,7 @@ export default function MaintenanceLogAddPage() {
                             />
                         </div>
 
-                        {/* Equipment Name (required) */}
+                        {/* Equipment Name  */}
                         <div>
                             <label className="block text-sm font-medium mb-1">
                                 Equipment Name <span className="text-red-600">*</span>
@@ -209,7 +207,7 @@ export default function MaintenanceLogAddPage() {
                             </div>
                         </div>
 
-                        {/* Description (required) */}
+                        {/* Description */}
                         <div>
                             <label className="block text-sm font-medium mb-1">
                                 Description <span className="text-red-600">*</span>
@@ -263,7 +261,7 @@ export default function MaintenanceLogAddPage() {
                                 />
                             </div>
                             <p className="mt-1 text-[11px] text-neutral-500">
-                                Defaults to today. You can change it if needed.
+                                Defaults to today.
                             </p>
                         </div>
                     </div>

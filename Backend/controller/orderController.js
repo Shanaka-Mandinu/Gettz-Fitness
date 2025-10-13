@@ -122,14 +122,8 @@ export async function createOrder(req, res) {
     } catch (revErr) {
       console.error("Revenue upsert (order pending) failed:", revErr?.message || revErr);
     }
-    
-
-    // Deduct points immediately (optional: or after payment success in webhook)
-    if (appliedPoints > 0) {
-      
-    }
-
     res.json({ id: session.id });
+    
   } catch (err) {
     console.error("Order creation error:", err);
     // Return the actual error message if available
@@ -153,7 +147,7 @@ export async function fetchOrder(req, res) {
   }
 }
 
-// List orders for the authenticated user (supplement purchases)
+// List supplement orders for the authenticated user
 export async function listMyOrders(req, res) {
   try {
     if (!req.user?._id) return res.status(401).json({ message: "Unauthorized" });
@@ -194,7 +188,7 @@ export async function stripeWebhook(req, res) {
         if (order) {
           const wasAlreadyPaid = String(order.status).toLowerCase() === "paid";
 
-          // Decrement supplement stock only once per order (idempotent against webhook retries)
+          // Decrement supplement stock only once per order
           if (!wasAlreadyPaid && Array.isArray(order.cart) && order.cart.length > 0) {
             for (const it of order.cart) {
               try {
@@ -298,7 +292,7 @@ export async function stripeWebhook(req, res) {
         break;
       }
       default:
-        // No-op for other event types you’re not using
+        
         break;
     }
 
