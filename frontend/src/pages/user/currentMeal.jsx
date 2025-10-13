@@ -463,6 +463,7 @@ export default function CurrentMeal() {
       console.error(err);
     }
   }
+  
 
   return (
     <div className="p-6">
