@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DefaultAvatar from "../../assets/default-avatar.png";
-import { Calendar, Clock, User, Activity, TrendingUp, Award } from "lucide-react";
+import { Calendar, Clock, User, Activity } from "lucide-react";
 
 export default function Dashboard() {
   const [loaded, setLoaded] = useState(false);
@@ -98,19 +98,6 @@ export default function Dashboard() {
   }, [userData]);
 
  
-  const attendanceStats = useMemo(() => {
-    if (!attendanceData.length) return { total: 0, thisMonth: 0, thisWeek: 0 };
-    
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-    
-    return {
-      total: attendanceData.length,
-      thisMonth: attendanceData.filter(att => new Date(att.time) >= startOfMonth).length,
-      thisWeek: attendanceData.filter(att => new Date(att.time) >= startOfWeek).length,
-    };
-  }, [attendanceData]);
 
   const recentAttendance = useMemo(() => {
     return attendanceData
@@ -261,93 +248,60 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Attendance Stats Cards */}
+          {/* Recent Attendance Section */}
           <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-red-100 text-sm font-medium">Total Visits</p>
-                    <p className="text-3xl font-bold">{attendanceStats.total}</p>
-                  </div>
-                  <Activity className="h-12 w-12 text-red-200" />
+            <div className="bg-white rounded-2xl shadow-xl p-8 h-full">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Recent Attendance</h3>
+                <div className="text-sm text-gray-600">
+                  Last 5 visits
                 </div>
               </div>
               
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">This Month</p>
-                    <p className="text-3xl font-bold">{attendanceStats.thisMonth}</p>
-                  </div>
-                  <TrendingUp className="h-12 w-12 text-blue-200" />
+              {attendanceLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading attendance data...</p>
                 </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm font-medium">This Week</p>
-                    <p className="text-3xl font-bold">{attendanceStats.thisWeek}</p>
-                  </div>
-                  <Award className="h-12 w-12 text-green-200" />
+              ) : recentAttendance.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Time</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentAttendance.map((attendance, index) => (
+                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4 text-gray-900 font-medium">
+                            {attendance.date}
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">
+                            {attendance.time}
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                              {attendance.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">No attendance records yet</h4>
+                  <p className="text-gray-600">Start your fitness journey by visiting the gym!</p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Recent Attendance Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">Recent Attendance</h3>
-            <div className="text-sm text-gray-600">
-              Last 5 visits
-            </div>
-          </div>
-          
-          {attendanceLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading attendance data...</p>
-            </div>
-          ) : recentAttendance.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Time</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAttendance.map((attendance, index) => (
-                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-4 px-4 text-gray-900 font-medium">
-                        {attendance.date}
-                      </td>
-                      <td className="py-4 px-4 text-gray-600">
-                        {attendance.time}
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                          {attendance.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h4 className="text-lg font-medium text-gray-900 mb-2">No attendance records yet</h4>
-              <p className="text-gray-600">Start your fitness journey by visiting the gym!</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

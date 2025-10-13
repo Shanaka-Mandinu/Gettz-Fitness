@@ -102,13 +102,18 @@ export default function AdminSidebar() {
           ))}
         </div>
 
-        <button
-          onClick={handleLogout}
-          className={`${linkBase} text-red-600 hover:bg-red-100 mb-3`}
-        >
-          <LogOut className="h-4 w-4" />
-          {open && <span>Logout</span>}
-        </button>
+        <div className="px-3 space-y-3">
+                <button
+                  className={`mb-10 flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 shadow-sm transition-colors ${
+                    open ? "justify-start" : "justify-center"
+                  }`}
+                  title={!open ? "Logout" : undefined}
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {open && <span>Logout</span>}
+                </button>
+              </div>
       </nav>
     </aside>
   );
