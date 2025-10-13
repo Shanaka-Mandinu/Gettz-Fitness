@@ -19,7 +19,7 @@ export default function Supplement_card({ product, onAddToCart }) {
     const isOutOfStock = product?.Sup_status === 'Out of stock' || (Number(product?.Sup_quantity || 0) <= 0);
 
     const handleAdd = () => {
-        if (isOutOfStock) return; // silently ignore
+        if (isOutOfStock) return; 
         if (typeof onAddToCart === 'function') {
             onAddToCart({ product, quantity });
             toast.success("Item added to your cart!");
@@ -42,20 +42,7 @@ export default function Supplement_card({ product, onAddToCart }) {
                     sizes="(max-width: 640px) 100vw, 400px"
                 />
 
-                {/* Heart Icon */}
-                {/* <button
-          type="button"
-          onClick={() => setIsLiked((v) => !v)}
-          aria-pressed={isLiked}
-          aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
-          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full shadow-md transition-all duration-200 md:hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500"
-        >
-          <Heart
-            className={`w-5 h-5 transition-colors duration-200 ${
-              isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'
-            }`}
-          />
-        </button> */}
+                
             </div>
             {/* {info} */}
             <div className="p-4 sm:p-6">

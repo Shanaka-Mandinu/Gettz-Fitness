@@ -21,7 +21,7 @@ import SupplementPaymentSuccess from "./eq_manager/supplement_store/supplement_p
 import SupplementPaymentFailed from "./eq_manager/supplement_store/supplement_paymentFailed";
 
 import ChallengePage from "./client/challengesPage";
-
+import NotFound from "../pages/NotFound";
 export default function Homepage() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-black via-gray-900 to-gray-800 flex flex-col">
@@ -52,10 +52,7 @@ export default function Homepage() {
           <Route path="/challenges" element={<ChallengePage/>} />
           <Route
             path="/*"
-            element={
-              <h1 className="p-6 text-xl text-red-600">404 Not Found</h1>
-            }
-          />
+            element={<NotFound />} />
         </Routes>
       </div>
       </CartProvider>

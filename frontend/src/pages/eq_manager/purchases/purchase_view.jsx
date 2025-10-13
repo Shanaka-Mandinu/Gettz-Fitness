@@ -35,10 +35,9 @@ export default function PurchaseListPage() {
         const q = query.trim().toLowerCase();
         if (!q) return purchases;
         return purchases.filter((p) => {
-            const code = (p.P_code || "").toLowerCase();
-            const item = (p.P_item || "").toLowerCase();
-            const note = (p.P_note || "").toLowerCase();
-            return code.includes(q) || item.includes(q) || note.includes(q);
+            const code = String(p?.P_code ?? "").toLowerCase();
+            const item = String(p?.P_item ?? "").toLowerCase();
+            return code.includes(q) || item.includes(q);
         });
     }, [purchases, query]);
 
@@ -205,7 +204,7 @@ export default function PurchaseListPage() {
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search by code, item, or note…"
+                            placeholder="Search by code, item"
                             className="w-full rounded-xl border border-black/10 pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
                         />
                         {query && (

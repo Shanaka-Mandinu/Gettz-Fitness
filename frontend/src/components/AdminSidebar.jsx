@@ -4,10 +4,7 @@ import {
   LayoutDashboard,
   Users,
   Dumbbell,
-  CalendarClock,
   Video,
-  Wrench,
-  Pill,
   BadgePercent,
   Settings,
   Menu,
@@ -17,6 +14,7 @@ import {
   Megaphone,
   Trophy,
   MessageSquareDot,
+  DollarSign,
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
 import Swal from "sweetalert2";
@@ -33,6 +31,7 @@ const navItems = [
   { to: "/admin/trainers", label: "Trainers", icon: Dumbbell },
   { to: "/admin/video", label: "Video", icon: Video },
   { to: "/admin/membership", label: "Membership", icon: BadgePercent },
+  { to: "/admin/payment", label: "Payment", icon: DollarSign },
   { to: "/admin/workshift", label: "Employees", icon: IdCardLanyard },
   { to: "/admin/inquiry", label: "Inquiry", icon: MessageSquareDot },
   { to: "/admin/competitions", label: "Competitions", icon: Trophy },

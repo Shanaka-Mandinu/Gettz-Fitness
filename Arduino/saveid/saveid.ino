@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define SS_PIN 53
-#define RST_PIN 5
+#define SS_PIN 53 // Slave Select pin
+#define RST_PIN 5 // Reset pin
 
 MFRC522 rfid(SS_PIN, RST_PIN);
 MFRC522::MIFARE_Key key;

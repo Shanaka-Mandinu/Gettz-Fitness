@@ -15,12 +15,7 @@ import SupplementEditPage from "../pages/eq_manager/supplement/supplement_editFo
 import EquipmentDashboard from "../pages/eq_manager/EquipmentDashboard.jsx";
 
 export default function EquipmentManagerLayout() {
-  // const user = JSON.parse(localStorage.getItem("user") || "{}");
-  // // Allow access if role is one of the expected equipment-manager roles (adjust to your auth model)
-  // const role = user?.role?.toLowerCase?.() || "";
-  // const allowed = ["equipment", "equip_manager", "equipment_manager", "admin"].includes(role);
-  // if (!allowed) return <Navigate to="/adminLog" replace />;
-
+  
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="flex">
@@ -44,7 +39,7 @@ export default function EquipmentManagerLayout() {
               {/* Index (Overview) */}
               <Route index element={<EquipmentDashboard/>} />
 
-              {/* Matches the nav items you requested */}
+              {/* Matches the nav items */}
               <Route path="equipment" element={<EquipmentDetailsPage />} />
               <Route path="equipment/add" element={<EquipmentAddPage />} />
               <Route path="equipment/edit/:code" element={<EquipmentEditPage />} />
