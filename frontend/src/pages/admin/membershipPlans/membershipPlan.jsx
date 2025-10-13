@@ -131,7 +131,7 @@ export default function MembershipPlans() {
               </div>
 
               <Link to={"/admin/membership/addPlan"}>
-                <button className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
+                <button className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
                   <Plus className="h-4 w-4" />
                   Add a Plan
                 </button>
@@ -179,7 +179,7 @@ export default function MembershipPlans() {
                     <td className="w-32 px-4 py-3">
                       <div className="flex justify-evenly">
                         <button
-                          className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 mr-[5px]"
+                          className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 mr-[5px] cursor-pointer"
                           onClick={() =>
                             navigate("/admin/membership/updatePlan", {
                               state: plan,
@@ -189,7 +189,7 @@ export default function MembershipPlans() {
                           Update
                         </button>
                         <button
-                          className="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                          className="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 cursor-pointer"
                           onClick={() => handleDelete(plan.plan_id)}
                         >
                           Delete

@@ -197,7 +197,7 @@ export default function Payment() {
       <div className="mx-auto max-w-6xl px-4 pt-8 flex items-center">
         <button
           onClick={() => navigate("/membership")}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
         >
           ← Back
         </button>
@@ -360,7 +360,7 @@ export default function Payment() {
                   type="checkbox"
                   checked={saveCard}
                   onChange={() => setSaveCard(!saveCard)}
-                  className="rounded border-gray-300 text-red-500 focus:ring-red-500"
+                  className="rounded border-gray-300 text-red-500 focus:ring-red-500 cursor-pointer"
                 />
                 Save this card for next time
               </label>
@@ -368,7 +368,7 @@ export default function Payment() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                  className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 cursor-pointer"
                   onClick={() => navigate("/membership/savedCards", { state })}
                 >
                   View saved cards
@@ -376,7 +376,7 @@ export default function Payment() {
 
                 <button
                   type="submit"
-                  className="rounded-lg bg-red-500 px-5 py-2 text-sm font-medium text-white hover:bg-red-600"
+                  className="rounded-lg bg-red-500 px-5 py-2 text-sm font-medium text-white hover:bg-red-600 cursor-pointer"
                 >
                   Pay {formatLKR(finalAmount)}
                 </button>

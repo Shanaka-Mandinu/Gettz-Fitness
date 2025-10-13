@@ -110,7 +110,7 @@ export default function Navbar() {
     //{ to: "/trainers", label: "Trainers" },
     { to: "/videos", label: "Videos" },
     { to: "/contactUs", label: "Contact" },
-    ...(user?.role === "member" ? [{ to: "/mealPlan", label: "Meals" }] : []),
+    { to: "/mealPlan", label: "Meals" },
     { to: "/store", label: "Store" },
     ...(userData ? [{ to: "/challenges", label: "Competitions" }] : [])
   ],

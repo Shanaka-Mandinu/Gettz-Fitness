@@ -251,7 +251,7 @@ export default function SignupPage() {
                 }`}>
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <input name="firstName" value={form.firstName} onChange={onChange} onBlur={onBlur}
-                    placeholder="John" className="w-full bg-transparent py-1.5 text-sm outline-none" />
+                    placeholder="First Name" className="w-full bg-transparent py-1.5 text-sm outline-none" />
                 </div>
                 {touched.firstName && errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
               </div>
@@ -263,7 +263,7 @@ export default function SignupPage() {
                 }`}>
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <input name="lastName" value={form.lastName} onChange={onChange} onBlur={onBlur}
-                    placeholder="Doe" className="w-full bg-transparent py-1.5 text-sm outline-none" />
+                    placeholder="Last Name" className="w-full bg-transparent py-1.5 text-sm outline-none" />
                 </div>
                 {touched.lastName && errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
               </div>

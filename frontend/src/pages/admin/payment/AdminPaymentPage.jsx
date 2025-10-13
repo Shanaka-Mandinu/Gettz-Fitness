@@ -22,7 +22,7 @@ export default function AdminPaymentPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // NEW: Filters
+  
   const [q, setQ] = useState(""); // search term
   const [statusFilter, setStatusFilter] = useState(""); // paid | pending | failed | refunded | ""
   const [typeFilter, setTypeFilter] = useState(""); // membership | order | ""
@@ -248,7 +248,7 @@ export default function AdminPaymentPage() {
             </button>
             <button
               onClick={downloadPDF}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2.5 text-sm text-white shadow-sm hover:shadow transition hover:bg-red-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2.5 text-sm text-white shadow-sm hover:shadow transition hover:bg-red-700 cursor-pointer"
               title="Download PDF report"
             >
               <FileDown className="h-4 w-4" />
