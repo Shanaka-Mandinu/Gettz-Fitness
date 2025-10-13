@@ -15,6 +15,10 @@ import PaymentFailed from "./client/payment/paymentFailed";
 import MealPlan from "./mealPlan";import SupplementStore from "./eq_manager/supplement_store/store_view";
 import { CartProvider } from "./eq_manager/supplement_store/supplement_cart";
 import SupplementCart from "./eq_manager/supplement_store/supplement_cart";
+import SupplementCheckout from "./eq_manager/supplement_store/supplement_checkout";
+import SupplementSavedCards from "./eq_manager/supplement_store/supplement_saved_cards";
+import SupplementPaymentSuccess from "./eq_manager/supplement_store/supplement_paymentSuccess";
+import SupplementPaymentFailed from "./eq_manager/supplement_store/supplement_paymentFailed";
 
 import ChallengePage from "./client/challengesPage";
 
@@ -34,7 +38,10 @@ export default function Homepage() {
           
           <Route path="/store" element={<SupplementStore />} />
           <Route path="/cart" element={<SupplementCart />} /*fixed*//>
-          
+          <Route path="/supplement/checkout" element={<SupplementCheckout />} />
+          <Route path="/supplement/savedCards" element={<SupplementSavedCards />} />
+          <Route path="/supplement/paymentSuccess" element={<SupplementPaymentSuccess />} />
+          <Route path="/supplement/paymentFailed" element={<SupplementPaymentFailed />} />
 
 
           <Route path="/videos" element={<VideoPortal />} />

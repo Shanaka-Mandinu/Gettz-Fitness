@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { fieldEncryption } from "mongoose-field-encryption";
 
 const cardSchema = new mongoose.Schema({
   user_id: {
@@ -25,6 +26,11 @@ const cardSchema = new mongoose.Schema({
     min: 0,
   }
   
+});
+// Add plugin: auto encrypt on save, decrypt on find
+cardSchema.plugin(fieldEncryption, {
+  fields: ["card_number", "card_name", "expiry_date"],
+  secret: process.env.FIELD_ENCRYPTION_KEY, // keep as string
 });
 
 const CreditCard = mongoose.model("CreditCard", cardSchema);

@@ -73,16 +73,18 @@ export default function InquiryPage() {
 
   useEffect(() => {
     if (!loaded) {
+      console.log("Fetching inquiries from:", `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`);
       axios
         .get(`${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`)
         .then((res) => {
+          console.log("Inquiry API response:", res);
           const data = Array.isArray(res.data) ? res.data : [];
           setInquiries(data);
           setLoaded(true);
         })
         .catch((err) => {
-          console.error(err);
-          toast.error("Failed to load inquiries");
+          console.error("Inquiry API error:", err);
+          toast.error("Failed to load inquiries: " + (err?.message || "Unknown error"));
         });
     }
   }, [loaded]);
@@ -174,32 +176,6 @@ export default function InquiryPage() {
     }
   }
 
-  function confirmDelete(inquiry_id) {
-    toast.custom((t) => (
-      <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-4 flex flex-col gap-3 w-72">
-        <p className="text-sm text-gray-800">
-          Delete inquiry #{inquiry_id}? This cannot be undone.
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 rounded-md border text-sm hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              deleteInquiry(inquiry_id);
-            }}
-            className="px-3 py-1 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
-          >
-            Yes, Delete
-          </button>
-        </div>
-      </div>
-    ));
-  }
 
   async function deleteInquiry(inquiry_id) {
     const token = localStorage.getItem("token") || localStorage.getItem("jwt");
@@ -239,7 +215,7 @@ export default function InquiryPage() {
       // API returns { inquiry: {...} }
       const full = res?.data?.inquiry || null;
       setViewRow(full);
-      setReplyText(full?.inquiry_response || "");
+      setReplyText("");
     } catch (e) {
       console.error(e);
       toast.error("Failed to load inquiry");
@@ -257,9 +233,9 @@ export default function InquiryPage() {
       return;
     }
     try {
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/update/${viewRow.inquiry_id}`,
-        { inquiry_response: replyText }, // keep status as-is
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/reply/${viewRow.inquiry_id}`,
+        { message: replyText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Reply saved");
@@ -278,9 +254,14 @@ export default function InquiryPage() {
       return;
     }
     try {
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/reply/${viewRow.inquiry_id}`,
+        { message: replyText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/update/${viewRow.inquiry_id}`,
-        { inquiry_response: replyText, inquiry_status: "Resolved" },
+        { inquiry_status: "Resolved" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Inquiry resolved");
@@ -392,8 +373,15 @@ export default function InquiryPage() {
                     </select>
                   </td>
                   <td className="px-3 py-2">
-                    {q.inquiry_response ? (
-                      <span className="line-clamp-2">{q.inquiry_response}</span>
+                    {Array.isArray(q.inquiry_response) && q.inquiry_response.length > 0 ? (
+                      <ul className="space-y-1">
+                        {q.inquiry_response.map((resp, idx) => (
+                          <li key={idx} className="text-xs">
+                            <span className="font-medium">{resp.responder === "admin" ? "Admin" : "User"}:</span> {resp.message}
+                            <span className="ml-2 text-gray-400">{resp.date ? new Date(resp.date).toLocaleString() : ""}</span>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
                       <span className="text-neutral-400 italic">—</span>
                     )}
@@ -406,12 +394,7 @@ export default function InquiryPage() {
                       >
                         View
                       </button>
-                      <button
-                        onClick={() => confirmDelete(q.inquiry_id)}
-                        className="rounded-md bg-[#e30613] px-2 py-1 text-white hover:opacity-90"
-                      >
-                        Delete
-                      </button>
+                  
                     </div>
                   </td>
                 </tr>
@@ -468,13 +451,20 @@ export default function InquiryPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs text-neutral-500 mb-1">
-                    Existing Response
-                  </div>
+                  <div className="text-xs text-neutral-500 mb-1">Responses</div>
                   <div className="rounded-lg border border-black/10 p-3 bg-neutral-50">
-                    <p className="whitespace-pre-wrap">
-                      {viewRow?.inquiry_response || "—"}
-                    </p>
+                    {Array.isArray(viewRow?.inquiry_response) && viewRow.inquiry_response.length > 0 ? (
+                      <ul className="space-y-2">
+                        {viewRow.inquiry_response.map((resp, idx) => (
+                          <li key={idx} className="text-sm">
+                            <span className="font-medium">{resp.responder === "admin" ? "Admin" : "User"}:</span> {resp.message}
+                            <span className="ml-2 text-xs text-gray-400">{resp.date ? new Date(resp.date).toLocaleString() : ""}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-neutral-400 italic">No responses yet.</span>
+                    )}
                   </div>
                 </div>
 

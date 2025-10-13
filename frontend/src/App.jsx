@@ -21,7 +21,9 @@ import AddNotification from './pages/AddNotification';
 import Leaderboard from './pages/leaderboard';
 import ChatBot from './components/ChatBot/chatBot';
 import ReceiptPDF from "./pages/client/mySubscription/paymentReport";
-import UserDashboard from "./dashboard/userDashboard"
+import UserDashboard from "./dashboard/userDashboard";
+import PredefinedMealTemplates from "./pages/predefinedMealTemplates";
+import NotFound from "./pages/NotFound";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -47,13 +49,13 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/chatbot" element={<ChatBot />} />
           <Route path="/my" element={<testing></testing>} />
-
-          <Route path="/*" element={<Homepage />} />
           <Route path="/eq_manager/*" element={<EquipmentManagerLayout />} />
 
           <Route path="/videos" element={<VideoPortal />} />
           <Route path="/videos/:videoId" element={<VideoDetails />} />
-          
+          <Route path="/meal-templates" element={<PredefinedMealTemplates />} />
+          <Route path="/*" element={<Homepage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </GoogleOAuthProvider>

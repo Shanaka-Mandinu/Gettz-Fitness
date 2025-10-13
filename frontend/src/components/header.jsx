@@ -50,7 +50,7 @@ export default function Navbar() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
-        navigate("/login");
+        navigate("/");
       }
     });
   };
@@ -67,6 +67,7 @@ export default function Navbar() {
 
 
   const avatarSrc = useMemo(() => {
+    // Check for valid HTTP URLs first
     if (
       user?.avatar &&
       typeof user.avatar === "string" &&
@@ -79,9 +80,24 @@ export default function Navbar() {
       user.profilePicture.startsWith("http")
     )
       return user.profilePicture;
-    if (user?.profilePicture && typeof user.profilePicture === "string")
+    
+    // Check for other valid profile pictures (not default placeholder)
+    if (
+      user?.profilePicture &&
+      typeof user.profilePicture === "string" &&
+      user.profilePicture !== "default-profile.jpg" &&
+      user.profilePicture.trim() !== ""
+    )
       return user.profilePicture;
-    if (user?.avatar && typeof user.avatar === "string") return user.avatar;
+    if (
+      user?.avatar &&
+      typeof user.avatar === "string" &&
+      user.avatar !== "default-profile.jpg" &&
+      user.avatar.trim() !== ""
+    )
+      return user.avatar;
+    
+    // Fallback to default avatar
     return DefaultAvatar;
   }, [user]);
 

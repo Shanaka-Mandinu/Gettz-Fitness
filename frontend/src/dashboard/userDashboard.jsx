@@ -4,12 +4,15 @@ import UserSidebar from "../components/userSidebar.jsx";
 import { User } from "lucide-react";
 
 import Dashboard from "../pages/user/dashboard.jsx";
+import { Suspense, lazy } from "react";
 import RequestMeals from "../pages/user/requestMeal.jsx";
 import CurrentMeal from "../pages/user/currentMeal.jsx";
+import EditMealRequest from "../pages/user/editMealRequest.jsx";
 import SaveCards from "../pages/client/cards/viewCards.jsx";
 import AddCardForm from "../pages/client/cards/addCards.jsx";
 import UpdateCardForm from "../pages/client/cards/updateCard.jsx";
 import ViewSubscription from "../pages/client/mySubscription/viewSubscription.jsx";
+import MyOrders from "../pages/user/myOrders.jsx";
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -51,18 +54,20 @@ export default function UserLayout() {
           <div className="mx-auto max-w-7xl px-0 py-0">
             <Routes>
               <Route index element={<Navigate to="dashboard" replace />} />
-
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="requestMeal" element={<RequestMeals />} />
+              <Route path="edit-meal-request" element={<EditMealRequest />} />
               <Route path="currentMeal" element={<CurrentMeal />} />
-              <Route path="/manageCards" element={<SaveCards />} />
-              <Route path="/manageCards/addCard" element={<AddCardForm />} />
-              <Route
-                path="/manageCards/updateCard"
-                element={<UpdateCardForm />}
-              />
-              <Route path="/mySubscription" element={<ViewSubscription />} />
-
+              <Route path="manageCards" element={<SaveCards />} />
+              <Route path="manageCards/addCard" element={<AddCardForm />} />
+              <Route path="manageCards/updateCard" element={<UpdateCardForm />} />
+              <Route path="mySubscription" element={<ViewSubscription />} />
+              <Route path="myOrders" element={<MyOrders />} />
+              <Route path="inquiry" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  {React.createElement(lazy(() => import('../pages/user/UserInquiry.jsx')))}
+                </Suspense>
+              } />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>
           </div>

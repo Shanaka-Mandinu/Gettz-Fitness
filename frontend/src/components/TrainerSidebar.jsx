@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Dumbbell, CalendarClock, Video,
-  Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy
+  Wrench, Pill, BadgePercent, Settings, Menu, HandPlatter, ArrowDownToDot, Trophy,
+  LogOut, User, ChefHat
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
+import Swal from "sweetalert2";
 
 const linkBase =
   "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all";
@@ -16,19 +18,39 @@ const idleStyle =
 const navItems = [
   { to: "/trainerDashboard/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/trainerDashboard/reqMeals", label: "User Requests", icon: HandPlatter  },
+  { to: "/trainerDashboard/mealTemplate", label: "Meal Templates", icon: ChefHat},
   { to: "/trainerDashboard/challenges", label: "Challenges", icon: Trophy },
-
+  { to: "/trainerDashboard/profile", label: "Profile", icon: User },
 ];
 
 export default function TrainerSidebar() {
   const [open, setOpen] = useState(true);
+  const navigate=useNavigate()
+   function logout() {
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to log out?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, Log Out!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/admin");
+        }
+      });
+    }
 
   return (
     <aside
       className={`${
         open ? "w-64" : "w-16"
-      } sticky top-0 h-screen shrink-0 border-r bg-white transition-all`}
+      } sticky top-0 h-screen shrink-0 border-r bg-white transition-all flex flex-col`}
     >
+      {/* Header */}
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-2">
           <img src={GymLogo} alt="Gettz" className="h-9 w-9 rounded-full" />
@@ -44,7 +66,8 @@ export default function TrainerSidebar() {
         </button>
       </div>
 
-      <nav className="px-2 pt-2 space-y-1">
+      {/* Navigation */}
+      <nav className="px-2 pt-2 space-y-1 flex-1 flex-1">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -59,6 +82,20 @@ export default function TrainerSidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Logout Button - Fixed at bottom */}
+      <div className="p-3 border-t border-gray-200">
+        <button
+          className={`w-full flex items-center gap-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg px-4 py-2 shadow-sm transition-colors ${
+            open ? "justify-start" : "justify-center"
+          }`}
+          title={!open ? "Logout" : undefined}
+          onClick={logout}
+        >
+          <LogOut className="h-4 w-4" />
+          {open && <span>Logout</span>}
+        </button>
+      </div>
     </aside>
   );
 }

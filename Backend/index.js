@@ -17,6 +17,7 @@ import challengeRouter from './routes/challengeRouter.js'
 import comPostRouter from './routes/comPostRouter.js'
 import equipmentRouter from './routes/equipmentRoute.js';
 import supplementRouter from './routes/supplementRoute.js';
+import orderRouter from './routes/orderRoute.js';
 import maintenanceLogsRouter from './routes/maintenanceLogsRoute.js';
 import purchaseRouter from './routes/purchaseRoute.js';
 import authRoutes from './routes/auth.js';
@@ -43,6 +44,11 @@ import { Server } from "socket.io";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import Member from "./model/memberModel.js";
 import Attendance from "./model/attendanceModel.js";
+import mealTemplateRouter from "./routes/mealTemplateRouter.js"
+import feedbackRouter from "./routes/feedbackRoute.js"
+import statsRouter from "./routes/statsRoute.js"
+import path from "path";
+import initRFIDListener from "./serial/rfidListener.js"; 
 
 
 dotenv.config();
@@ -95,9 +101,12 @@ app.use("/api/mealPlan", mealPlanRouter);
 app.use("/api/employeeSalary", employeeSalaryRouter);
 app.use("/api/employeeSalarayRecords", employeeSalaryRecordsRouter);
 app.use("/api/mealRequest", mealRequestRouter);
+app.use("/api/mealTemplate",mealTemplateRouter);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/equipment",equipmentRouter);
 app.use("/api/supplement",supplementRouter);
+app.use("/api/order", orderRouter);
 app.use("/api/purchase",purchaseRouter);
 app.use("/api/maintenanceLogs",maintenanceLogsRouter);
 
@@ -118,33 +127,14 @@ app.use("/api/inquiry",inqRouter);
 app.use('/api/notification',notificationRouter)
 app.use("/api/members", memberRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/feedback", feedbackRouter);
+app.use("/api/stats", statsRouter);
 
-
-// const port = new SerialPort({ path: "COM5", baudRate: 9600 }); // Replace COM5 with your port
-// const parser = port.pipe(new ReadlineParser({ delimiter: "\n" }));
-// parser.on("data", async (raw) => {
-//   const uid = String(raw).trim().toUpperCase();
-//   if (!/^[0-9A-F]{8,}$/i.test(uid)) return;
-
-//   const member = await Member.findOne({ rfid: uid });
-
-//   let status = "INACTIVE";
-//   let mid = member?.membershipId || ""; // or compute one
-//   if (member) {
-//     const valid = member.isActive && (!member.membershipExpiry || member.membershipExpiry > new Date());
-//     // create attendance record
-//     await new Attendance({ rfid: uid, memberName: member.name, time: new Date() }).save();
-//     if (valid) status = "ACTIVE";
-//     // realtime update to dashboard
-//     io.emit("attendanceUpdate", { rfid: uid, memberName: member.name, time: new Date().toISOString() });
-//   }
-
-//   // Send status back to Arduino (ACTIVE|MID:XXXX or INACTIVE)
-//   const line = status === "ACTIVE" && mid ? `ACTIVE|MID:${mid}\n` : `${status}\n`;
-//   try { port.write(line); } catch (e) { console.error("serial write failed:", e.message); }
-// });
-
-
+io.on("connection", (socket) => {
+  console.log("🟢 Dashboard connected");
+  socket.on("disconnect", () => console.log("🔴 Dashboard disconnected"));
+});
+initRFIDListener(io);
 
 app.post('/api/auth/google', googleLogin);
 app.listen(3000, () =>{

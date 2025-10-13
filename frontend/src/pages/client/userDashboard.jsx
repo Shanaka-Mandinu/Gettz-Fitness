@@ -6,6 +6,8 @@ import DefaultAvatar from "../../assets/default-avatar.png";
 
 export default function UserDashboard() {
 	const [user, setUser] = useState(null);
+	const [inquiries, setInquiries] = useState([]);
+	const [loadingInquiries, setLoadingInquiries] = useState(false);
 
 	useEffect(() => {
 		try {
@@ -16,6 +18,21 @@ export default function UserDashboard() {
 			setUser(null);
 		}
 	}, []);
+
+	useEffect(() => {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+		setLoadingInquiries(true);
+		fetch("/api/inquiry/user", {
+			headers: { Authorization: `Bearer ${token}` }
+		})
+			.then(res => res.json())
+			.then(data => {
+				setInquiries(Array.isArray(data) ? data : []);
+				setLoadingInquiries(false);
+			})
+			.catch(() => setLoadingInquiries(false));
+	}, [user]);
 
 	const displayName = useMemo(() => {
 		if (!user) return "Guest";
@@ -28,10 +45,39 @@ export default function UserDashboard() {
 	}, [user]);
 
 	const avatarSrc = useMemo(() => {
-		if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http")) return user.avatar;
-		if (user?.profilePicture && typeof user.profilePicture === "string" && user.profilePicture.startsWith("http")) return user.profilePicture;
-		if (user?.profilePicture && typeof user.profilePicture === "string") return user.profilePicture;
-		if (user?.avatar && typeof user.avatar === "string") return user.avatar;
+		if (!user) return DefaultAvatar;
+		
+		// Check for valid HTTP URLs first
+		if (
+			user?.avatar &&
+			typeof user.avatar === "string" &&
+			user.avatar.startsWith("http")
+		)
+			return user.avatar;
+		if (
+			user?.profilePicture &&
+			typeof user.profilePicture === "string" &&
+			user.profilePicture.startsWith("http")
+		)
+			return user.profilePicture;
+		
+		// Check for other valid profile pictures (not default placeholder)
+		if (
+			user?.profilePicture &&
+			typeof user.profilePicture === "string" &&
+			user.profilePicture !== "default-profile.jpg" &&
+			user.profilePicture.trim() !== ""
+		)
+			return user.profilePicture;
+		if (
+			user?.avatar &&
+			typeof user.avatar === "string" &&
+			user.avatar !== "default-profile.jpg" &&
+			user.avatar.trim() !== ""
+		)
+			return user.avatar;
+		
+		// Fallback to default avatar
 		return DefaultAvatar;
 	}, [user]);
 
@@ -69,6 +115,40 @@ export default function UserDashboard() {
 							))}
 						</div>
 					</div>
+				</div>
+				{/* User Inquiries Section */}
+				<div className="w-full max-w-2xl mt-8 bg-white rounded-2xl shadow p-6">
+					<h3 className="text-xl font-bold text-gray-800 mb-4">Your Inquiries</h3>
+					{loadingInquiries ? (
+						<div>Loading inquiries...</div>
+					) : inquiries.length === 0 ? (
+						<div className="text-gray-500">No inquiries found.</div>
+					) : (
+						<ul className="space-y-4">
+							{inquiries.map((inq) => (
+								<li key={inq._id} className="border rounded-lg p-4">
+									<div className="font-semibold text-red-600">{inq.inquiry_type}</div>
+									<div className="text-gray-700 mb-2">{inq.inquiry_message}</div>
+									<div className="text-xs text-gray-400 mb-2">Sent: {new Date(inq.inquiry_date).toLocaleString()}</div>
+									<div className="mt-2">
+										<div className="font-semibold text-gray-700">Replies:</div>
+										{inq.inquiry_response && inq.inquiry_response.length > 0 ? (
+											<ul className="ml-4 mt-1 space-y-1">
+												{inq.inquiry_response.map((resp, idx) => (
+													<li key={idx} className="text-sm text-gray-800">
+														<span className="font-medium">{resp.responder === "admin" ? "Admin" : "You"}:</span> {resp.message}
+														<span className="ml-2 text-xs text-gray-400">{resp.date ? new Date(resp.date).toLocaleString() : ""}</span>
+													</li>
+												))}
+											</ul>
+										) : (
+											<div className="text-gray-500">No replies yet.</div>
+										)}
+									</div>
+								</li>
+							))}
+						</ul>
+					)}
 				</div>
 			</main>
 			<Footer />

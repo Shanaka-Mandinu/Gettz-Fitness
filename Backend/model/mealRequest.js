@@ -25,10 +25,6 @@ const mealRequestSchema = new Schema({
     type: String,
   },
 
-  request_date: {
-    type: String,
-  },
-
   weight: {
     type: String,
   },
@@ -43,6 +39,12 @@ const mealRequestSchema = new Schema({
 
   mealType: {
     type: String,
+  },
+
+  status: {
+    type: String,
+    enum: ['urgent', 'normal'],
+    default: 'normal'
   },
 });
 

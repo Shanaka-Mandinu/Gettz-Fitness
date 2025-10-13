@@ -1,5 +1,6 @@
 import MembershipPlan from "../model/Membership_Plans_Model.js";
 import Subscription from "../model/Subscription_Model.js";
+import User from "../model/user.js";
 
 export function addSubscription(req, res) {
   console.log("Add Subscription runs");
@@ -104,17 +105,22 @@ export function mySubscription(req, res) {
     });
 }
 
-export function cancelSubscription(req, res) {
-  Subscription.findOneAndUpdate(
-    { user_id: req.user._id },
-    { status: "canceled" }
-  )
-    .then(() => {
-      res.status(200).json({ message: "Subscription Canceled" });
-    })
-    .catch(() => {
-      res
-        .status(500)
-        .json({ message: "Server error when canceling the subscription" });
-    });
+export async function cancelSubscription(req, res) {
+  try {
+    await Subscription.findOneAndUpdate(
+      { user_id: req.user._id },
+      { status: "canceled" }
+    );
+    const user = await User.findById(req.user._id);
+    user.role = "user";
+    await user.save();
+
+    res.status(200).json({ message: "Subscription Canceled" });
+  } catch (error) {
+    console.error("Error canceling subscription:", error);
+    res
+      .status(500)
+      .json({ message: "Server error when canceling the subscription" });
+  }
 }
+

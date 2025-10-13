@@ -62,6 +62,26 @@ export function getAllTrainers(req,res){
         }
     );
 }
+
+
+export function getPublicTrainers(req, res) {
+    Trainer.find({ isActive: true, isDisabled: false })
+        .select('name profilePicture specialization experienceYears certifications rating bio')
+        .limit(6)
+        .then((trainers) => {
+            res.status(200).json({
+                success: true,
+                data: trainers
+            });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                success: false,
+                message: "Error retrieving trainers",
+                error: err.message
+            });
+        });
+}
 export function loginTrainer(req, res) {
     req.body.role = 'trainer';  
     return loggingController(req, res);
@@ -153,5 +173,111 @@ export function getTrainerById(req,res){
             });
         }
     );
+}
+
+// Get trainer profile (for logged-in trainer)
+export function getTrainerProfile(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+    Trainer.findOne({ email: req.user.email }).then(
+        (trainer) => {
+            if (!trainer) {
+                return res.status(404).json({ 
+                    message: 'Trainer profile not found' });
+            }
+            res.status(200).json({
+                message: "Profile retrieved successfully",
+                trainer: trainer
+            });
+        }
+    ).catch(
+        (err) => {
+            res.status(500).json({
+                message: "Error retrieving trainer profile",
+                error: err.message
+            });
+        }
+    );
+}
+
+
+export function updateTrainerProfile(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+    const updateData = {
+        ...req.body,
+        updatedAt: new Date()
+    };
+
+    Trainer.findOneAndUpdate(
+        { email: req.user.email },
+        updateData,
+        { new: true, runValidators: true }
+    ).then(
+        (trainer) => {
+            if (!trainer) {
+                return res.status(404).json({ 
+                    message: 'Trainer profile not found' });
+            }
+            res.status(200).json({
+                message: "Profile updated successfully",
+                trainer: trainer
+            });
+        }
+    ).catch(
+        (err) => {
+            res.status(500).json({
+                message: "Error updating trainer profile",
+                error: err.message
+            });
+        }
+    );
+}
+
+export function getTrainerStats(req, res) {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Authentication required"
+        });
+    }
+
+    if (req.user.role !== 'trainer') {
+        return res.status(403).json({
+            message: "Access denied. Trainer role required."
+        });
+    }
+
+
+    const stats = {
+        totalClients: 0,
+        activeClients: 0,
+        totalSessions: 0,
+        rating: 4.5
+    };
+
+    res.status(200).json({
+        message: "Stats retrieved successfully",
+        stats: stats
+    });
 }
 

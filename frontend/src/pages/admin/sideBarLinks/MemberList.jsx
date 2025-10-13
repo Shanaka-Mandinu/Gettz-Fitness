@@ -19,10 +19,10 @@ export default function MemberList() {
     axios
       .get(`${import.meta.env.VITE_BACKEND_URL}/api/user`, { headers })
       .then((res) => {
-        // API may return an array or an object { users: [...] }
+       
         const raw = Array.isArray(res.data) ? res.data : res.data?.users || [];
         const onlyMembers = raw.filter(
-          (u) => String(u.role || "").toLowerCase() === "user"
+          (u) => String(u.role || "").toLowerCase() === "user" || String(u.role || "").toLowerCase() === "member"
         );
         setMembers(onlyMembers);
         setLoaded(true);

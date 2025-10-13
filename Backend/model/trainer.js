@@ -48,6 +48,18 @@ const trainerSchema = new mongoose.Schema({
         enum: ['General Fitness', 'Weight Loss', 'Muscle Gain', 'Nutrition', 'Yoga', 'Pilates'],
         default: 'General Fitness'
     },
+    location: {
+        type: String,
+        default: ""
+    },
+    bio: {
+        type: String,
+        default: ""
+    },
+    availability: {
+        type: String,
+        default: ""
+    },
     rating:{
         type: Number,
         min: 0,

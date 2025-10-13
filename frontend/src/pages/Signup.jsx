@@ -6,7 +6,7 @@ import {
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import meadiaUpload from "../utils/mediaUpload";
+import mediaUpload from "../utils/mediaUpload";
 
 import loginBg from "../assets/loging.jpg";
 import GymLogo from "../assets/GymLogo.jpg";
@@ -156,7 +156,7 @@ export default function SignupPage() {
         // guard: only images up to ~5MB
         if (!/^image\//.test(f.type)) throw new Error("Please select an image file");
         if (f.size > 5 * 1024 * 1024) throw new Error("Image too large (max 5MB)");
-        const uploaded = await meadiaUpload(f);
+        const uploaded = await mediaUpload(f);
         profilePictureUrl = uploaded?.url || uploaded?.secure_url || uploaded;
       }
 
