@@ -24,7 +24,7 @@ export default function EditMealTemplate() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
-  // Fetch template data
+  // Fetch template data once by id
   useEffect(() => {
     async function fetchTemplate() {
       try {
@@ -48,16 +48,9 @@ export default function EditMealTemplate() {
           photo: null,
         });
       } catch (err) {
-        console.error("Failed to fetch template:", err);
-        
-        // Handle authentication errors
-        if (err.response?.status === 401) {
-          const errorMessage = err.response?.data?.message || "Authentication required";
-          if (errorMessage.includes("Trainer or Admin authorization")) {
-            toast.error("You need admin or trainer authorization");
-          } else {
-            toast.error("You need admin or trainer authorization");
-          }
+        const status = err?.response?.status;
+        if (status === 401) {
+          toast.error("You need admin or trainer authorization");
         } else {
           toast.error("Failed to load template. Redirecting back...");
           setTimeout(() => {
@@ -72,7 +65,7 @@ export default function EditMealTemplate() {
   }, [id, navigate]);
   
 
-  // Helper to build FormData
+  // Helper to build FormData for multipart upload (photo optional)
   function buildFormData() {
     const formData = new FormData();
     formData.append("templateName", form.templateName.trim());
@@ -89,7 +82,23 @@ export default function EditMealTemplate() {
     return formData;
   }
 
-  // Update
+  // Validate image before setting into state (<=10MB and image/* type)
+  function handlePhotoChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxBytes) {
+      toast.error("Image is too large. Max size is 10MB.");
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error("Invalid file type. Please choose an image.");
+      return;
+    }
+    setForm({ ...form, photo: file });
+  }
+
+  // Update template on submit (requires trainer/admin JWT)
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -99,28 +108,17 @@ export default function EditMealTemplate() {
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate/${id}`,
         formData,
-        { 
-          headers: { 
-            "Content-Type": "multipart/form-data",
-            ...(token && { Authorization: "Bearer " + token })
-          } 
-        }
+        token ? { headers: { Authorization: "Bearer " + token } } : undefined
       );
       toast.success("Meal template updated successfully!");
       navigate('/trainerDashboard/mealTemplate');
     } catch (err) {
-      console.error("Failed to update template:", err.response?.data || err);
-      
-      // Handle authentication errors
-      if (err.response?.status === 401) {
-        const errorMessage = err.response?.data?.message || "Authentication required";
-        if (errorMessage.includes("Trainer or Admin authorization")) {
-          toast.error("You need admin or trainer authorization");
-        } else {
-          toast.error("You need admin or trainer authorization");
-        }
+      const status = err?.response?.status;
+      if (status === 401) {
+        toast.error("You need admin or trainer authorization");
       } else {
-        toast.error("Failed to update template. Please try again.");
+        const msg = err?.response?.data?.error || err?.message || "Failed to update template. Please try again.";
+        toast.error(String(msg));
       }
     } finally {
       setLoading(false);
@@ -251,9 +249,7 @@ export default function EditMealTemplate() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) =>
-                          setForm({ ...form, photo: e.target.files[0] })
-                        }
+                        onChange={handlePhotoChange}
                         className="hidden"
                       />
                     </label>

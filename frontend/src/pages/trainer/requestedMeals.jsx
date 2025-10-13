@@ -18,6 +18,11 @@ export default function RequestedMeals() {
   async function fetchRequests() {
     try {
       setBusy(true);
+      // Guard: backend URL must be configured
+      if (!import.meta.env.VITE_BACKEND_URL) {
+        toast.error("Backend URL not configured. Set VITE_BACKEND_URL.");
+        return;
+      }
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: "Bearer " + token } : undefined;
 
@@ -28,11 +33,14 @@ export default function RequestedMeals() {
       const items = Array.isArray(data?.response) ? data.response : [];
       setRequests(items);
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to load requests";
-      toast.error(msg);
+      // Prefer role-specific message on 401, else surface server message
+      const status = err?.response?.status;
+      if (status === 401) {
+        toast.error("You need admin or trainer authorization");
+      } else {
+        const msg = err?.response?.data?.message || err?.message || "Failed to load requests";
+        toast.error(String(msg));
+      }
     } finally {
       setBusy(false);
     }
@@ -52,6 +60,7 @@ export default function RequestedMeals() {
 
   // -------- PDF ----------
   const handleDownloadPDF = () => {
+    // Build a report PDF with brand header, two tables, and footer
     const doc = new jsPDF();
     
     // Header
@@ -121,7 +130,8 @@ export default function RequestedMeals() {
 
     // Second Table - Additional Details
     autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 20,
+      // Start after first table ends; if undefined, fall back to a default
+      startY: (doc.lastAutoTable?.finalY || 55) + 20,
       head: [
         [
           "No",
@@ -177,7 +187,8 @@ export default function RequestedMeals() {
 
   // ---- Assign helper ----
   function openAssign(row) {
-    // Store request data in localStorage for the assign page
+    // Store selected request data in localStorage for the assign page.
+    // Backend expects these fields when creating a meal plan from a request.
     localStorage.setItem('assignRequestData', JSON.stringify({
       request_id: row.request_id ?? "",
       user_name: row.user_name ?? "",
@@ -190,7 +201,7 @@ export default function RequestedMeals() {
       user_id: row.user_id ?? "",
     }));
     
-    // Navigate to assign page
+    // Navigate to the plan assignment page
     navigate('/trainerDashboard/assign-meal-plan');
   }
 
@@ -213,7 +224,7 @@ export default function RequestedMeals() {
           </div>
         </div>
 
-        {/* Filter Section */}
+  {/* Filter Section: quick chips to filter by urgency */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
             <button
@@ -249,7 +260,7 @@ export default function RequestedMeals() {
           </div>
         </div>
 
-        {/* Table */}
+  {/* Table: requests list with loading/empty states and Assign action */}
         <div className="rounded-2xl border border-gray-200 bg-white overflow-x-auto">
           <table className="min-w-full table-fixed text-sm text-left text-gray-700">
             <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">

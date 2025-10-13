@@ -5,9 +5,13 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 
 export default function EditMealRequest() {
+
+  
   const navigate = useNavigate();
+  // UI/validation state
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  // Form model mirrors backend fields. request_id is the numeric identifier.
   const [editForm, setEditForm] = useState({
     request_id: "",
     user_id: "",
@@ -20,8 +24,10 @@ export default function EditMealRequest() {
     height: "",
   });
 
+
+
   useEffect(() => {
-    // Get the request data from localStorage
+    // Load the request data from localStorage set by the list page
     const requestData = localStorage.getItem('editRequestData');
     if (requestData) {
       const parsedData = JSON.parse(requestData);
@@ -32,13 +38,12 @@ export default function EditMealRequest() {
     }
   }, [navigate]);
 
-  const isValidDate = (str) => {
-    if (!str) return false;
-    const d = new Date(str);
-    return !Number.isNaN(d.getTime());
-  };
+
+  
+  // Simple numeric validation helper
   const isPositive = (v) => Number.isFinite(Number(v)) && Number(v) > 0;
 
+  // Validate the form prior to sending the update to backend
   const validate = (v) => {
     const e = {};
     if (!String(v.user_name || "").trim())
@@ -61,6 +66,9 @@ export default function EditMealRequest() {
     return e;
   };
 
+
+
+  // Submit the update to backend. Requires Authorization token.
   const handleSubmitUpdate = async (e) => {
     e.preventDefault();
     if (!editForm.request_id) {
@@ -85,11 +93,13 @@ export default function EditMealRequest() {
     };
     try {
       setSaving(true);
+      const token = localStorage.getItem("token");
       await axios.put(
         `${
           import.meta.env.VITE_BACKEND_URL
         }/api/mealRequest/${encodeURIComponent(editForm.request_id)}`,
-        payload
+        payload,
+        { headers: { Authorization: "Bearer " + token } }
       );
       Swal.fire({
         position: "center",
@@ -112,6 +122,9 @@ export default function EditMealRequest() {
     }
   };
 
+
+
+  // Reusable styles for form controls
   const label = "block mb-1 text-sm font-medium text-black";
   const sub = "text-xs text-gray-500 mb-2";
   const input =

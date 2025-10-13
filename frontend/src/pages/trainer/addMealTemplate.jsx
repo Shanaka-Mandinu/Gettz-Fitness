@@ -1,3 +1,4 @@
+// Trainer: Add a new meal template (multipart form with optional photo)
 import { useState } from "react";
 import { Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import Swal from "sweetalert2";
 export default function AddMealTemplate() {
   const navigate = useNavigate();
   
+  // Form model mirrors backend controller fields
   const [form, setForm] = useState({
     templateName: "",
     mealType: "",
@@ -23,7 +25,7 @@ export default function AddMealTemplate() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Validation function
+  // Validation function: returns a map of field errors (empty when valid)
   const validateForm = () => {
     const newErrors = {};
 
@@ -87,7 +89,8 @@ export default function AddMealTemplate() {
     return newErrors;
   };
 
-  // Helper to build FormData
+
+  // Helper to build FormData for multipart upload (photo optional)
   function buildFormData() {
     const formData = new FormData();
     formData.append("templateName", form.templateName.trim());
@@ -104,7 +107,35 @@ export default function AddMealTemplate() {
     return formData;
   }
 
-  // Create
+
+  // Validate image before setting into state (max ~10MB; basic type check)
+  function handlePhotoChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxBytes) {
+      Swal.fire({
+        title: 'Image too large',
+        text: 'Please choose an image up to 10MB.',
+        icon: 'warning',
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        title: 'Invalid file type',
+        text: 'Please choose a valid image file.',
+        icon: 'warning',
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+    setForm({ ...form, photo: file });
+  }
+
+
+  // Create: submit form to backend (requires trainer/admin JWT)
   async function handleSubmit(e) {
     e.preventDefault();
     
@@ -140,34 +171,13 @@ export default function AddMealTemplate() {
       const formData = buildFormData();
       const token = localStorage.getItem("token");
       
-      console.log("Submitting form data:", {
-        templateName: form.templateName,
-        mealType: form.mealType,
-        foodItems: form.foodItems,
-        calories: form.calories,
-        protein: form.protein,
-        carbs: form.carbs,
-        fats: form.fats,
-        dietCategory: form.dietCategory,
-        duration: form.duration,
-        hasPhoto: !!form.photo
-      });
-      
-      console.log("Token:", token);
-      console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
-      
+      // Note: do NOT set Content-Type manually for FormData; let the browser set the boundary
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate`,
         formData,
-        { 
-          headers: { 
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-          } 
-        }
+        headers ? { headers } : undefined
       );
-      
-      console.log("Template created successfully:", response.data);
       
       // Show success alert
       await Swal.fire({
@@ -180,10 +190,6 @@ export default function AddMealTemplate() {
       
       navigate('/trainerDashboard/mealTemplate');
     } catch (err) {
-      console.error("Failed to create template:", err.response?.data || err);
-      console.error("Error status:", err.response?.status);
-      console.error("Error headers:", err.response?.headers);
-      
       let errorMessage = "Failed to create template. Please try again.";
       
       if (err.response?.status === 401) {
@@ -214,6 +220,8 @@ export default function AddMealTemplate() {
       setLoading(false);
     }
   }
+
+
 
   return (
     <div className="p-6">
@@ -339,9 +347,7 @@ export default function AddMealTemplate() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) =>
-                          setForm({ ...form, photo: e.target.files[0] })
-                        }
+                        onChange={handlePhotoChange}
                         className="hidden"
                       />
                     </label>
