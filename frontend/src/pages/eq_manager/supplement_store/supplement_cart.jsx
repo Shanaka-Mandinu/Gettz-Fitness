@@ -48,9 +48,9 @@ export function CartProvider({ children }) {
         const id = product.Sup_code;
         if (!id) return;
 
-        //if out of stock
+
+        // If product is out of stock, silently ignore the add (no toast)
         if (product.Sup_status === "Out of stock") {
-            toast.error("This item is currently out of stock.");
             return;
         }
 
@@ -182,7 +182,7 @@ export default function SupplementCart() {
                                 <p className="font-semibold text-gray-900 leading-tight line-clamp-2">
                                     {item.name}
                                 </p>
-                                
+
                             </div>
                             {item.type && (
                                 <p className="text-sm text-gray-500 mt-0.5">{item.type}</p>
