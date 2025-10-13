@@ -3,14 +3,10 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import bowl from "../../assets/healthy-meal.png";
 import Swal from "sweetalert2";
 
-function IconBowl() {
-  return (
-    <img src={bowl} className="icon h-5 w-5 inline-block object-contain" alt="bowl" />
-  );
-}
+
+// Small inline timer icon
 function IconTimer() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
@@ -20,6 +16,7 @@ function IconTimer() {
     </svg>
   );
 }
+// Small inline calories/fire icon
 function IconFire() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
@@ -33,6 +30,7 @@ function IconFire() {
   );
 }
 
+// Colored pill badge; tone selects Tailwind classes
 function Pill({ children, tone = "gray" }) {
   const tones = {
     gray: "bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-200",
@@ -47,6 +45,7 @@ function Pill({ children, tone = "gray" }) {
   );
 }
 
+// A single meal plan card displaying key fields; supports both API plans and template selections
 function MealPlanCard({ plan, onDelete }) {
   const name = plan.meal_name ?? plan.mealName ?? "-";
   const type = plan.meal_type ?? plan.planMealType ?? "-";
@@ -204,27 +203,42 @@ export default function CurrentMeal() {
   const [saving, setSaving] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
 
+  // Load meal plans assigned to the user from API and merge with locally-selected templates
   async function fetchPlans() {
     try {
       setBusy(true);
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: "Bearer " + token } : undefined;
 
-      console.log("fetchPlans - token:", token);
-      console.log("fetchPlans - headers:", headers);
-
       // Fetch regular meal plans from API
       const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealPlan/getOneMealPlan`,
         { headers }
       );
-
-      console.log("fetchPlans - API response:", data);
       const apiItems = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
-      console.log("fetchPlans - apiItems:", apiItems);
       
-      // Fetch selected meal templates from localStorage
-      const selectedTemplates = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
+  // Fetch selected meal templates from localStorage (scoped per user)
+      let currentUserId = null;
+      try {
+        const uStr = localStorage.getItem('user');
+        if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
+      } catch {}
+      const storageKey = currentUserId ? `selectedMealTemplates:${currentUserId}` : 'selectedMealTemplates';
+      let selectedTemplates = [];
+      try {
+        selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      } catch { selectedTemplates = []; }
+      // One-time migration: move any legacy global selections to the user-scoped key
+      if (currentUserId && selectedTemplates.length === 0) {
+        try {
+          const legacy = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
+          if (Array.isArray(legacy) && legacy.length > 0) {
+            localStorage.setItem(storageKey, JSON.stringify(legacy));
+            localStorage.removeItem('selectedMealTemplates');
+            selectedTemplates = legacy;
+          }
+        } catch {}
+      }
       
       // Convert templates to the same format as meal plans
       const templateItems = selectedTemplates.map(template => ({
@@ -238,11 +252,8 @@ export default function CurrentMeal() {
         templateData: template // Keep original template data
       }));
 
-      // Combine both arrays
+  // Combine both arrays into a single list for rendering and export
       const allItems = [...apiItems, ...templateItems];
-      console.log("fetchPlans - allItems:", allItems);
-      console.log("fetchPlans - apiItems length:", apiItems.length);
-      console.log("fetchPlans - templateItems length:", templateItems.length);
       setPlans(allItems);
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Failed to load meal plans";
@@ -253,6 +264,7 @@ export default function CurrentMeal() {
   }
 
 
+  // Delete either an API meal plan (with backend call) or a locally-selected template (localStorage)
   async function handleDelete(plan) {
     
     const result = await Swal.fire({
@@ -269,21 +281,33 @@ export default function CurrentMeal() {
     try {
       setSaving(true);
       
-      // Check if it's a template (selected from predefined templates)
+  // Check if it's a template (selected from predefined templates)
       if (plan.isTemplate) {
         // Remove from localStorage
-        const selectedTemplates = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
+        let currentUserId = null;
+        try {
+          const uStr = localStorage.getItem('user');
+          if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
+        } catch {}
+        const storageKey = currentUserId ? `selectedMealTemplates:${currentUserId}` : 'selectedMealTemplates';
+        const selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
         const updatedTemplates = selectedTemplates.filter(t => t.id !== plan._id);
-        localStorage.setItem('selectedMealTemplates', JSON.stringify(updatedTemplates));
+        localStorage.setItem(storageKey, JSON.stringify(updatedTemplates));
         
         toast.success("The template has been removed from your meal plans.");
       } else {
         // Delete regular meal plan from API
         const id = plan.mealPlan_id;
+        if (id === undefined || id === null) {
+          toast.error("Missing meal plan ID");
+          return;
+        }
+        const token = localStorage.getItem("token");
         await axios.delete(
           `${
             import.meta.env.VITE_BACKEND_URL
-          }/api/mealPlan/${encodeURIComponent(id)}`
+          }/api/mealPlan/${encodeURIComponent(id)}`,
+          token ? { headers: { Authorization: "Bearer " + token } } : undefined
         );
         toast.success("The plan has been deleted.");
       }
@@ -310,7 +334,7 @@ export default function CurrentMeal() {
     fetchPlans();
   }, []);
 
-  // Filter plans based on type
+  // Filter plans based on type (all | custom | template)
   const filteredPlans = plans.filter(plan => {
     if (typeFilter === "all") return true;
     if (typeFilter === "custom") return !plan.isTemplate;
@@ -319,6 +343,7 @@ export default function CurrentMeal() {
   });
 
 
+  // Export the currently filtered plans to a PDF with two tables (basic + nutritional info)
   function handleDownloadPDF() {
     try {
       const doc = new jsPDF();
@@ -460,7 +485,6 @@ export default function CurrentMeal() {
       doc.save("user_meal_plans_report.pdf");
     } catch (err) {
       toast.error("Failed to generate PDF");
-      console.error(err);
     }
   }
   
