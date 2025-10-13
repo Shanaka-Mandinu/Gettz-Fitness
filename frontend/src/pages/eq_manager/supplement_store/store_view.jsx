@@ -89,30 +89,7 @@ export default function SupplementStoreView() {
       <div className="max-w-7xl pt-10 mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
 
-          {/* {uncomment when other parts are ready} */}
-          {/* <div className="lg:hidden">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="w-full bg-white rounded-xl shadow-lg px-4 py-3 flex items-center justify-between border border-gray-200 hover:shadow-xl transition-shadow"
-            >
-              <span className="font-semibold text-gray-700">Filters</span>
-              <svg
-                className={`w-5 h-5 transition-transform ${showFilters ? "rotate-180" : ""
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-          </div> */}
-
+        
           {/* {filter sidebar} */}
           <div className={`lg:w-80 ${showFilters ? "block" : "hidden lg:block"}`}>
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-6">
