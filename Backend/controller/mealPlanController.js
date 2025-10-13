@@ -1,5 +1,6 @@
 import meal from "../model/mealplan.js";
 import MealPlan from "../model/mealplan.js";
+import { createNotificationForUser } from "./notificatinController.js";
 
 export const getMealPlan = (req, res) => {
   req.user = { role: "trainer" };
@@ -49,7 +50,36 @@ export const addMealPlan = (req, res) => {
     });
     mealplan
       .save()
-      .then((response) => {
+      .then(async(response) => {
+        //changed to async
+
+        //try catch block added by sandeep for create notification
+        try{
+
+          const mockReq = {
+            body: {
+              title: "Meal Plan Created✅",
+              body: "Your requested meal plan is ready",
+              type: "alert",
+              userId: req.body.user_id,
+              deliveryTo: req.body.user_name
+            }
+          }
+
+          const mockRes = {
+            status: () => mockRes,
+            json: () => {}
+          }
+
+          await createNotificationForUser(mockReq, mockRes)
+
+        }catch(err){
+          console.log("Meal plan notification failed : ", err)
+          res.json({
+            message : "Meal plan notification error"
+          })
+        }
+
         res.json({ response });
       })
       .catch((error) => {

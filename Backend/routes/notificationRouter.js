@@ -7,7 +7,8 @@ import {
   markAsRead,
   updateNotification,
   viewNotifications,
-  getMyNotifications
+  getMyNotifications,
+  filterNotifications
 } from "../controller/notificatinController.js";
 
 const notificationRouter = express.Router();
@@ -19,5 +20,6 @@ notificationRouter.post("/addOne", createNotificationForUser);
 notificationRouter.put("/update/:id", updateNotification);
 notificationRouter.delete("/delete/:id", deleteNotification);
 notificationRouter.put("/markasread", markAsRead);
+notificationRouter.get("/filter", filterNotifications)
 
 export default notificationRouter;

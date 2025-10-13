@@ -15,20 +15,27 @@ export default function AnnouncementDetailsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
+  //for filtering part
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [filterLoading, setFilterLoading] = useState(false)
+
   useEffect(() => {
-    if (!loaded) {
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_URL}/api/notification`)
-        .then((res) => {
-          setAnnouncement(res.data || []);
-          setLoaded(true);
-        })
-        .catch((err) => {
-          console.error(err);
-          toast.error("Failed to load announcements");
-        });
-    }
-  }, [loaded]);
+    const fetchInitialData = async () => {
+      try {
+        setLoaded(false);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/notification`);
+        setAnnouncement(response.data || []);
+        setLoaded(true);
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+        toast.error("Failed to load announcements");
+        setLoaded(true);
+      }
+    };
+    
+    fetchInitialData();
+  }, []); // Empty dependency array - only runs once
 
   function confirmDelete(id) {
     Swal.fire({
@@ -67,6 +74,7 @@ export default function AnnouncementDetailsPage() {
 
   // Filter announcements by title, type, or deliveryTo
   const filteredAnnouncements = announcement.filter((notifi) => {
+    if(!searchTerm) return true
     const term = searchTerm.toLowerCase();
     return (
       notifi.title?.toLowerCase().includes(term) ||
@@ -74,6 +82,34 @@ export default function AnnouncementDetailsPage() {
       notifi.deliveryTo?.toLowerCase().includes(term)
     );
   });
+
+  useEffect(() => {
+    if (!loaded) return; // Don't run until initial data is loaded
+    
+    const fetchFilteredData = async () => {
+      try {
+        setFilterLoading(true); // Show filter loading state
+        
+        const params = new URLSearchParams();
+        if (typeFilter !== "all") params.append("type", typeFilter);
+        if (dateFilter !== "all") params.append("date", dateFilter);
+        
+        const url = params.toString() 
+          ? `${import.meta.env.VITE_BACKEND_URL}/api/notification/filter?${params}`
+          : `${import.meta.env.VITE_BACKEND_URL}/api/notification`;
+          
+        const response = await axios.get(url);
+        setAnnouncement(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch filtered notifications:", error);
+        toast.error("Failed to load filtered announcements");
+      } finally {
+        setFilterLoading(false); // Hide filter loading state
+      }
+    };
+
+    fetchFilteredData();
+  }, [typeFilter, dateFilter, loaded]); // Dependencies: filters and loaded state
 
   // PDF Download (styled like competitions page)
   const handleDownloadPDF = async () => {
@@ -169,6 +205,33 @@ export default function AnnouncementDetailsPage() {
                 </button>
               </Link>
             </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 items-center mb-5">
+
+              {/* Type Filter */}
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-red-500"
+              >
+                <option value="all">All Types</option>
+                <option value="promotional">Promotional</option>
+                <option value="alert">Alert</option>
+                <option value="warning">Warning</option>
+              </select>
+
+              {/* Date Filter */}
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-red-500"
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+              </select>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white overflow-x-auto">
