@@ -522,7 +522,7 @@ export default function EditVideo() {
             <div className="flex justify-end gap-2 border-t px-4 py-3">
               <button
                 onClick={() => setYtOpen(false)}
-                className="rounded-xl border border-black/10 px-3 py-2 text-sm hover:bg-black/5"
+                className="rounded-xl border border-black/10 px-3 py-2 text-sm hover:bg-black/5 "
               >
                 Close
               </button>
