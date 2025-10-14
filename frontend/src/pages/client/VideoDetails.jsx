@@ -20,7 +20,7 @@ import {
 import Header from "../../components/header";
 
 
-const RAW_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const RAW_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 const API_BASE = RAW_BASE.replace(/\/+$/, "");
 
 const endpoints = {
@@ -73,7 +73,7 @@ function normalizeDriveDirect(url) {
   }
 }
 
-export default function VideoDetails() {
+export default function VideoDetails() {       // Workout Details Page
   const { videoId } = useParams();
   const [data, setData] = useState(null);
   const [likeBusy, setLikeBusy] = useState(false);
@@ -108,15 +108,15 @@ export default function VideoDetails() {
     };
   }, [videoId]);
 
-  const rawUrl = (data?.videoUrl || "").trim();
-  const ytEmbed = useMemo(() => toYouTubeEmbed(rawUrl), [rawUrl]);
+  const rawUrl = (data?.videoUrl || "").trim();            // URL of the video
+  const ytEmbed = useMemo(() => toYouTubeEmbed(rawUrl), [rawUrl]);    // YouTube embed URL if applicable
   const fileSrc = useMemo(() => {
     if (ytEmbed) return null;
     if (!rawUrl) return null;
-    return normalizeDriveDirect(rawUrl);
+    return normalizeDriveDirect(rawUrl);     
   }, [ytEmbed, rawUrl]);
 
-  useEffect(() => {
+  useEffect(() => {             // Increment view count on first load
     if (!data) return;
     if (sessionStorage.getItem(viewKey)) return;
     sessionStorage.setItem(viewKey, "1");
@@ -346,7 +346,7 @@ export default function VideoDetails() {
                       <Clock className="h-5 w-5 text-red-600" />
                       <span className="text-gray-700 font-medium">Duration</span>
                     </div>
-                    <span className="font-bold text-gray-900">25 min</span>
+                    <span className="font-bold text-gray-900">{data.duration}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <div className="flex items-center gap-3">
