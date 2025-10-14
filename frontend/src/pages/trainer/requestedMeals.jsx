@@ -14,6 +14,7 @@ export default function RequestedMeals() {
   const [busy, setBusy] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
+
   // -------- FETCH ----------
   async function fetchRequests() {
     try {
@@ -188,7 +189,6 @@ export default function RequestedMeals() {
   // ---- Assign helper ----
   function openAssign(row) {
     // Store selected request data in localStorage for the assign page.
-    // Backend expects these fields when creating a meal plan from a request.
     localStorage.setItem('assignRequestData', JSON.stringify({
       request_id: row.request_id ?? "",
       user_name: row.user_name ?? "",

@@ -147,7 +147,7 @@ export default function AddMealTemplate() {
   }
 
 
-  // Create: submit form to backend (requires trainer/admin JWT)
+  // Create: submit form to backend
   async function handleSubmit(e) {
     e.preventDefault();
     
