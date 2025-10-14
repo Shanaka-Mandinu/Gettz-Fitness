@@ -100,7 +100,7 @@ export default function AddCardForm() {
       {/* Back + Title */}
       <div className="mb-8 flex items-center gap-3">
         <Link to="/userDashboard/manageCards">
-          <button className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 border border-red-300">
+          <button className="cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 border border-red-300">
             ← Back
           </button>
         </Link>
@@ -181,14 +181,14 @@ export default function AddCardForm() {
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                className="mt-3 flex-1 rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600 transition"
+                className="cursor-pointer mt-3 flex-1 rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600 transition"
               >
                 Add Card
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="mt-3 flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 transition"
+                className="cursor-pointer mt-3 flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 transition"
               >
                 Reset
               </button>

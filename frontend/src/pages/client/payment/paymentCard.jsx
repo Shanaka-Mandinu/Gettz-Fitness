@@ -38,7 +38,7 @@ export default function Payment() {
   const [usePoints, setUsePoints] = useState(false);
   const [pointsToUse, setPointsToUse] = useState(0);
 
-  // fetch points once
+  
   useEffect(() => {
     (async () => {
       try {
@@ -47,7 +47,7 @@ export default function Payment() {
           import.meta.env.VITE_BACKEND_URL + "/api/user/points",
           { headers: { Authorization: "Bearer " + token } }
         );
-        // tolerant to shapes: {points} or {data:{points}}
+        
         const pts = res?.data?.points ?? res?.data?.data?.points ?? 0;
         setAvailablePoints(Number(pts) || 0);
       } catch (err) {
@@ -82,7 +82,7 @@ export default function Payment() {
   const formatLKR = (n) =>
     new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", maximumFractionDigits: 0 }).format(n);
 
-  // ---------- Validation (CVV 3–4) ----------
+  
   function validateForm() {
     const newErrors = {};
     const now = new Date();
@@ -123,7 +123,7 @@ export default function Payment() {
     return Object.keys(newErrors).length === 0;
   }
 
-  // ---------- Submit ----------
+  // Submit
   async function choosePlan(e) {
     e.preventDefault();
     if (!validateForm()) return;
@@ -220,7 +220,7 @@ export default function Payment() {
             </div>
           </div>
 
-          {/* ⭐ Use Points block */}
+          {/*Use Points block */}
           <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-1">

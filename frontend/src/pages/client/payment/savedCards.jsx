@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../../../components/loader-animate2";
 
-/** ---- Tiny helpers ---- */
+
 const last4 = (num) => String(num ?? "").slice(-4);
 const mask = (num) => `•••• •••• •••• ${last4(num)}`;
 
