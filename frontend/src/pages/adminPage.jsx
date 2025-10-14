@@ -30,6 +30,18 @@ export default function AdminLayout() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (user?.role?.toLowerCase() !== "admin")
     return <Navigate to="/adminLog" replace />;
+  
+  const displayName = [user?.firstName, user?.lastName]
+    .filter(Boolean)
+    .join(" ") || user?.name || (user?.email ? user.email.split("@")[0] : "Admin");
+  const initials = `${user?.firstName?.[0] || user?.name?.[0] || user?.email?.[0] || "A"}${user?.lastName?.[0] || ""}`.toUpperCase();
+  const avatarSrc = (() => {
+    const candidates = [user?.profilePicture, user?.avatar];
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim() !== "" && c !== "default-profile.jpg") return c;
+    }
+    return "";
+  })();
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -40,8 +52,23 @@ export default function AdminLayout() {
           <div className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b">
             <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
               <h1 className="text-lg font-semibold">Admin Console</h1>
-              <div className="text-sm text-black">
-                {JSON.parse(localStorage.getItem("user") || "{}")?.firstName || "Admin"}
+              <div className="flex items-center gap-3">
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt={displayName}
+                    className="h-9 w-9 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-gray-900 text-white text-sm font-semibold">
+                    {initials}
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-gray-900">{displayName}</span>
               </div>
             </div>
           </div>

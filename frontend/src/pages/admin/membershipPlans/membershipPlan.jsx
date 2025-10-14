@@ -1,6 +1,6 @@
 import { Plus, Search, X } from "lucide-react"; // ✅ changed (added X)
 import { useState, useEffect } from "react";
-import Loader from "../../../components/lorder-animate";
+import Loader from "../../../components/loader-animate2";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
@@ -69,7 +69,7 @@ export default function MembershipPlans() {
     });
   }
 
-  //  lightweight debounce + filter
+  
   useEffect(() => {
     const t = setTimeout(() => {
       const q = query.trim().toLowerCase();
@@ -217,7 +217,7 @@ export default function MembershipPlans() {
       )}
 
       {!loaded && (
-        <div className="h-[500px] border-2">
+        <div className="h-[500px]">
           <Loader />
         </div>
       )}

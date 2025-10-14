@@ -24,11 +24,11 @@ export function generateReceiptPDF(data, userName) {
   );
   const status = (data?.status || "").toUpperCase();
 
-  // 🔒 Fixed values
+  
   const business = "Gettz Fitness";
   const address = "48 Udyana Mawatha, Matara";
 
-  // helpers
+  
   const fmtMoney = (n) =>
     new Intl.NumberFormat("en-LK", {
       style: "currency",

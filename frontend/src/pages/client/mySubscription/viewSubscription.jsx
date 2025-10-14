@@ -116,7 +116,7 @@ export default function ViewSubscription() {
                   </p>
                   <div className="mt-6 flex items-center justify-center gap-3">
                     <Link to="/membership">
-                      <button className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-rose-700">
+                      <button className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-rose-700">
                         <Crown className="h-4 w-4" />
                         View Plans
                       </button>

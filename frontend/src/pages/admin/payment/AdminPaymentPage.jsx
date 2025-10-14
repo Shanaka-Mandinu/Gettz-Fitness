@@ -26,8 +26,8 @@ export default function AdminPaymentPage() {
   const [q, setQ] = useState(""); // search term
   const [statusFilter, setStatusFilter] = useState(""); // paid | pending | failed | refunded | ""
   const [typeFilter, setTypeFilter] = useState(""); // membership | order | ""
-  const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD
-  const [dateTo, setDateTo] = useState("");   // YYYY-MM-DD
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");   
 
   const fmt = (n) => `LKR ${Number(n || 0).toLocaleString("en-LK")}`;
 
@@ -72,7 +72,7 @@ export default function AdminPaymentPage() {
     fetchList();
   }, []);
 
-  // Unique types from data (fallback to common ones)
+  // Unique types from data
   const typeOptions = useMemo(() => {
     const set = new Set(payments.map((p) => String(p.type || "").toLowerCase()).filter(Boolean));
     if (set.size === 0) return ["membership", "order"];
@@ -251,8 +251,8 @@ export default function AdminPaymentPage() {
               className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2.5 text-sm text-white shadow-sm hover:shadow transition hover:bg-red-700 cursor-pointer"
               title="Download PDF report"
             >
-              <FileDown className="h-4 w-4" />
-              PDF Report
+              <FileDown className="h-10 w-10" />
+              Download Report
             </button>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function AdminPaymentPage() {
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <MiniTotal label="Filtered Count" value={totals.count} />
           <MiniTotal label="Total Discount" value={fmt(totals.totalDiscount)} />
-          <MiniTotal label="Total Paid" value={fmt(totals.totalPaid)} />
+          <MiniTotal label="Total Amount" value={fmt(totals.totalPaid)} />
         </div>
       </div>
 

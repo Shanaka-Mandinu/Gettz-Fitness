@@ -76,7 +76,7 @@ export async function createPayment(req, res) {
         const payment = new Payment(paymentData);
         const savedPayment = await payment.save();
 
-        // Upsert a pending Revenue entry so it appears in the Admin Payment table
+        
         try {
           await Revenue.findOneAndUpdate(
             { referenceId: Number(savedPayment.payment_id) },
