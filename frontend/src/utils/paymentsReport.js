@@ -13,7 +13,7 @@ export function generatePaymentsPDF(payments = [], totals = {}, options = {}) {
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-  // Match receipt header: logo, business name (red), address, divider
+  // Receipt header
   const red = [220, 38, 38];
   const gray = [75, 85, 99];
   const black = [0, 0, 0];
@@ -75,7 +75,7 @@ export function generatePaymentsPDF(payments = [], totals = {}, options = {}) {
   doc.setLineWidth(0.5);
   doc.line(midX, metaTop + 14, midX, metaTop + metaHeight - 14);
 
-  // Helpers for label/value rows
+  // Helpers for value rows
   const drawPair = (lx, ry, label, value, opts = {}) => {
     const { mono = false } = opts;
     doc.setFontSize(9);
