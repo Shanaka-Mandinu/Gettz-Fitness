@@ -146,7 +146,7 @@ export const updateMealPlan = (req, res) => {
           user_name,
           user_id,
           
-          // Meal plan details (matching mealTemplate structure)
+          // Meal plan details 
           meal_name,
           meal_type,
           foodItems,

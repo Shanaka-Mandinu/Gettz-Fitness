@@ -113,6 +113,7 @@ export const updateMealRequest = async (req, res) => {
       mealType,
     } = req.body;
 
+    // (...) prevents overwriting with undefined
     const update = {
       ...(user_id ? { user_id } : {}),
       ...(user_name !== undefined ? { user_name } : {}),

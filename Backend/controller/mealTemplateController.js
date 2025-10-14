@@ -29,6 +29,7 @@ export const addMealTemplate = async (req, res) => {
 
     const photo = req.file ? req.file.path.replace(process.cwd() + path.sep, '') : null;
 
+    // Create a new document and save the new meal template in database 
     const doc = await MealTemplate.create({
       templateName,
       mealType,
@@ -91,7 +92,7 @@ export const updateMealTemplate = async (req, res) => {
         duration,
         photo,
       },
-      { new: true, runValidators: true } //enforce schema
+      { new: true, runValidators: true } //enforce schema validators on update and return the updated document
     );
 
     if (!updated) {
@@ -125,6 +126,8 @@ export const getAllMealTemplates = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+
 
 // Public endpoint for getting meal templates (no authentication required)
 export const getPublicMealTemplates = async (req, res) => {
