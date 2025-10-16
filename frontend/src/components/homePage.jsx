@@ -844,7 +844,7 @@ function BackToTop() {
       aria-label="Back to top"
       title="Back to top"
       onClick={scrollToTop}
-      className={`fixed right-6 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-red-300 ${
+      className={`fixed right-8 md:right-10 bottom-[90px] md:-bottom-[-100px] z-50 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-red-300 ${
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
