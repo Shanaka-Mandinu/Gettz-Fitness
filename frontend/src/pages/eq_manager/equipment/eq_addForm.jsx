@@ -20,6 +20,7 @@ export default function EquipmentAddPage() {
   const [Eq_repairNote, setRepairNote] = useState("");
   const [Eq_supplier, setSupplier] = useState("");
   const [IM_ID, setIMID] = useState("");
+  const [managerName, setManagerName] = useState("");
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,15 +28,18 @@ export default function EquipmentAddPage() {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const guess = user?.IM_ID || user?._id || user?.id || user?.managerId || "";
-    if (guess && !IM_ID) setIMID(guess);
+    // Prefer to show the manager's name; IM_ID is used for submission
+    const idGuess = user?.IM_ID || user?._id || user?.id || user?.managerId || "";
+    const nameGuess = user?.name || user?.managerName || "";
+    if (idGuess && !IM_ID) setIMID(idGuess);
+    if (nameGuess && !managerName) setManagerName(nameGuess);
   }, []);
 
   async function handleSubmit() {
     //validations 
     if (!Eq_name.trim()) return toast.error("Equipment name is required");
     if (!Eq_type.trim()) return toast.error("Equipment type is required");
-    if (!IM_ID.trim()) return toast.error("Equipment Manager ID (IM_ID) is required");
+    if (!IM_ID.trim()) return toast.error("Equipment Manager is required");
 
     try {
       setLoading(true);
@@ -176,24 +180,22 @@ export default function EquipmentAddPage() {
             </div>
           </div>
 
-          {/* Right IM id */}
+          {/* right: equipment Manager */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Equipment Manager ID (IM_ID) <span className="text-red-600">*</span>
+                Equipment Manager <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
                 <input
-                  value={IM_ID}
-                  onChange={(e) => setIMID(e.target.value)}
-                  placeholder="Mongo _id of equipmentManager"
-                  className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  value={managerName || "Unknown manager"}
+                  disabled
+                  className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm bg-gray-50 text-gray-600"
                 />
               </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                Paste the <code>_id</code> of the equipment manager account.
-              </p>
+              <input type="hidden" value={IM_ID} readOnly />
+              
             </div>
             {/* {tips part} */}
             <div className="rounded-xl border border-black/10 p-3 bg-black/[0.02]">
