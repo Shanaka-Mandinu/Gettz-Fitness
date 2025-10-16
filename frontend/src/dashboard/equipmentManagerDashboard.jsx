@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import EquipmentManagerSidebar from "../components/equipmentManagerSidebar.jsx";
 import EquipmentDetailsPage from "../pages/eq_manager/equipment/eq_view.jsx";
 import EquipmentAddPage from "../pages/eq_manager/equipment/eq_addForm.jsx";
@@ -15,6 +15,30 @@ import SupplementEditPage from "../pages/eq_manager/supplement/supplement_editFo
 import EquipmentDashboard from "../pages/eq_manager/EquipmentDashboard.jsx";
 
 export default function EquipmentManagerLayout() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Check if user is authenticated and has equipment manager role
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // If no token or user data, redirect to admin login
+    if (!token || !userData) {
+      navigate("/adminLog", { replace: true });
+      return;
+    }
+    
+    // Check if user has equipment manager role
+    const userRole = userData.role?.toLowerCase().replace(/\s+/g, "");
+    if (userRole !== "equipmentmanager") {
+      // Clear invalid session data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Redirect to admin login page
+      navigate("/adminLog", { replace: true });
+      return;
+    }
+  }, [navigate]);
   
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
