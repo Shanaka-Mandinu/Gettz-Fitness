@@ -55,9 +55,13 @@ export default function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const token = useMemo(() => localStorage.getItem("token"), []);
-  const userId = useMemo(() => localStorage.getItem("userId"), []);
+  const userId = useMemo(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user._id || user.id;
+  }, []);
   
   // Create axios instance with auth header
   const axiosInstance = useMemo(() => {
@@ -71,13 +75,32 @@ export default function NotificationBell() {
 
   // Socket.io connection for real-time notifications
   const socket = useMemo(() => {
-    if (!token) return null;
-    return io(import.meta.env.VITE_BACKEND_URL, {
+    if (!token || !userId) return null;
+    const socketInstance = io(import.meta.env.VITE_BACKEND_URL, {
       auth: {
         token: token
-      }
+      },
+      transports: ['websocket', 'polling']
     });
-  }, [token]);
+
+    // Handle connection events
+    socketInstance.on('connect', () => {
+      console.log('🔔 Notification socket connected');
+      setSocketConnected(true);
+    });
+
+    socketInstance.on('disconnect', () => {
+      console.log('🔔 Notification socket disconnected');
+      setSocketConnected(false);
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('🔔 Socket connection error:', error);
+      setSocketConnected(false);
+    });
+
+    return socketInstance;
+  }, [token, userId]);
 
   const fetchMine = async () => {
     try {
@@ -102,10 +125,11 @@ export default function NotificationBell() {
 
   // Real-time notification handling
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !userId) return;
 
     // Listen for inquiry reply notifications
     socket.on('inquiryReply', (data) => {
+      console.log('🔔 Received inquiry reply notification:', data);
       // Check if this notification is for the current user
       if (data.userId === userId || data.userId === localStorage.getItem("userId")) {
         // Show toast notification
@@ -131,7 +155,9 @@ export default function NotificationBell() {
 
     // Listen for general notifications
     socket.on('notification', (data) => {
+      console.log('🔔 Received general notification:', data);
       if (data.userId === userId || data.userId === localStorage.getItem("userId")) {
+        // Show toast notification
         toast.success(data.title, {
           duration: 4000,
           position: 'top-right'

@@ -141,9 +141,12 @@ io.on("connection", (socket) => {
 initRFIDListener(io);
 
 app.post('/api/auth/google', googleLogin);
-app.listen(3000, () =>{
+
+// Use httpServer instead of app for socket.io compatibility
+httpServer.listen(3000, () => {
   console.log('Server is running on port 3000');
-})
+  console.log('Socket.io server is ready');
+});
 
 
 app.post("/chatbot", async (req, res) => {
