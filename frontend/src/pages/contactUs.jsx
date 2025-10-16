@@ -1,5 +1,5 @@
 // src/pages/ContactUs.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -29,9 +29,38 @@ export default function ContactUs() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [serverMsg, setServerMsg] = useState(null);
   const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [isEmailAutoFilled, setIsEmailAutoFilled] = useState(false);
 
   const maxChars = 500;
   const charsLeft = maxChars - form.inquiry_message.length;
+
+  // Auto-fill email for logged-in users
+  useEffect(() => {
+    const getUserEmail = () => {
+      try {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          const userEmail = userObj?.email;
+          if (userEmail) {
+            // Only set email if it's not already filled
+            if (!form.email) {
+              setForm(prev => ({ ...prev, email: userEmail }));
+              setIsEmailAutoFilled(true);
+            }
+            // Also set for feedback form if not filled
+            if (!feedbackForm.email) {
+              setFeedbackForm(prev => ({ ...prev, email: userEmail }));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    };
+
+    getUserEmail();
+  }, []); // Run once on component mount
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -272,7 +301,7 @@ export default function ContactUs() {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  We’ll use this to update you about your inquiry.
+                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to update you about your inquiry."}
                 </p>
               </div>
 
@@ -388,6 +417,9 @@ export default function ContactUs() {
                   className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to update you about your feedback."}
+                </p>
               </div>
 
               {/* Name */}

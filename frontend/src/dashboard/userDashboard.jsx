@@ -13,6 +13,8 @@ import AddCardForm from "../pages/client/cards/addCards.jsx";
 import UpdateCardForm from "../pages/client/cards/updateCard.jsx";
 import ViewSubscription from "../pages/client/mySubscription/viewSubscription.jsx";
 import MyOrders from "../pages/user/myOrders.jsx";
+import SavedVideos from "../pages/user/SavedVideos.jsx";
+import Playlists from "../pages/user/Playlists.jsx";
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -63,6 +65,8 @@ export default function UserLayout() {
               <Route path="manageCards/updateCard" element={<UpdateCardForm />} />
               <Route path="mySubscription" element={<ViewSubscription />} />
               <Route path="myOrders" element={<MyOrders />} />
+              <Route path="savedVideos" element={<SavedVideos />} />
+              <Route path="playlists" element={<Playlists />} />
               <Route path="inquiry" element={
                 <Suspense fallback={<div>Loading...</div>}>
                   {React.createElement(lazy(() => import('../pages/user/UserInquiry.jsx')))}

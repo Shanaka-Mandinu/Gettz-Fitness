@@ -105,7 +105,7 @@ export default function AnnouncementAdd() {
             </select>
           </div>
 
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium mb-1">
               Target User (optional, leave empty for all members)
             </label>
@@ -115,7 +115,7 @@ export default function AnnouncementAdd() {
               placeholder="Enter userId"
               className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

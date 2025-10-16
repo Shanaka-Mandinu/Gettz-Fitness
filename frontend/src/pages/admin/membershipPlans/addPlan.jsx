@@ -93,13 +93,21 @@ export default function AddPlanForm() {
 
   return (
     <div className="p-6 pt-0">
+
       <div className="border-b border-gray-100 px-6 py-4">
-        <h1 className="text-xl font-semibold text-black">
-          Add Membership Plan
-        </h1>
-        <p className="text-sm text-gray-500">
-          Create a new plan for your gym members.
-        </p>
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            ← Back
+          </button>
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold text-black">Add Membership Plan</h1>
+          <p className="text-sm text-gray-500">Create a new plan for your gym members.</p>
+        </div>
       </div>
 
       <div className="mx-auto max-w-4xl">

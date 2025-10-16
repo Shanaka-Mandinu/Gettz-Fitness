@@ -250,7 +250,7 @@ export default function ChallengeDetailsPage() {
       )}
 
       {!loaded && (
-        <div className="h-[500px] border-2">
+        <div className="h-[500px]">
           <Loader />
         </div>
       )}

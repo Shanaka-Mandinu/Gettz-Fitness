@@ -115,7 +115,7 @@ export default function AnnouncementDetailsPage() {
     fetchFilteredData();
   }, [typeFilter, dateFilter, loaded]); // Dependencies: filters and loaded state
 
-  // PDF Download (styled like competitions page)
+
   const handleDownloadPDF = async () => {
     const doc = new jsPDF();
 
@@ -307,7 +307,7 @@ export default function AnnouncementDetailsPage() {
       )}
 
       {!loaded && (
-        <div className="h-[500px] border-2">
+        <div className="h-[500px]">
           <Loader />
         </div>
       )}
