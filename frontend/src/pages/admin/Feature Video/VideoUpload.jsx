@@ -43,6 +43,10 @@ export default function VideoUpload() {
   const [ytLoading, setYtLoading] = useState(false);
   const [ytResults, setYtResults] = useState([]);
 
+  // Form validation state
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
   const navigate = useNavigate();
   const videoRef = useRef(null);
 
@@ -69,11 +73,107 @@ export default function VideoUpload() {
       .map((t) => t.trim())
       .filter(Boolean);
 
+  // Validation functions
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'title':
+        if (!value.trim()) return 'Title is required';
+        if (value.trim().length < 3) return 'Title must be at least 3 characters';
+        if (value.trim().length > 100) return 'Title must be less than 100 characters';
+        return '';
+      case 'description':
+        if (!value.trim()) return 'Description is required';
+        if (value.trim().length < 10) return 'Description must be at least 10 characters';
+        if (value.trim().length > 500) return 'Description must be less than 500 characters';
+        return '';
+      case 'category':
+        if (!value) return 'Please select a category';
+        return '';
+      case 'duration':
+        const durationNum = Number(value);
+        if (isNaN(durationNum) || durationNum < 5) return 'Duration must be at least 5 seconds';
+        if (durationNum > 3600) return 'Duration must be less than 1 hour';
+        return '';
+      case 'videoUrl':
+        if (!value.trim() && !videoFile) return 'Please provide a video URL or upload a file';
+        if (value.trim() && !isValidUrl(value.trim())) return 'Please enter a valid URL';
+        return '';
+      case 'videoFile':
+        if (!value && !videoUrl.trim()) return 'Please upload a video file or provide a URL';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const isValidUrl = (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const handleFieldChange = (name, value) => {
+    // Update the field value
+    switch (name) {
+      case 'title':
+        setTitle(value);
+        break;
+      case 'description':
+        setDescription(value);
+        break;
+      case 'category':
+        setCategory(value);
+        break;
+      case 'duration':
+        setDuration(value);
+        break;
+      case 'videoUrl':
+        setVideoUrl(value);
+        break;
+      case 'videoFile':
+        setVideoFile(value);
+        break;
+    }
+
+    // Mark field as touched
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    // Validate field
+    const error = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const newTouched = {};
+
+    // Validate all fields
+    newErrors.title = validateField('title', title);
+    newErrors.description = validateField('description', description);
+    newErrors.category = validateField('category', category);
+    newErrors.duration = validateField('duration', duration);
+    newErrors.videoUrl = validateField('videoUrl', videoUrl);
+    newErrors.videoFile = validateField('videoFile', videoFile);
+
+    // Mark all fields as touched
+    Object.keys(newErrors).forEach(key => {
+      newTouched[key] = true;
+    });
+
+    setErrors(newErrors);
+    setTouched(newTouched);
+
+    return !Object.values(newErrors).some(error => error !== '');
+  };
 
   async function handleSubmit() {
-    if (!title.trim()) return toast.error("Title is required");
-    if (!description.trim()) return toast.error("Description is required");
-    if (!category) return toast.error("Please pick a category"); 
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -196,10 +296,17 @@ export default function VideoUpload() {
               <label className="block text-sm font-medium mb-1">Title</label>
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="Upper Body Workout – Beginner"
-                className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  touched.title && errors.title 
+                    ? 'border-red-500 focus:ring-red-500/30' 
+                    : 'border-black/10 focus:ring-[#e30613]/30'
+                }`}
               />
+              {touched.title && errors.title && (
+                <p className="mt-1 text-xs text-red-600">{errors.title}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Workout Steps</label>
@@ -241,11 +348,18 @@ export default function VideoUpload() {
               <label className="block text-sm font-medium mb-1">Description</label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
                 rows={4}
                 placeholder="Coach explains a 10-minute routine..."
-                className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  touched.description && errors.description 
+                    ? 'border-red-500 focus:ring-red-500/30' 
+                    : 'border-black/10 focus:ring-[#e30613]/30'
+                }`}
               />
+              {touched.description && errors.description && (
+                <p className="mt-1 text-xs text-red-600">{errors.description}</p>
+              )}
             </div>
 
             
@@ -278,8 +392,12 @@ export default function VideoUpload() {
                 <label className="block text-sm font-medium mb-1">Category</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  onChange={(e) => handleFieldChange('category', e.target.value)}
+                  className={`w-full rounded-xl border px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 ${
+                    touched.category && errors.category 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-black/10 focus:ring-[#e30613]/30'
+                  }`}
                 >
                   <option value="" disabled>
                     Select a category…
@@ -291,9 +409,13 @@ export default function VideoUpload() {
                   ))}
                   
                 </select>
-                <p className="mt-1 text-xs text-neutral-500">
-                  Choose the most relevant category for this video.
-                </p>
+                {touched.category && errors.category ? (
+                  <p className="mt-1 text-xs text-red-600">{errors.category}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Choose the most relevant category for this video.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -305,14 +427,22 @@ export default function VideoUpload() {
                 </label>
                 <input
                   type="number"
-                  min={0}
+                  min={5}
                   value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  onChange={(e) => handleFieldChange('duration', e.target.value)}
+                  className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    touched.duration && errors.duration 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-black/10 focus:ring-[#e30613]/30'
+                  }`}
                 />
-                <p className="mt-1 text-xs text-neutral-500">
-                  Auto-filled when you choose a file.
-                </p>
+                {touched.duration && errors.duration ? (
+                  <p className="mt-1 text-xs text-red-600">{errors.duration}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Auto-filled when you choose a file. Minimum 5 seconds.
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-6">
                 <input
@@ -338,9 +468,13 @@ export default function VideoUpload() {
               <div className="flex gap-2">
                 <input
                   value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
+                  onChange={(e) => handleFieldChange('videoUrl', e.target.value)}
                   placeholder="https://..."
-                  className="flex-1 rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    touched.videoUrl && errors.videoUrl 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-black/10 focus:ring-[#e30613]/30'
+                  }`}
                 />
                 <button
                   type="button"
@@ -351,25 +485,36 @@ export default function VideoUpload() {
                   Pick
                 </button>
               </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                If left blank, we’ll upload the file below.
-              </p>
+              {touched.videoUrl && errors.videoUrl ? (
+                <p className="mt-1 text-xs text-red-600">{errors.videoUrl}</p>
+              ) : (
+                <p className="mt-1 text-xs text-neutral-500">
+                  If left blank, we'll upload the file below.
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Or upload a video file
               </label>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-black/20 p-6 text-center hover:bg:black/5 hover:bg-black/5">
+              <label className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center hover:bg-black/5 ${
+                touched.videoFile && errors.videoFile 
+                  ? 'border-red-500 bg-red-50' 
+                  : 'border-black/20'
+              }`}>
                 <UploadCloud className="mb-2" />
                 <span className="text-sm">Drag &amp; drop or click to choose</span>
                 <input
                   type="file"
                   accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  onChange={(e) => handleFieldChange('videoFile', e.target.files?.[0] || null)}
                   className="hidden"
                 />
               </label>
+              {touched.videoFile && errors.videoFile && (
+                <p className="mt-1 text-xs text-red-600">{errors.videoFile}</p>
+              )}
 
               {preview && (
                 <div className="mt-3 w-full rounded-xl border border-black/10 overflow-hidden">
@@ -395,7 +540,7 @@ export default function VideoUpload() {
           </Link>
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || Object.values(errors).some(error => error !== '')}
             className="rounded-xl bg-[#e30613] px-4 py-2 text-sm font-medium text-white shadow hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Uploading…" : "Save Video"}

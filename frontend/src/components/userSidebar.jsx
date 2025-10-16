@@ -9,6 +9,8 @@ import {
   FileText,
   ShoppingCart,
   ArrowDownToDot,
+  Bookmark,
+  MessageCircle,
 } from "lucide-react";
 import GymLogo from "../assets/GymLogo.jpg";
 import Swal from "sweetalert2";
@@ -31,6 +33,16 @@ const navItems = [
     to: "/userDashboard/inquiry",
     label: "Inquiry & Reply",
     icon: FileText,
+  },
+  {
+    to: "/userDashboard/savedVideos",
+    label: "Saved Videos",
+    icon: Bookmark,
+  },
+  {
+    to: "/userDashboard/playlists",
+    label: "My Playlists",
+    icon: MessageCircle,
   },
   {
     to: "/userDashboard/requestMeal",

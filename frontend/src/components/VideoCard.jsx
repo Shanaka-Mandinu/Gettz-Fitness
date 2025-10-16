@@ -1,6 +1,23 @@
 import { Play, Eye, Heart, Clock, Calendar, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
+// Utility function to format duration from seconds to readable format
+function formatDuration(seconds) {
+  if (!seconds || seconds < 0) return "0 min";
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes} min`;
+  } else {
+    return `${remainingSeconds} sec`;
+  }
+}
+
 function ytThumb(url) {
   try {
     const u = new URL(url);
@@ -89,7 +106,7 @@ export default function VideoCard({ v, viewMode = "grid" }) {
                 )}
                 <div className="flex items-center gap-1">
                   <Clock size={14} />
-                  <span>25 min</span>
+                  <span>{formatDuration(v.duration)}</span>
                 </div>
               </div>
             </div>
@@ -168,7 +185,7 @@ export default function VideoCard({ v, viewMode = "grid" }) {
           </div>
           <div className="flex items-center gap-1">
             <Clock size={14} />
-            <span>25 min</span>
+            <span>{formatDuration(v.duration)}</span>
           </div>
         </div>
       </div>

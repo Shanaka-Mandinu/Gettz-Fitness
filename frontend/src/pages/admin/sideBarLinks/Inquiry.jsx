@@ -26,6 +26,9 @@ function fmtDate(d) {
 }
 
 export default function InquiryPage() {
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
+
   // PDF Download Handler
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -71,23 +74,57 @@ export default function InquiryPage() {
   const [viewRow, setViewRow] = useState(null); // full inquiry
   const [replyText, setReplyText] = useState("");
 
-  useEffect(() => {
-    if (!loaded) {
-      console.log("Fetching inquiries from:", `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`);
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`)
-        .then((res) => {
-          console.log("Inquiry API response:", res);
-          const data = Array.isArray(res.data) ? res.data : [];
-          setInquiries(data);
-          setLoaded(true);
-        })
-        .catch((err) => {
-          console.error("Inquiry API error:", err);
-          toast.error("Failed to load inquiries: " + (err?.message || "Unknown error"));
-        });
+  // Function to fetch inquiries
+  const fetchInquiries = async (showLoading = true) => {
+    if (showLoading) {
+      setLoaded(false);
     }
-  }, [loaded]);
+    
+    try {
+      console.log("Fetching inquiries from:", `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`);
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/inquiry/viewAll`);
+      console.log("Inquiry API response:", res);
+      const data = Array.isArray(res.data) ? res.data : [];
+      
+      // Check for new inquiries during auto-refresh
+      if (!showLoading && inquiries.length > 0) {
+        const newInquiries = data.filter(newInq => 
+          !inquiries.some(existingInq => existingInq.inquiry_id === newInq.inquiry_id)
+        );
+        if (newInquiries.length > 0) {
+          toast.success(`${newInquiries.length} new inquiry${newInquiries.length > 1 ? 'ies' : ''} received!`);
+        }
+      }
+      
+      setInquiries(data);
+      setLastRefresh(new Date());
+      if (showLoading) {
+        setLoaded(true);
+      }
+    } catch (err) {
+      console.error("Inquiry API error:", err);
+      toast.error("Failed to load inquiries: " + (err?.message || "Unknown error"));
+      if (showLoading) {
+        setLoaded(true);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchInquiries();
+
+    // Auto-refresh every 5 seconds
+    const refreshInterval = setInterval(() => {
+      setIsAutoRefreshing(true);
+      fetchInquiries(false).finally(() => {
+        setIsAutoRefreshing(false);
+      });
+    }, 5000);
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, []);
 
   const totalCount = inquiries.length;
   const resolvedCount = useMemo(
@@ -169,7 +206,7 @@ export default function InquiryPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Inquiry updated");
-      setLoaded(false);
+      fetchInquiries(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to update inquiry");
@@ -189,7 +226,7 @@ export default function InquiryPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Inquiry deleted");
-      setLoaded(false);
+      fetchInquiries(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete inquiry");
@@ -239,7 +276,7 @@ export default function InquiryPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Reply saved");
-      setLoaded(false); // refresh list
+      fetchInquiries(false); // refresh list
     } catch (e) {
       console.error(e);
       toast.error("Failed to save reply");
@@ -265,7 +302,7 @@ export default function InquiryPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Inquiry resolved");
-      setLoaded(false);
+      fetchInquiries(false);
       setViewOpen(false);
     } catch (e) {
       console.error(e);
@@ -277,7 +314,15 @@ export default function InquiryPage() {
     <div className="relative w-full h-full rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Inquiries</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Inquiries</h2>
+          <div className="flex items-center gap-2 mt-1">
+            <div className={`w-2 h-2 rounded-full ${isAutoRefreshing ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`}></div>
+            <p className="text-xs text-neutral-500">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </p>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <input

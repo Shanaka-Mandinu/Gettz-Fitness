@@ -194,6 +194,151 @@ export async function sendPaymentReciept(email, sessionId) {
 }
 
 
+// Send inquiry reply notification email
+export async function sendInquiryReplyNotification(email, inquiryData, adminReply) {
+  const htmlTemplate = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body {
+        font-family: 'Arial', sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333333;
+        }
+        .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        /* Header */
+        .header {
+        background: #111111;
+        color: #FF0000;
+        text-align: center;
+        padding: 20px;
+        }
+        .header h1 {
+        margin: 0;
+        font-size: 26px;
+        letter-spacing: 1px;
+        }
+        .sub-header {
+        font-size: 14px;
+        margin-top: 5px;
+        color: #ffffff;
+        opacity: 0.85;
+        }
+        /* Content */
+        .content {
+        padding: 25px;
+        }
+        .content h2 {
+        color: #FF0000;
+        margin-top: 0;
+        }
+        .inquiry-details {
+        background: #f8f8f8;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        }
+        .reply-section {
+        background: #e8f4fd;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #FF0000;
+        margin: 15px 0;
+        }
+        .reply-text {
+        font-style: italic;
+        color: #333;
+        margin: 10px 0;
+        }
+        /* Footer */
+        .footer {
+        background: #111111;
+        color: #bbbbbb;
+        text-align: center;
+        padding: 15px;
+        font-size: 13px;
+        }
+        .footer a {
+        color: #FF0000;
+        text-decoration: none;
+        }
+        .button {
+        display: inline-block;
+        background: #FF0000;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 15px 0;
+        }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+        <h1>Gettz Fitness</h1>
+        <div class="sub-header">Inquiry Reply Notification</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+        <h2>Hello!</h2>
+        <p>We have received your inquiry and our admin team has responded. Here are the details:</p>
+        
+        <div class="inquiry-details">
+        <h3>Your Inquiry Details:</h3>
+        <p><strong>Inquiry ID:</strong> ${inquiryData.inquiry_id}</p>
+        <p><strong>Type:</strong> ${inquiryData.inquiry_type}</p>
+        <p><strong>Your Message:</strong> ${inquiryData.inquiry_message}</p>
+        <p><strong>Date:</strong> ${new Date(inquiryData.inquiry_date).toLocaleString()}</p>
+        <p><strong>Status:</strong> ${inquiryData.inquiry_status}</p>
+        </div>
+
+        <div class="reply-section">
+        <h3>Admin Reply:</h3>
+        <div class="reply-text">"${adminReply}"</div>
+        <p><strong>Reply Date:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+
+        <p>You can reply to this inquiry by visiting your dashboard or clicking the link below:</p>
+        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/userDashboard" class="button">View & Reply to Inquiry</a>
+        
+        <p>Thank you for contacting Gettz Fitness!</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+        <p>Gettz Fitness - Your Fitness Partner</p>
+        <p>Email: <a href="mailto:hello@getzzfitness.com">hello@getzzfitness.com</a> | Phone: +94 11 234 5678</p>
+        </div>
+    </div>
+    </body>
+    </html>
+  `;
+
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: `Gettz Fitness - Reply to Your Inquiry #${inquiryData.inquiry_id}`,
+    text: `Hello! We have replied to your inquiry #${inquiryData.inquiry_id}. Admin Reply: "${adminReply}". Please visit your dashboard to view the full conversation.`,
+    html: htmlTemplate,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
 export async function sendStoreOrderReceipt(email, sessionId) {
   const order = await Order.findOne({ session_id: sessionId });
   if (!order) {
