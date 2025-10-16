@@ -91,10 +91,7 @@ export default function TrainerProfile() {
     }
   };
 
-  const handleEdit = () => {
-    setEditing(true);
-    setEditForm(profile);
-  };
+
 
   const handleCancel = () => {
     setEditing(false);
@@ -158,15 +155,7 @@ export default function TrainerProfile() {
           <h2 className="text-2xl font-bold text-gray-900">Profile</h2>
           <p className="text-gray-600">Manage your trainer profile information</p>
         </div>
-        {!editing && (
-          <button
-            onClick={handleEdit}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            <Edit3 className="h-4 w-4" />
-            Edit Profile
-          </button>
-        )}
+        
       </div>
 
       {/* Profile Overview */}

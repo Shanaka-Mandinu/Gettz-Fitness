@@ -1,3 +1,4 @@
+// Trainer: Add a new meal template (multipart form with optional photo)
 import { useState } from "react";
 import { Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import Swal from "sweetalert2";
 export default function AddMealTemplate() {
   const navigate = useNavigate();
   
+  // Form model mirrors backend controller fields
   const [form, setForm] = useState({
     templateName: "",
     mealType: "",
@@ -23,7 +25,7 @@ export default function AddMealTemplate() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Validation function
+  // Validation function: returns a map of field errors (empty when valid)
   const validateForm = () => {
     const newErrors = {};
 
@@ -46,7 +48,7 @@ export default function AddMealTemplate() {
       newErrors.foodItems = "Please provide more detailed food items (at least 10 characters).";
     }
 
-    // Calories validation
+    // Calories validation (cap at 5000)
     if (!form.calories) {
       newErrors.calories = "Calories are required.";
     } else if (isNaN(form.calories) || Number(form.calories) <= 0) {
@@ -55,19 +57,31 @@ export default function AddMealTemplate() {
       newErrors.calories = "Calories cannot exceed 5000.";
     }
 
-    // Protein validation
-    if (form.protein && (isNaN(form.protein) || Number(form.protein) < 0)) {
+    // Protein validation (required, 0 - 500g)
+    if (form.protein === "") {
+      newErrors.protein = "Protein is required.";
+    } else if (isNaN(form.protein) || Number(form.protein) < 0) {
       newErrors.protein = "Please enter a valid protein amount.";
+    } else if (Number(form.protein) > 500) {
+      newErrors.protein = "Protein cannot exceed 500g.";
     }
 
-    // Carbs validation
-    if (form.carbs && (isNaN(form.carbs) || Number(form.carbs) < 0)) {
+    // Carbs validation (required, 0 - 1000g)
+    if (form.carbs === "") {
+      newErrors.carbs = "Carbs are required.";
+    } else if (isNaN(form.carbs) || Number(form.carbs) < 0) {
       newErrors.carbs = "Please enter a valid carbs amount.";
+    } else if (Number(form.carbs) > 1000) {
+      newErrors.carbs = "Carbs cannot exceed 1000g.";
     }
 
-    // Fats validation
-    if (form.fats && (isNaN(form.fats) || Number(form.fats) < 0)) {
+    // Fats validation (required, 0 - 300g)
+    if (form.fats === "") {
+      newErrors.fats = "Fats are required.";
+    } else if (isNaN(form.fats) || Number(form.fats) < 0) {
       newErrors.fats = "Please enter a valid fats amount.";
+    } else if (Number(form.fats) > 300) {
+      newErrors.fats = "Fats cannot exceed 300g.";
     }
 
     // Duration validation
@@ -87,7 +101,8 @@ export default function AddMealTemplate() {
     return newErrors;
   };
 
-  // Helper to build FormData
+
+  // Helper to build FormData for multipart upload (photo optional)
   function buildFormData() {
     const formData = new FormData();
     formData.append("templateName", form.templateName.trim());
@@ -104,7 +119,35 @@ export default function AddMealTemplate() {
     return formData;
   }
 
-  // Create
+
+  // Validate image before setting into state (max ~10MB; basic type check)
+  function handlePhotoChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxBytes) {
+      Swal.fire({
+        title: 'Image too large',
+        text: 'Please choose an image up to 10MB.',
+        icon: 'warning',
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        title: 'Invalid file type',
+        text: 'Please choose a valid image file.',
+        icon: 'warning',
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+    setForm({ ...form, photo: file });
+  }
+
+
+  // Create: submit form to backend
   async function handleSubmit(e) {
     e.preventDefault();
     
@@ -140,34 +183,13 @@ export default function AddMealTemplate() {
       const formData = buildFormData();
       const token = localStorage.getItem("token");
       
-      console.log("Submitting form data:", {
-        templateName: form.templateName,
-        mealType: form.mealType,
-        foodItems: form.foodItems,
-        calories: form.calories,
-        protein: form.protein,
-        carbs: form.carbs,
-        fats: form.fats,
-        dietCategory: form.dietCategory,
-        duration: form.duration,
-        hasPhoto: !!form.photo
-      });
-      
-      console.log("Token:", token);
-      console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
-      
+      // Note: do NOT set Content-Type manually for FormData; let the browser set the boundary
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate`,
         formData,
-        { 
-          headers: { 
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-          } 
-        }
+        headers ? { headers } : undefined
       );
-      
-      console.log("Template created successfully:", response.data);
       
       // Show success alert
       await Swal.fire({
@@ -180,10 +202,6 @@ export default function AddMealTemplate() {
       
       navigate('/trainerDashboard/mealTemplate');
     } catch (err) {
-      console.error("Failed to create template:", err.response?.data || err);
-      console.error("Error status:", err.response?.status);
-      console.error("Error headers:", err.response?.headers);
-      
       let errorMessage = "Failed to create template. Please try again.";
       
       if (err.response?.status === 401) {
@@ -214,6 +232,8 @@ export default function AddMealTemplate() {
       setLoading(false);
     }
   }
+
+
 
   return (
     <div className="p-6">
@@ -339,9 +359,7 @@ export default function AddMealTemplate() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) =>
-                          setForm({ ...form, photo: e.target.files[0] })
-                        }
+                        onChange={handlePhotoChange}
                         className="hidden"
                       />
                     </label>
@@ -374,6 +392,8 @@ export default function AddMealTemplate() {
                       className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
                         errors.calories ? 'border-red-500' : 'border-gray-300'
                       }`}
+                      min={0}
+                      max={5000}
                     />
                     {errors.calories && (
                       <p className="mt-1 text-sm text-red-600">{errors.calories}</p>
@@ -393,6 +413,9 @@ export default function AddMealTemplate() {
                         className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
                           errors.protein ? 'border-red-500' : 'border-gray-300'
                         }`}
+                        min={0}
+                        max={500}
+                        required
                       />
                       {errors.protein && (
                         <p className="mt-1 text-sm text-red-600">{errors.protein}</p>
@@ -410,6 +433,9 @@ export default function AddMealTemplate() {
                         className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
                           errors.carbs ? 'border-red-500' : 'border-gray-300'
                         }`}
+                        min={0}
+                        max={1000}
+                        required
                       />
                       {errors.carbs && (
                         <p className="mt-1 text-sm text-red-600">{errors.carbs}</p>
@@ -427,6 +453,9 @@ export default function AddMealTemplate() {
                         className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors bg-white shadow-sm ${
                           errors.fats ? 'border-red-500' : 'border-gray-300'
                         }`}
+                        min={0}
+                        max={300}
+                        required
                       />
                       {errors.fats && (
                         <p className="mt-1 text-sm text-red-600">{errors.fats}</p>

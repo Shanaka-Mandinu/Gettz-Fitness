@@ -41,53 +41,6 @@ export default function MemberList() {
   useEffect(() => {
     fetchMembers();
   }, []);
-
-  function confirmDelete(id) {
-    toast.custom((t) => (
-      <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-4 flex flex-col gap-3 w-72">
-        <p className="text-sm text-gray-800">
-          Are you sure you want to delete this member?
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 rounded-md border text-sm hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              deleteMember(id);
-            }}
-            className="px-3 py-1 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
-          >
-            Yes, Delete
-          </button>
-        </div>
-      </div>
-    ));
-  }
-
-  async function deleteMember(id) {
-    const token = localStorage.getItem("token") || localStorage.getItem("jwt");
-    if (!token) {
-      toast.error("You must be logged in to delete a member");
-      return;
-    }
-    try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/${encodeURIComponent(id)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Member deleted");
-      setMembers((prev) => prev.filter((m) => m._id !== id));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete member");
-    }
-  }
-
   async function toggleStatus(member) {
     const token = localStorage.getItem("token") || localStorage.getItem("jwt");
     if (!token) {
@@ -220,12 +173,6 @@ export default function MemberList() {
                           className="rounded-md bg-blue-600 px-2 py-1 text-white hover:opacity-90"
                         >
                           {m.isDisabled ? "Activate" : "Disable"}
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(m._id)}
-                          className="rounded-md bg-[#e30613] px-2 py-1 text-white hover:opacity-90"
-                        >
-                          Delete
                         </button>
                       </div>
                     </td>

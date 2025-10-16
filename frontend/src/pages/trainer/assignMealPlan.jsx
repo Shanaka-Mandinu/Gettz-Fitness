@@ -25,7 +25,7 @@ export default function AssignMealPlan() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Load request data from localStorage
+  // Load request data from localStorage (set on previous page)
   useEffect(() => {
     const storedData = localStorage.getItem('assignRequestData');
     if (storedData) {
@@ -36,7 +36,7 @@ export default function AssignMealPlan() {
     }
   }, [navigate]);
 
-  // Validation function
+  // Validate form fields and return a map of field errors (empty if valid)
   const validateForm = () => {
     const newErrors = {};
 
@@ -59,7 +59,7 @@ export default function AssignMealPlan() {
       newErrors.duration = "Please provide a more specific duration.";
     }
 
-    // Calories validation
+    // Calories validation (cap at 5000)
     if (!form.calories) {
       newErrors.calories = "Calories are required.";
     } else if (isNaN(form.calories) || Number(form.calories) <= 0) {
@@ -75,19 +75,31 @@ export default function AssignMealPlan() {
       newErrors.foodItems = "Please provide more detailed food items (at least 10 characters).";
     }
 
-    // Protein validation
-    if (form.protein && (isNaN(form.protein) || Number(form.protein) < 0)) {
+    // Protein validation (required, 0 - 500g)
+    if (form.protein === "") {
+      newErrors.protein = "Protein is required.";
+    } else if (isNaN(form.protein) || Number(form.protein) < 0) {
       newErrors.protein = "Please enter a valid protein amount.";
+    } else if (Number(form.protein) > 500) {
+      newErrors.protein = "Protein cannot exceed 500g.";
     }
 
-    // Carbs validation
-    if (form.carbs && (isNaN(form.carbs) || Number(form.carbs) < 0)) {
+    // Carbs validation (required, 0 - 1000g)
+    if (form.carbs === "") {
+      newErrors.carbs = "Carbs are required.";
+    } else if (isNaN(form.carbs) || Number(form.carbs) < 0) {
       newErrors.carbs = "Please enter a valid carbs amount.";
+    } else if (Number(form.carbs) > 1000) {
+      newErrors.carbs = "Carbs cannot exceed 1000g.";
     }
 
-    // Fats validation
-    if (form.fats && (isNaN(form.fats) || Number(form.fats) < 0)) {
+    // Fats validation (required, 0 - 300g)
+    if (form.fats === "") {
+      newErrors.fats = "Fats are required.";
+    } else if (isNaN(form.fats) || Number(form.fats) < 0) {
       newErrors.fats = "Please enter a valid fats amount.";
+    } else if (Number(form.fats) > 300) {
+      newErrors.fats = "Fats cannot exceed 300g.";
     }
 
     // Diet Category validation
@@ -100,7 +112,7 @@ export default function AssignMealPlan() {
     return newErrors;
   };
 
-  // Helper to build FormData
+  // Build FormData to match backend controller (multipart/form-data)
   function buildFormData() {
     const formData = new FormData();
     formData.append("user_name", requestData?.user_name || "");
@@ -121,8 +133,24 @@ export default function AssignMealPlan() {
     return formData;
   }
 
+  // Validate image before setting into state (max ~10MB; image MIME types)
+  function handlePhotoChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxBytes) {
+      toast.error("Image is too large. Max size is 10MB.");
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error("Invalid file type. Please choose an image.");
+      return;
+    }
+    setForm({ ...form, photo: file });
+  }
 
-  // Submit assignment
+
+  // Submit assignment: create meal plan then remove the original request
   async function handleSubmit(e) {
     e.preventDefault();
     
@@ -143,27 +171,21 @@ export default function AssignMealPlan() {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: "Bearer " + token } : undefined;
       
-      // First, assign the meal plan
+      // First, assign the meal plan (let browser set multipart boundary)
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealPlan`,
         formData,
-        { 
-          headers: {
-            ...headers,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+        headers ? { headers } : undefined
       );
       
-      // Then, delete the meal request
+      // Then, delete the meal request (authorized)
       try {
         await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/mealRequest/${requestData?.request_id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/mealRequest/${encodeURIComponent(requestData?.request_id)}`,
           { headers }
         );
         toast.success("Meal plan assigned and request removed");
       } catch (deleteErr) {
-        console.error("Failed to delete request:", deleteErr);
         toast.success("Meal plan assigned (request may still be visible)");
       }
       
@@ -217,7 +239,7 @@ export default function AssignMealPlan() {
           <form onSubmit={handleSubmit} className="space-y-6 p-6" noValidate>
             {/* THREE-COLUMN LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* LEFT: Request Details (READ-ONLY) */}
+              {/* LEFT: Request Details */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -412,6 +434,8 @@ export default function AssignMealPlan() {
                           errors.calories ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={5000}
+                        required
                       />
                       {errors.calories && (
                         <p className="mt-1 text-sm text-red-600">{errors.calories}</p>
@@ -454,6 +478,8 @@ export default function AssignMealPlan() {
                           errors.protein ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={500}
+                        required
                       />
                       {errors.protein && (
                         <p className="mt-1 text-sm text-red-600">{errors.protein}</p>
@@ -473,6 +499,8 @@ export default function AssignMealPlan() {
                           errors.carbs ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={1000}
+                        required
                       />
                       {errors.carbs && (
                         <p className="mt-1 text-sm text-red-600">{errors.carbs}</p>
@@ -492,6 +520,8 @@ export default function AssignMealPlan() {
                           errors.fats ? 'border-red-500' : 'border-gray-300'
                         }`}
                         min={0}
+                        max={300}
+                        required
                       />
                       {errors.fats && (
                         <p className="mt-1 text-sm text-red-600">{errors.fats}</p>
@@ -520,7 +550,7 @@ export default function AssignMealPlan() {
                 </div>
               </div>
 
-              {/* RIGHT: Photo Upload */}
+              {/* RIGHT: Photo Upload (optional) */}
               <div className="mt-10">
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700">
@@ -559,9 +589,7 @@ export default function AssignMealPlan() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) =>
-                        setForm({ ...form, photo: e.target.files[0] })
-                      }
+                      onChange={handlePhotoChange}
                       className="hidden"
                     />
                   </label>

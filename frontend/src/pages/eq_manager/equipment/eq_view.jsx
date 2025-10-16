@@ -102,7 +102,11 @@ export default function EquipmentDetailsPage() {
 
         return matchesText && matchesStatus && matchesType;
       })
-      .sort((a, b) => (a?.Eq_name || "").localeCompare(b?.Eq_name || ""));
+      .sort((a, b) => {
+        const ac = Number(a?.Eq_code) || 0;
+        const bc = Number(b?.Eq_code) || 0;
+        return ac - bc;
+      });
   }, [equipment, search, statusFilter, typeFilter]);
 
   //generate pdf
@@ -281,7 +285,6 @@ export default function EquipmentDetailsPage() {
           <table className="w-full text-sm">
             <thead className="bg-black text-white">
               <tr>
-                <th className="px-3 py-2 text-left">No</th>
                 <th className="px-3 py-2 text-left">Code</th>
                 <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Type</th>
@@ -294,7 +297,7 @@ export default function EquipmentDetailsPage() {
             <tbody>
               {visibleEquipment.length === 0 && (
                 <tr>
-                  <td className="px-3 py-4 text-center text-neutral-500" colSpan={8}>
+                  <td className="px-3 py-4 text-center text-neutral-500" colSpan={7}>
                     No equipment found with current filters.
                   </td>
                 </tr>
@@ -302,8 +305,7 @@ export default function EquipmentDetailsPage() {
 
               {visibleEquipment.map((eq, index) => (
                 <tr key={eq.Eq_code || index} className="border-t border-black/10">
-                  <td className="px-3 py-2">{index + 1}</td>
-                  <td className="px-3 py-2">{eq.Eq_code}</td>
+                  <td className="px-3 py-2">EQ-{eq.Eq_code}</td>
                   <td className="px-3 py-2">{eq.Eq_name}</td>
                   <td className="px-3 py-2">{eq.Eq_type}</td>
                   <td className="px-3 py-2">{eq.Eq_supplier || "-"}</td>

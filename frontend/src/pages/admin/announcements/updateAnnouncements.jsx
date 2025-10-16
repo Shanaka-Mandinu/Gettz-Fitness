@@ -72,7 +72,7 @@ export default function EditAnnouncement() {
       const payload = { title: title.trim(), body: body.trim(), type };
       const token = localStorage.getItem("token") || localStorage.getItem("jwt");
 
-      // ✅ your backend uses POST /update/:id for updating
+
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/notification/update/${annId}`,
         payload,

@@ -251,7 +251,7 @@ export default function SignupPage() {
                 }`}>
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <input name="firstName" value={form.firstName} onChange={onChange} onBlur={onBlur}
-                    placeholder="John" className="w-full bg-transparent py-1.5 text-sm outline-none" />
+                    placeholder="First Name" className="w-full bg-transparent py-1.5 text-sm outline-none" />
                 </div>
                 {touched.firstName && errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
               </div>
@@ -263,7 +263,7 @@ export default function SignupPage() {
                 }`}>
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <input name="lastName" value={form.lastName} onChange={onChange} onBlur={onBlur}
-                    placeholder="Doe" className="w-full bg-transparent py-1.5 text-sm outline-none" />
+                    placeholder="Last Name" className="w-full bg-transparent py-1.5 text-sm outline-none" />
                 </div>
                 {touched.lastName && errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
               </div>
@@ -379,20 +379,7 @@ export default function SignupPage() {
 
               {/* Profile picture */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium">Profile picture (optional)</label>
-
-                {/* URL input */}
-                <input
-                  type="url"
-                  name="profilePicture"
-                  value={form.profilePicture}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Paste image URL (optional)"
-                  className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200"
-                />
-
-                {/* Dropzone */}
+                <label className="block text-sm font-medium">Profile picture (optional)</label>                {/* Dropzone */}
                 <div className="mt-3">
                   <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-black/20 p-6 text-center hover:bg-black/5">
                     <ImageIcon className="mb-2 h-6 w-6 text-gray-500" />

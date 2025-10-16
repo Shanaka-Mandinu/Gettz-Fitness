@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../../../components/loader-animate2";
 
-/** ---- Tiny helpers ---- */
+
 const last4 = (num) => String(num ?? "").slice(-4);
 const mask = (num) => `•••• •••• •••• ${last4(num)}`;
 
@@ -46,7 +46,7 @@ export default function ViewSavedCards() {
           <div className="flex gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
             >
               ← Back
             </button>

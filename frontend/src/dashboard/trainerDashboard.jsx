@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import TrainerSidebar from "../components/TrainerSidebar.jsx";
 
 import RequestedMeals from "../pages/trainer/requestedMeals.jsx";
@@ -12,6 +12,30 @@ import EditMealTemplate from "../pages/trainer/editMealTemplate.jsx";
 import AssignMealPlan from "../pages/trainer/assignMealPlan.jsx";
 
 export default function TrainerLayout() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Check if user is authenticated and has trainer role
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // If no token or user data, redirect to admin login
+    if (!token || !userData) {
+      navigate("/adminLog", { replace: true });
+      return;
+    }
+    
+    // Check if user has trainer role
+    const userRole = userData.role?.toLowerCase().replace(/\s+/g, "");
+    if (userRole !== "trainer") {
+      // Clear invalid session data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Redirect to admin login page
+      navigate("/adminLog", { replace: true });
+      return;
+    }
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="flex">

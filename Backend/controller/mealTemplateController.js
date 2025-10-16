@@ -2,19 +2,13 @@ import MealTemplate from "../model/mealTemplate.js";
 import path from "path";
 
 export const addMealTemplate = async (req, res) => {
-  console.log("addMealTemplate - req.user:", req.user);
-  console.log("addMealTemplate - req.body:", req.body);
-  console.log("addMealTemplate - req.file:", req.file);
-  
   if (!req.user) {
-    console.log("No user found in request");
     return res.status(401).json({
       message: "Authentication required...",
     });
   }
   
   if (req.user.role !== "trainer" && req.user.role !== "admin") {
-    console.log("User role not authorized:", req.user.role);
     return res.status(401).json({
       message: "You need Trainer or Admin authorization...",
     });
@@ -35,19 +29,7 @@ export const addMealTemplate = async (req, res) => {
 
     const photo = req.file ? req.file.path.replace(process.cwd() + path.sep, '') : null;
 
-    console.log("Creating meal template with data:", {
-      templateName,
-      mealType,
-      foodItems,
-      calories,
-      protein,
-      carbs,
-      fats,
-      dietCategory,
-      duration,
-      photo
-    });
-
+    // Create a new document and save the new meal template in database 
     const doc = await MealTemplate.create({
       templateName,
       mealType,
@@ -60,11 +42,8 @@ export const addMealTemplate = async (req, res) => {
       duration,
       photo,
     });
-
-    console.log("Meal template created successfully:", doc);
     return res.status(201).json(doc);
   } catch (err) {
-    console.error("Error creating meal template:", err);
     return res.status(400).json({ error: err.message });
   }
 };
@@ -113,7 +92,7 @@ export const updateMealTemplate = async (req, res) => {
         duration,
         photo,
       },
-      { new: true, runValidators: true } //enforce schema
+      { new: true, runValidators: true } //enforce schema validators on update and return the updated document
     );
 
     if (!updated) {
@@ -147,6 +126,8 @@ export const getAllMealTemplates = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+
 
 // Public endpoint for getting meal templates (no authentication required)
 export const getPublicMealTemplates = async (req, res) => {

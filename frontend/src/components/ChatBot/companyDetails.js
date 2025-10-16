@@ -9,7 +9,7 @@ I’m your friendly **GettzFitness chatbot**, here to guide you on your fitness 
 
 Located in the heart of **Matara, Sri Lanka**, GettzFitness is built to inspire you to achieve your goals in a supportive and motivating environment.
 
-📍 Address: 123 Fitness Street, Matara, Sri Lanka
+📍 Address:48 Udyana Mawatha, Matara
 🕒 Hours:
 
 * Monday to Friday: 5:30 AM – 10:00 PM

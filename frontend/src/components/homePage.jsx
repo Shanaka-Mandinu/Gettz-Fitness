@@ -45,7 +45,7 @@ export default function GymLandingPage() {
       <Programs />
       <Stats />
       <Coaches />
-      <Pricing />
+      {/* <Pricing /> */}
       <FeedbackDisplay />
       <Faq />
       <FinalCta />
@@ -126,7 +126,6 @@ function Hero({ email, setEmail }) {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-white to-gray-50">
-      {/* background pattern */}
       <div
         aria-hidden
         className="absolute inset-0 opacity-5"
@@ -166,13 +165,13 @@ function Hero({ email, setEmail }) {
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <a
-              href="#pricing"
+            <Link
+              to="/membership"
               className="inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               style={{ background: BRAND.red }}
             >
-              Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
+              Subscribe <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
             <a
               href="#features"
               className="inline-flex items-center justify-center rounded-xl border-2 border-red-600 text-red-600 px-6 py-3 font-semibold hover:bg-red-600 hover:text-white transition-all duration-300"
@@ -210,7 +209,7 @@ function Hero({ email, setEmail }) {
           <Tilt3D>
             <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1554344728-77cf90d9ed26?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1170&auto=format&fit=crop"
                 alt="Professional Gym"
                 className="w-full h-[420px] object-cover"
               />
@@ -293,26 +292,26 @@ function BentoFeatures() {
       title: "Smart Coaching",
       desc: "Adaptive plans tuned to your recovery and performance.",
       icon: <HeartPulse className="h-6 w-6" />,
-      img: "https://images.unsplash.com/photo-1554295405-9ec9bc9e3a5e?q=80&w=1920&auto=format&fit=crop",
+  img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1920&auto=format&fit=crop",
       span: "col-span-2",
     },
     {
       title: "Metabolic Tracking",
       desc: "Calories, HR zones, and readiness—live.",
       icon: <Flame className="h-6 w-6" />,
-      img: "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1920&auto=format&fit=crop",
+      img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=1920&auto=format&fit=crop",
     },
     {
       title: "Elite Equipment",
       desc: "Calibrated plates, platforms, and competition bars.",
       icon: <Dumbbell className="h-6 w-6" />,
-      img: "https://images.unsplash.com/photo-1558611848-4061b92b0e50?q=80&w=1920&auto=format&fit=crop",
+      img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1920&auto=format&fit=crop",
     },
     {
       title: "Community & Events",
       desc: "Comps, workshops, and member challenges.",
       icon: <Trophy className="h-6 w-6" />,
-      img: "https://images.unsplash.com/photo-1546484959-f6d8a1dfcf19?q=80&w=1920&auto=format&fit=crop",
+  img: "https://images.unsplash.com/photo-1464983953574-0892a716854b?q=80&w=1920&auto=format&fit=crop",
       span: "col-span-2",
     },
   ];
@@ -349,22 +348,20 @@ function BentoFeatures() {
 
 function VideoTeaser() {
   return (
-    <section id="video" className="py-12">
+    <section id="video" className="py-12 bg-white">
       <Container>
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
           <img
-            src="https://images.unsplash.com/photo-1546483875-ad9014c88eba?q=80&w=1920&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1464983953574-0892a716854b?q=80&w=1920&auto=format&fit=crop"
             alt="Gym ambience"
             className="absolute inset-0 h-full w-full object-cover opacity-35"
           />
           <div className="relative p-8 md:p-14">
             <div className="max-w-xl">
-              <h3 className="text-2xl md:text-3xl font-black">Tour the club in 60 seconds</h3>
-              <p className="mt-2 text-neutral-200">See how our tech and coaching come together.</p>
+                <h3 className="text-2xl md:text-3xl font-black text-slate-800">Tour the club in 60 seconds</h3>
+                <p className="mt-2 text-slate-600">See how our tech and coaching come together.</p>
               <Link
                 to="/videos"
-                target="_blank"
-                rel="noreferrer"
                 className="mt-6 inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white hover:-translate-y-0.5 transition"
                 style={{ background: BRAND.red }}
               >
@@ -378,47 +375,54 @@ function VideoTeaser() {
   );
 }
 
-/** ===== Programs (new cards) ===== */
+/** ===== Programs (minimal design) ===== */
 function Programs() {
   const items = [
     {
       title: "Strength & Conditioning",
-      img: "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1920&auto=format&fit=crop",
+  img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1920&auto=format&fit=crop",
       desc: "Compound lifts + accessories for raw power.",
     },
     {
       title: "HIIT & MetCon",
-      img: "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?q=80&w=1920&auto=format&fit=crop",
+  img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=1920&auto=format&fit=crop",
       desc: "Intervals that burn fat and build capacity.",
     },
     {
       title: "Mobility & Recovery",
-      img: "https://images.unsplash.com/photo-1552196563-55cd4e45efb3?q=80&w=1920&auto=format&fit=crop",
+  img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1920&auto=format&fit=crop",
       desc: "Move better, reduce pain, and bulletproof joints.",
     },
   ];
   return (
-    <section id="classes" className="py-16 md:py-24">
+    <section id="classes" className="py-16 md:py-24 bg-white">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl md:text-4xl font-black">Choose your path</h2>
-          <p className="mt-3 text-neutral-300">Pick one focus or mix and match. New blocks monthly.</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-800">Choose your path</h2>
+          <p className="mt-3 text-slate-600">Pick one focus or mix and match. New blocks monthly.</p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
           {items.map((c, i) => (
-            <Tilt3D key={i}>
-              <article className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60">
-                <img src={c.img} alt={c.title} className="h-56 w-full object-cover" />
-                <div className="p-5">
-                  <h3 className="font-bold text-lg">{c.title}</h3>
-                  <p className="mt-1 text-sm text-neutral-300">{c.desc}</p>
-                  <a href="#" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: BRAND.red }}>
-                    View schedule <ArrowRight className="h-4 w-4" />
-                  </a>
+            <article key={i} className="group cursor-pointer">
+              <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200 hover:shadow-lg transition-all duration-300">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img 
+                    src={c.img} 
+                    alt={c.title} 
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                  />
                 </div>
-              </article>
-            </Tilt3D>
+                <div className="p-6 bg-slate-50">
+                  <h3 className="font-semibold text-lg text-slate-800 mb-2">{c.title}</h3>
+                  <p className="text-sm text-slate-600 mb-4">{c.desc}</p>
+                  <div className="flex items-center text-sm font-medium text-red-600 group-hover:text-red-700 transition-colors">
+                    View schedule 
+                    <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </Container>
@@ -740,7 +744,7 @@ function Pricing() {
 }
 
 
-/** ===== FAQ (new) ===== */
+/** ===== FAQ (minimal design) ===== */
 function Faq() {
   const faqs = [
     { q: "Can I pause or cancel anytime?", a: "Yes — manage your plan in the app. No lock-in contracts." },
@@ -748,20 +752,22 @@ function Faq() {
     { q: "Is coaching included?", a: "Performance & Elite include coached classes. Elite adds weekly 1:1." },
   ];
   return (
-    <section className="py-16">
+    <section className="py-16 bg-white">
       <Container>
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-3xl font-black text-center">Questions, answered</h2>
-          <div className="mt-8 space-y-4">
+          <h2 className="text-3xl font-bold text-center text-slate-800">Questions, answered</h2>
+          <div className="mt-12 space-y-6">
             {faqs.map((f, i) => (
-              <details key={i} className="group rounded-2xl border border-white/10 bg-neutral-900/60 p-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between">
-                  <span className="font-semibold">{f.q}</span>
-                  <span className="ml-4 h-6 w-6 grid place-items-center rounded-md border border-white/15 text-sm text-neutral-300">
-                    +
+              <details key={i} className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between py-4 border-b border-slate-200 hover:border-slate-300 transition-colors">
+                  <span className="font-medium text-slate-800 text-lg">{f.q}</span>
+                  <span className="ml-4 h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 text-slate-600 group-hover:border-red-500 group-hover:text-red-500 transition-colors">
+                    <span className="text-lg font-light">+</span>
                   </span>
                 </summary>
-                <p className="mt-3 text-neutral-300">{f.a}</p>
+                <div className="py-4">
+                  <p className="text-slate-600 leading-relaxed">{f.a}</p>
+                </div>
               </details>
             ))}
           </div>
@@ -779,16 +785,14 @@ function FinalCta() {
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900 p-8 md:p-14">
           <img
             src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=1920&auto=format&fit=crop"
-            alt="Weights rack"
-            className="absolute inset-0 h-full w-full object-cover opacity-20"
+            alt="Running silhouettes"
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
           />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "radial-gradient(1000px circle at 10% 10%, rgba(223,32,78,.18), transparent 40%)" }}
-          />
+          {/* Semi-transparent overlay */}
+          <div className="absolute inset-0 bg-black/30"></div>
           <div className="relative max-w-xl">
-            <h3 className="text-2xl md:text-3xl font-black">Ready to transform?</h3>
-            <p className="mt-2 text-neutral-300">Book a free consult and get a personalized plan.</p>
+            <h3 className="text-2xl md:text-3xl font-black text-cyan-400">Ready to transform?</h3>
+            <p className="mt-2 text-white">Book a free consult and get a personalized plan.</p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <a
                 href="#pricing"
@@ -797,7 +801,7 @@ function FinalCta() {
               >
                 Start free week
               </a>
-              <a href="#" className="inline-flex items-center justify-center rounded-2xl border border-white/30 px-5 py-3 font-semibold hover:bg-white/5">
+              <a href="#" className="inline-flex items-center justify-center rounded-2xl border border-white/30 px-5 py-3 font-semibold text-gray-300 hover:bg-white/10 transition-colors">
                 Talk to a coach
               </a>
             </div>

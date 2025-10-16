@@ -13,8 +13,9 @@ export const getPublicStats = async (req, res) => {
     });
 
     
-    const activeMembers = await Member.countDocuments({ 
-      isActive: true 
+    const activeMembers = await User.countDocuments({ 
+      role: 'member', 
+      isDisabled: false 
     });
 
     
@@ -94,7 +95,7 @@ export const getDetailedStats = async (req, res) => {
     ] = await Promise.all([
       User.countDocuments({ isDisabled: false }),
       User.countDocuments({ role: 'member', isDisabled: false }),
-      Member.countDocuments({ isActive: true }),
+      User.countDocuments({ role: 'member', isDisabled: false }),
       Trainer.countDocuments({ isActive: true, isDisabled: false }),
       Feedback.countDocuments(),
       Feedback.aggregate([

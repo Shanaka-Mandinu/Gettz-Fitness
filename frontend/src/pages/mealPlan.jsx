@@ -35,7 +35,6 @@ export default function MealPlan() {
   };
 
   // --- Validation helpers ---
-  const todayISO = new Date().toISOString().slice(0, 10);
 
   function validateField(name, value, allValues = form) {
     switch (name) {
@@ -59,8 +58,8 @@ export default function MealPlan() {
       case "height":
         if (!value && value !== 0) return "Height is required";
         if (Number.isNaN(Number(value))) return "Height must be a number";
-        if (Number(value) < 50 || Number(value) > 250)
-          return "Height must be between 50–250 cm";
+        if (Number(value) < 100 || Number(value) > 250)
+          return "Height must be between 100–250 cm";
         return null;
 
       case "weight":
@@ -143,6 +142,12 @@ export default function MealPlan() {
 
     if (!derivedUserId) {
       toast.error("Please log in to continue.");
+      return;
+    }
+
+    // Guard: backend URL must be configured
+    if (!import.meta.env.VITE_BACKEND_URL) {
+      toast.error("Backend URL not configured. Set VITE_BACKEND_URL.");
       return;
     }
 
@@ -253,7 +258,7 @@ export default function MealPlan() {
             )}
           </div>
 
-          {/* Last Name | Request Date */}
+          {/* Last Name | Request Status */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block mb-1 text-sm font-medium text-black">
@@ -366,8 +371,9 @@ export default function MealPlan() {
                 value={form.height}
                 onChange={(e) => handleChange("height", e.target.value)}
                 onBlur={() => handleBlur("height")}
-                min={50}
+                min={100}
                 max={250}
+                step="0.1"
                 aria-invalid={!!errors.height}
                 aria-describedby={errId("height")}
                 className={`w-full border rounded-lg px-3 py-2 ${
@@ -399,6 +405,7 @@ export default function MealPlan() {
                 onBlur={() => handleBlur("weight")}
                 min={20}
                 max={300}
+                step="0.1"
                 aria-invalid={!!errors.weight}
                 aria-describedby={errId("weight")}
                 className={`w-full border rounded-lg px-3 py-2 ${
