@@ -67,7 +67,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchMine(); // initial
-    const t = setInterval(fetchMine, 45000); // light polling
+    const t = setInterval(fetchMine, 45000); 
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
