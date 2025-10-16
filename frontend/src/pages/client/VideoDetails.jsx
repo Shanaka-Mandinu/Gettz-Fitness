@@ -169,6 +169,7 @@ export default function VideoDetails() {       // Workout Details Page
         const playlistsRes = await axios.get(endpoints.getPlaylists(), {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log("Playlists response:", playlistsRes.data);
         setPlaylists(playlistsRes.data.playlists || []);
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -299,6 +300,7 @@ export default function VideoDetails() {       // Workout Details Page
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      console.log("Created playlist:", res.data.playlist);
       setPlaylists(prev => [...prev, res.data.playlist]);
       setNewPlaylistName("");
       setNewPlaylistDescription("");
@@ -322,15 +324,18 @@ export default function VideoDetails() {       // Workout Details Page
       return;
     }
 
+    console.log("Adding video to playlist:", { playlistId, videoId });
     setIsAddingToPlaylist(true);
     try {
-      await axios.post(endpoints.addToPlaylist(playlistId, videoId), {}, {
+      const response = await axios.post(endpoints.addToPlaylist(playlistId, videoId), {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log("Add to playlist response:", response.data);
       toast.success("Video added to playlist");
       setShowPlaylistModal(false);
     } catch (error) {
+      console.error("Error adding to playlist:", error);
       const msg = error?.response?.data?.message || error?.message || "Failed to add video to playlist";
       toast.error(msg);
     } finally {
@@ -574,7 +579,23 @@ export default function VideoDetails() {       // Workout Details Page
                   </button>
                   
                   <button 
-                    onClick={() => setShowPlaylistModal(true)}
+                    onClick={async () => {
+                      console.log("Opening playlist modal, current playlists:", playlists);
+                      // Refresh playlists when opening modal
+                      try {
+                        const token = localStorage.getItem("token");
+                        if (token) {
+                          const playlistsRes = await axios.get(endpoints.getPlaylists(), {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          console.log("Refreshed playlists:", playlistsRes.data);
+                          setPlaylists(playlistsRes.data.playlists || []);
+                        }
+                      } catch (error) {
+                        console.error("Error refreshing playlists:", error);
+                      }
+                      setShowPlaylistModal(true);
+                    }}
                     className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
                   >
                     <MessageCircle className="h-5 w-5 text-gray-600" />
@@ -632,15 +653,44 @@ export default function VideoDetails() {       // Workout Details Page
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Add to Playlist</h3>
-              <button
-                onClick={() => setShowPlaylistModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      if (token) {
+                        const playlistsRes = await axios.get(endpoints.getPlaylists(), {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        setPlaylists(playlistsRes.data.playlists || []);
+                        toast.success("Playlists refreshed");
+                      }
+                    } catch (error) {
+                      console.error("Error refreshing playlists:", error);
+                      toast.error("Failed to refresh playlists");
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  title="Refresh playlists"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowPlaylistModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
             
             <div className="p-6">
+              {/* Debug info */}
+              <div className="text-xs text-gray-400 mb-2">
+                Debug: {playlists.length} playlists loaded
+              </div>
               {playlists.length === 0 ? (
                 <div className="text-center py-8">
                   <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -669,8 +719,16 @@ export default function VideoDetails() {       // Workout Details Page
                         <p className="text-sm text-gray-500">
                           {playlist.videoCount} video{playlist.videoCount !== 1 ? 's' : ''}
                         </p>
+                        {playlist.description && (
+                          <p className="text-xs text-gray-400 mt-1">{playlist.description}</p>
+                        )}
                       </div>
-                      <MessageCircle className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="h-5 w-5 text-gray-400" />
+                        {isAddingToPlaylist && (
+                          <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </div>
                     </button>
                   ))}
                   

@@ -283,3 +283,173 @@ export async function getInquiryById(req, res) {
     inquiry: inquiry,
   });
 }
+
+// Generate inquiry report with filters
+export async function generateInquiryReport(req, res) {
+  try {
+    const { 
+      startDate, 
+      endDate, 
+      status, 
+      reportType = 'custom', // 'custom', 'weekly', 'monthly'
+      format = 'json' // 'json', 'pdf'
+    } = req.body;
+
+    let query = {};
+    let dateRange = {};
+
+    // Handle date filtering based on report type
+    if (reportType === 'weekly') {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      dateRange = {
+        inquiry_date: {
+          $gte: weekAgo,
+          $lte: now
+        }
+      };
+    } else if (reportType === 'monthly') {
+      const now = new Date();
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      dateRange = {
+        inquiry_date: {
+          $gte: monthAgo,
+          $lte: now
+        }
+      };
+    } else if (startDate && endDate) {
+      dateRange = {
+        inquiry_date: {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        }
+      };
+    }
+
+    // Build query
+    if (Object.keys(dateRange).length > 0) {
+      query = { ...query, ...dateRange };
+    }
+
+    if (status && status !== 'all') {
+      query.inquiry_status = status;
+    }
+
+    // Fetch inquiries
+    const inquiries = await Inquiry.find(query)
+      .populate('userId', 'firstName lastName email')
+      .sort({ inquiry_date: -1 });
+
+    // Generate report statistics
+    const totalInquiries = inquiries.length;
+    const statusCounts = {
+      Open: inquiries.filter(i => i.inquiry_status === 'Open').length,
+      'In Progress': inquiries.filter(i => i.inquiry_status === 'In Progress').length,
+      Resolved: inquiries.filter(i => i.inquiry_status === 'Resolved').length,
+      Closed: inquiries.filter(i => i.inquiry_status === 'Closed').length
+    };
+
+    const typeCounts = {
+      General: inquiries.filter(i => i.inquiry_type === 'General').length,
+      Technical: inquiries.filter(i => i.inquiry_type === 'Technical').length,
+      Billing: inquiries.filter(i => i.inquiry_type === 'Billing').length,
+      Feedback: inquiries.filter(i => i.inquiry_type === 'Feedback').length,
+      Other: inquiries.filter(i => i.inquiry_type === 'Other').length
+    };
+
+    const resolvedInquiries = inquiries.filter(i => i.inquiry_status === 'Resolved').length;
+    const avgResponseTime = calculateAvgResponseTime(inquiries);
+
+    // Generate report ID
+    const reportId = `IR-${Date.now()}`;
+    const generatedAt = new Date();
+
+    const reportData = {
+      reportId,
+      generatedAt,
+      reportType,
+      filters: {
+        startDate: reportType === 'custom' ? startDate : null,
+        endDate: reportType === 'custom' ? endDate : null,
+        status,
+        dateRange: reportType === 'weekly' ? 'Last 7 days' : 
+                   reportType === 'monthly' ? 'Last 30 days' : 
+                   'Custom range'
+      },
+      summary: {
+        totalInquiries,
+        statusCounts,
+        typeCounts,
+        resolvedInquiries,
+        resolutionRate: totalInquiries > 0 ? ((resolvedInquiries / totalInquiries) * 100).toFixed(1) : 0,
+        avgResponseTime
+      },
+      inquiries: inquiries.map(inquiry => ({
+        inquiry_id: inquiry.inquiry_id,
+        inquiry_type: inquiry.inquiry_type,
+        inquiry_message: inquiry.inquiry_message,
+        inquiry_date: inquiry.inquiry_date,
+        email: inquiry.email,
+        inquiry_status: inquiry.inquiry_status,
+        response_count: inquiry.inquiry_response ? inquiry.inquiry_response.length : 0,
+        user_name: inquiry.userId ? `${inquiry.userId.firstName || ''} ${inquiry.userId.lastName || ''}`.trim() : 'N/A'
+      }))
+    };
+
+    if (format === 'pdf') {
+      // For PDF generation, we'll return the data and let frontend handle PDF creation
+      res.json({
+        success: true,
+        message: 'Report data generated successfully',
+        data: reportData
+      });
+    } else {
+      res.json({
+        success: true,
+        message: 'Report generated successfully',
+        data: reportData
+      });
+    }
+
+  } catch (error) {
+    console.error('Error generating inquiry report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating report',
+      error: error.message
+    });
+  }
+}
+
+// Helper function to calculate average response time
+function calculateAvgResponseTime(inquiries) {
+  const inquiriesWithResponses = inquiries.filter(i => 
+    i.inquiry_response && i.inquiry_response.length > 0
+  );
+
+  if (inquiriesWithResponses.length === 0) return 0;
+
+  let totalResponseTime = 0;
+  let responseCount = 0;
+
+  inquiriesWithResponses.forEach(inquiry => {
+    const firstResponse = inquiry.inquiry_response.find(resp => resp.responder === 'admin');
+    if (firstResponse) {
+      const responseTime = new Date(firstResponse.date) - new Date(inquiry.inquiry_date);
+      totalResponseTime += responseTime;
+      responseCount++;
+    }
+  });
+
+  if (responseCount === 0) return 0;
+
+  const avgMs = totalResponseTime / responseCount;
+  const avgHours = avgMs / (1000 * 60 * 60);
+  
+  if (avgHours < 24) {
+    return `${avgHours.toFixed(1)} hours`;
+  } else {
+    const avgDays = avgHours / 24;
+    return `${avgDays.toFixed(1)} days`;
+  }
+}
