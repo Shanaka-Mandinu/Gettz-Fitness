@@ -40,6 +40,11 @@ export default function LoginPage() {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
 
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('authChange', { 
+          detail: { isLoggedIn: true } 
+        }));
+
         const user = response.data.user;
         if (user.role === "admin") navigate("/admin");
         else navigate("/");
@@ -70,6 +75,11 @@ export default function LoginPage() {
         toast.success("Login Success");
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('authChange', { 
+          detail: { isLoggedIn: true } 
+        }));
 
         const user = res.data.user;
         if (user.role === "admin") navigate("/admin");

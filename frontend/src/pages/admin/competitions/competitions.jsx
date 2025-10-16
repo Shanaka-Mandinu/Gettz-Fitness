@@ -79,7 +79,6 @@ export default function ChallengeDetailsPage() {
       ch.challengeID?.toString().includes(searchTerm)
   );
 
-  // PDF Download (styled like Video.jsx)
   const handleDownloadPDF = async () => {
     const doc = new jsPDF();
 

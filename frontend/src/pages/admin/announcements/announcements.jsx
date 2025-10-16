@@ -130,7 +130,7 @@ export default function AnnouncementDetailsPage() {
     doc.text('Gettz Fitness', 32, 18);
     doc.setFontSize(11);
     doc.setTextColor('#333');
-    doc.text('Address: GettzFitness Matara', 32, 25);
+    doc.text('Address: 48 Udyana Mawatha, Matara', 32, 25);
 
     doc.setFontSize(10);
     doc.setTextColor('#333');

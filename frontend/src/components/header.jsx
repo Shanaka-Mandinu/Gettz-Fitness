@@ -50,6 +50,12 @@ export default function Navbar() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
+
+         // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('authChange', { 
+        detail: { isLoggedIn: false } 
+      }));
+
         navigate("/");
       }
     });

@@ -50,7 +50,7 @@ export default function TrainerChallenges() {
     const list = filtered;
     const doc = new jsPDF();
 
-    // Add logo
+    // logo
     const img = new window.Image();
     img.src = GymLogo;
     await new Promise((resolve) => { img.onload = resolve; });
