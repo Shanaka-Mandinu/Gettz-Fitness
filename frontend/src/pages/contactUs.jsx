@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 export default function ContactUs() {
    const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const API_BASE =
     (import.meta?.env && import.meta.env.VITE_BACKEND_URL) ||
     (window.location.port === "5173" ? "http://localhost:3000" : window.location.origin);
@@ -60,6 +61,17 @@ export default function ContactUs() {
     };
 
     getUserEmail();
+    // listen for auth changes
+    const onAuth = (e) => {
+      try {
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token);
+      } catch { setIsLoggedIn(false); }
+    };
+    window.addEventListener('authChange', onAuth);
+    // initial check
+    onAuth();
+    return () => window.removeEventListener('authChange', onAuth);
   }, []); // Run once on component mount
 
   const handleChange = (e) => {
@@ -388,21 +400,31 @@ export default function ContactUs() {
             <p className="text-gray-600 mb-6">
               Rate your experience and let us know how we can improve.
             </p>
-
-            {/* Feedback message */}
-            {feedbackMsg && (
-              <div
-                className={`mb-6 rounded-lg px-4 py-3 text-sm ${
-                  feedbackMsg.type === "success"
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-red-50 text-red-800 border border-red-200"
-                }`}
-              >
-                {feedbackMsg.text}
+            {/* Only show feedback form to logged-in users */}
+            {!isLoggedIn ? (
+              <div className="p-6 bg-red-50 rounded-md text-sm text-gray-700">
+                <p className="mb-3">You must be logged in to submit feedback.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => navigate('/login')} className="rounded-md bg-red-600 text-white px-4 py-2">Login</button>
+                  <button onClick={() => navigate('/register')} className="rounded-md border border-red-600 text-red-600 px-4 py-2">Register</button>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                {/* Feedback message */}
+                {feedbackMsg && (
+                  <div
+                    className={`mb-6 rounded-lg px-4 py-3 text-sm ${
+                      feedbackMsg.type === "success"
+                        ? "bg-green-50 text-green-800 border border-green-200"
+                        : "bg-red-50 text-red-800 border border-red-200"
+                    }`}
+                  >
+                    {feedbackMsg.text}
+                  </div>
+                )}
 
-            <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+                <form onSubmit={handleFeedbackSubmit} className="space-y-6">
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -539,7 +561,9 @@ export default function ContactUs() {
                 </a>
                 .
               </p>
-            </form>
+              </form>
+              </>
+            )}
           </div>
         </div>
       </section>
