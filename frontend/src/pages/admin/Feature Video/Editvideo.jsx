@@ -471,7 +471,9 @@ export default function EditVideo() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Duration (seconds)</label>
+                <label className="block text-sm font-medium mb-1">
+                  Workout Duration (seconds)
+                </label>
                 <input
                   type="number"
                   min={5}
