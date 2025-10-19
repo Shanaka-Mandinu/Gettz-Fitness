@@ -1,9 +1,10 @@
 import express from 'express';
-import { createInquiry, deleteInquiry, getAllInquiry, getInquiryById, updateInquiry, replyInquiry, getUserInquiries, userReplyInquiry, generateInquiryReport } from '../controller/inquiryController.js';
+import { createInquiry, createPublicInquiry, deleteInquiry, getAllInquiry, getInquiryById, updateInquiry, replyInquiry, getUserInquiries, userReplyInquiry, generateInquiryReport } from '../controller/inquiryController.js';
 
 const inqRouter = express.Router();
 
 inqRouter.post('/submit', createInquiry);
+inqRouter.post('/public-submit', createPublicInquiry);
 inqRouter.get('/viewAll', getAllInquiry);
 inqRouter.put('/update/:inquiry_id', updateInquiry);
 inqRouter.delete('/delete/:inquiry_id', deleteInquiry);

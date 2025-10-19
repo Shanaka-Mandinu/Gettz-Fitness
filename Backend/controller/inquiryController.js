@@ -162,6 +162,7 @@ export function userReplyInquiry(req, res) {
     });
 }
 
+// Create inquiry for authenticated users
 export function createInquiry(req, res) {
   if (req.user == null) {
     return res.status(400).json({ message: "Logging First" });
@@ -179,6 +180,38 @@ export function createInquiry(req, res) {
     })
     .catch((err) => {
       res.status(500).json({ message: "Unsuccessful!", error: err.message });
+    });
+}
+
+// Create public inquiry for non-authenticated users
+export function createPublicInquiry(req, res) {
+  const { email, inquiry_type, inquiry_message } = req.body;
+  
+  // Validate required fields
+  if (!email || !inquiry_type || !inquiry_message) {
+    return res.status(400).json({ message: "Email, inquiry type, and message are required" });
+  }
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Please provide a valid email address" });
+  }
+  
+  const inquiry = new Inquiry({
+    email: email.toLowerCase(),
+    inquiry_type,
+    inquiry_message,
+    userId: null // No user ID for public inquiries
+  });
+  
+  inquiry
+    .save()
+    .then(() => {
+      res.status(201).json({ message: "Inquiry submitted successfully! We'll get back to you soon." });
+    })
+    .catch((err) => {
+      res.status(500).json({ message: "Failed to submit inquiry", error: err.message });
     });
 }
 

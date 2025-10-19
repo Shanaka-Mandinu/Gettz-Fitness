@@ -100,35 +100,51 @@ export default function ContactUs() {
       return;
     }
 
-    const inquiry_id = Math.floor(100000 + Math.random() * 900000);
-    let userId = null;
-    try {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const userObj = JSON.parse(userStr);
-        userId = userObj?._id || userObj?.id || null;
-      }
-    } catch {}
-    const payload = {
-      inquiry_id,
-      email: form.email.trim().toLowerCase(),
-      inquiry_type: form.inquiry_type,
-      inquiry_message: form.inquiry_message.trim(),
-      userId
-    };
-
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("token"); // get JWT
-      console.log("Token:", token);
+      // Determine which endpoint to use based on login status
+      const endpoint = isLoggedIn ? '/api/inquiry/submit' : '/api/inquiry/public-submit';
+      
+      let payload;
+      let headers = {
+        "Content-Type": "application/json"
+      };
+
+      if (isLoggedIn) {
+        // For logged-in users, include user ID and use auth endpoint
+        const inquiry_id = Math.floor(100000 + Math.random() * 900000);
+        let userId = null;
+        try {
+          const userStr = localStorage.getItem("user");
+          if (userStr) {
+            const userObj = JSON.parse(userStr);
+            userId = userObj?._id || userObj?.id || null;
+          }
+        } catch {}
+        
+        payload = {
+          inquiry_id,
+          email: form.email.trim().toLowerCase(),
+          inquiry_type: form.inquiry_type,
+          inquiry_message: form.inquiry_message.trim(),
+          userId
+        };
+        
+        const token = localStorage.getItem("token");
+        headers.Authorization = "Bearer " + token;
+      } else {
+        // For non-logged-in users, use public endpoint
+        payload = {
+          email: form.email.trim().toLowerCase(),
+          inquiry_type: form.inquiry_type,
+          inquiry_message: form.inquiry_message.trim()
+        };
+      }
+
+      console.log("Endpoint:", endpoint);
       console.log("Payload:", payload);
 
-      const { data } = await axios.post(`${API_BASE}/api/inquiry/submit`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      });
+      const { data } = await axios.post(`${API_BASE}${endpoint}`, payload, { headers });
 
       toast.success("Inquiry submitted successfully");
       setServerMsg({
@@ -214,7 +230,7 @@ export default function ContactUs() {
     { q: "What are your hours?", a: "We’re open 5:00 AM – 11:00 PM daily. Class schedules vary by day; check the timetable or call us for slots." },
     { q: "Is personal training available?", a: "Absolutely. We offer 1:1, partner, and small-group training with specialized coaches. Packages are flexible and goal-based." },
     { q: "Can I freeze or cancel my membership?", a: "Yes. You can freeze for travel or medical reasons and cancel anytime after your initial term. See our policy for simple steps." },
-    { q: "Where are you located?", a: "48, Esplanade Road, Matara 81000, Sri Lanka. Use the map below to get directions or open it in Google Maps." },
+    { q: "Where are you located?", a: "Getzz Fitness is located at 48, Udyana Mawatha, Matara 81000, Sri Lanka. Use the map above to get directions or click 'Open in Google Maps' for navigation." },
   ];
 
   return (
@@ -281,7 +297,7 @@ export default function ContactUs() {
           >
             <h2 className="text-2xl font-bold">Get in Touch</h2>
             <p className="text-gray-600 mt-1">
-              Logged-in members can submit inquiries directly.
+              Submit your inquiry below. We'll get back to you soon!
             </p>
 
             
@@ -309,11 +325,14 @@ export default function ContactUs() {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
+                  readOnly={isLoggedIn && isEmailAutoFilled}
+                  className={`w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000] ${
+                    isLoggedIn && isEmailAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to update you about your inquiry."}
+                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to respond to your inquiry."}
                 </p>
               </div>
 
@@ -436,11 +455,14 @@ export default function ContactUs() {
                   value={feedbackForm.email}
                   onChange={handleFeedbackChange}
                   placeholder="you@example.com"
-                  className="w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
+                  readOnly={isLoggedIn && isEmailAutoFilled}
+                  className={`w-full rounded-lg border border-red-600/30 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF0000] ${
+                    isLoggedIn && isEmailAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to update you about your feedback."}
+                  {isEmailAutoFilled ? "Email pre-filled from your account" : "We'll use this to respond to your feedback."}
                 </p>
               </div>
 
@@ -578,7 +600,7 @@ export default function ContactUs() {
               className="w-full h-[340px] md:h-[420px]"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps?q=48%2C%20Esplanade%20Road%2C%20Matara%2C%20Sri%20Lanka&output=embed"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.123456789!2d80.546038!3d5.948860!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNcKwNTYnNTUuOSJOIDgwwrAzMic0Ni41IkU!5e0!3m2!1sen!2slk!4v1234567890123!5m2!1sen!2slk&q=Getzz+Fitness+48+Udyana+Mawatha+Matara+Sri+Lanka"
             />
           </div>
 
@@ -586,24 +608,38 @@ export default function ContactUs() {
           <div>
             <p className="text-sm text-gray-500">Our Location</p>
             <h2 className="text-3xl md:text-4xl font-bold leading-tight mt-1">
-              Connecting Near and Far
+              Visit Getzz Fitness
             </h2>
             <div className="mt-6">
-              <h3 className="font-semibold">Headquarters</h3>
+              <h3 className="font-semibold text-lg">Getzz Fitness</h3>
               <div className="mt-2 text-gray-700 text-sm leading-6">
-                <div>Getzz Fitness</div>
-                <div>Matara, Sri Lanka</div>
-                <div>48, Esplanade Road</div>
+                <div className="font-medium">Matara, Sri Lanka</div>
+                <div>48, Udyana Mawatha</div>
                 <div>Matara 81000</div>
                 <div>Sri Lanka</div>
               </div>
-              <div className="mt-4">
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="font-medium mr-2">📍</span>
+                  <span>Located in the heart of Matara</span>
+                </div>
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="font-medium mr-2">🕒</span>
+                  <span>Open 5:00 AM – 11:00 PM daily</span>
+                </div>
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="font-medium mr-2">🚗</span>
+                  <span>Easy parking available</span>
+                </div>
+              </div>
+              <div className="mt-6">
                 <a
-                  href=""
+                  href="https://www.google.com/maps/search/Getzz+Fitness+48+Udyana+Mawatha+Matara+Sri+Lanka"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-lg bg-[#FF0000] px-5 py-3 text-white font-semibold hover:opacity-90"
+                  className="inline-flex items-center rounded-lg bg-[#FF0000] px-5 py-3 text-white font-semibold hover:opacity-90 transition-opacity"
                 >
+                  <span className="mr-2">🗺️</span>
                   Open in Google Maps
                 </a>
               </div>
