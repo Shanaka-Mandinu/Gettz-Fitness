@@ -1,5 +1,5 @@
 import MealPlan from "../model/mealplan.js";
-import path from "path";
+// path no longer needed; photos are URLs now
 import { createNotificationForUser } from "./notificatinController.js";
 
 
@@ -70,7 +70,8 @@ export const addMealPlan = (req, res) => {
       fats: req.body.fats,
       dietCategory: req.body.dietCategory,
       duration: req.body.duration,
-      photo: req.file ? req.file.path.replace(process.cwd() + path.sep, '') : null,
+      // Accept URL from the request body (cloud)
+      photo: (req.body.photo || null),
     });
     mealplan
       .save()
@@ -136,29 +137,34 @@ export const updateMealPlan = (req, res) => {
       photo: photoFromBody,
     } = req.body;
     
-    const photo = req.file ? req.file.path.replace(process.cwd() + path.sep, '') : photoFromBody ?? undefined;
+    // Accept URL from body; if not provided, don't modify existing photo
+    const computedPhoto = (photoFromBody ?? undefined);
     const mealPlan_id = Number(req.params.id);
+    // Build $set payload and include photo only when defined
+    const setPayload = {
+      // User information
+      user_name,
+      user_id,
+      
+      // Meal plan details 
+      meal_name,
+      meal_type,
+      foodItems,
+      description,
+      calories,
+      protein,
+      carbs,
+      fats,
+      dietCategory,
+      duration,
+    };
+    if (computedPhoto !== undefined) {
+      setPayload.photo = computedPhoto;
+    }
     MealPlan.updateOne(
       { mealPlan_id: mealPlan_id },
       {
-        $set: {
-          // User information
-          user_name,
-          user_id,
-          
-          // Meal plan details 
-          meal_name,
-          meal_type,
-          foodItems,
-          description,
-          calories,
-          protein,
-          carbs,
-          fats,
-          dietCategory,
-          duration,
-          photo,
-        },
+        $set: setPayload,
       }
     )
       .then((response) => {

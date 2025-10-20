@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import mediaUpload from "../../utils/mediaUpload";
 
 export default function AssignMealPlan() {
   const navigate = useNavigate();
@@ -112,25 +113,23 @@ export default function AssignMealPlan() {
     return newErrors;
   };
 
-  // Build FormData to match backend controller (multipart/form-data)
-  function buildFormData() {
-    const formData = new FormData();
-    formData.append("user_name", requestData?.user_name || "");
-    formData.append("user_id", requestData?.user_id || "");
-    formData.append("meal_name", form.mealName.trim());
-    formData.append("meal_type", form.planMealType.trim());
-    formData.append("foodItems", form.foodItems.trim());
-    formData.append("description", form.planDescription.trim());
-    formData.append("calories", form.calories);
-    formData.append("protein", form.protein);
-    formData.append("carbs", form.carbs);
-    formData.append("fats", form.fats);
-    formData.append("dietCategory", form.dietCategory.trim());
-    formData.append("duration", form.duration.trim());
-    
-    if (form.photo) formData.append("photo", form.photo);
-
-    return formData;
+  // Build JSON payload; if a File is present, caller should pass uploaded URL
+  function buildPayload(photoUrl) {
+    return {
+      user_name: requestData?.user_name || "",
+      user_id: requestData?.user_id || "",
+      meal_name: form.mealName.trim(),
+      meal_type: form.planMealType.trim(),
+      foodItems: form.foodItems.trim(),
+      description: form.planDescription.trim(),
+      calories: form.calories,
+      protein: form.protein,
+      carbs: form.carbs,
+      fats: form.fats,
+      dietCategory: form.dietCategory.trim(),
+      duration: form.duration.trim(),
+      photo: photoUrl ?? null,
+    };
   }
 
   // Validate image before setting into state (max ~10MB; image MIME types)
@@ -167,14 +166,19 @@ export default function AssignMealPlan() {
     setLoading(true);
     
     try {
-      const formData = buildFormData();
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: "Bearer " + token } : undefined;
       
-      // First, assign the meal plan (let browser set multipart boundary)
+      // Upload photo (if any) to Supabase first
+      let photoUrl = null;
+      if (form.photo instanceof File) {
+        photoUrl = await mediaUpload(form.photo);
+      }
+      const payload = buildPayload(photoUrl);
+      // Assign the meal plan with JSON payload
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealPlan`,
-        formData,
+        payload,
         headers ? { headers } : undefined
       );
       

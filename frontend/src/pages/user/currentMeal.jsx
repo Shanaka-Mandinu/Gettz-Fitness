@@ -58,30 +58,39 @@ function MealPlanCard({ plan, onDelete }) {
     ? (plan.templateData?.photo || plan.photo)
     : (plan.photo);
   
-  const photoUrl = photo 
-    ? `${import.meta.env.VITE_BACKEND_URL}/${photo}`
-    : null;
+  // Only use absolute cloud URLs; local /uploads no longer exists
+  const photoUrl = photo && String(photo).startsWith("http") ? photo : null;
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       {/* Photo Section */}
-      {photoUrl && (
-        <div className="relative h-48 w-full overflow-hidden">
+      <div className="relative h-48 w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+        {photoUrl ? (
           <img
             src={photoUrl}
             alt={name}
             className="h-full w-full object-cover"
             onError={(e) => {
-              e.target.style.display = 'none';
+              // Show placeholder if image fails
+              e.currentTarget.style.display = 'none';
+              const fallback = e.currentTarget.parentElement?.querySelector('[data-fallback]');
+              if (fallback) fallback.style.display = 'flex';
             }}
           />
-          <div className="absolute top-3 right-3">
-            {isTemplate && (
-              <Pill tone="blue">Template</Pill>
-            )}
-          </div>
+        ) : null}
+        <div data-fallback className="hidden h-full w-full items-center justify-center">
+          <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 7a2 2 0 012-2h1l2-2h6l2 2h1a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 14l4-4a2 2 0 012 0l7 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14 14l1-1a2 2 0 012 0l4 4" />
+          </svg>
         </div>
-      )}
+        <div className="absolute top-3 right-3">
+          {isTemplate && (
+            <Pill tone="blue">Template</Pill>
+          )}
+        </div>
+      </div>
       
       {/* Content Section */}
       <div className="p-5">
@@ -215,40 +224,42 @@ export default function CurrentMeal() {
       );
       const apiItems = Array.isArray(data?.response) ? data.response : Array.isArray(data) ? data : [];
       
-  // Fetch selected meal templates from localStorage (scoped per user)
-      let currentUserId = null;
-      try {
-        const uStr = localStorage.getItem('user');
-        if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
-      } catch {}
-      const storageKey = currentUserId ? `selectedMealTemplates:${currentUserId}` : 'selectedMealTemplates';
-      let selectedTemplates = [];
-      try {
-        selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      } catch { selectedTemplates = []; }
-      // One-time migration: move any legacy global selections to the user-scoped key
-      if (currentUserId && selectedTemplates.length === 0) {
+      // Fetch selected meal templates from API for cross-browser persistence
+      let templateItems = [];
+      if (token) {
         try {
-          const legacy = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
-          if (Array.isArray(legacy) && legacy.length > 0) {
-            localStorage.setItem(storageKey, JSON.stringify(legacy));
-            localStorage.removeItem('selectedMealTemplates');
-            selectedTemplates = legacy;
-          }
-        } catch {}
+          const { data: saved } = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/saved-meal-templates/mine`,
+            { headers }
+          );
+          const arr = Array.isArray(saved) ? saved : [];
+          templateItems = arr.map(template => ({
+            _id: String(template._id),
+            meal_name: template.templateName,
+            meal_type: template.mealType,
+            duration: template.duration || "Custom Template",
+            calories: template.calories,
+            description: template.foodItems,
+            isTemplate: true,
+            templateData: template,
+          }));
+        } catch (e) {
+          // If API fails (e.g., unauthenticated), fall back to any local selections
+          try {
+            const local = JSON.parse(localStorage.getItem('selectedMealTemplates') || '[]');
+            templateItems = local.map(template => ({
+              _id: template.id,
+              meal_name: template.templateName,
+              meal_type: template.mealType,
+              duration: template.duration || "Custom Template",
+              calories: template.calories,
+              description: template.foodItems,
+              isTemplate: true,
+              templateData: template,
+            }));
+          } catch {}
+        }
       }
-      
-      // Convert templates to the same format as meal plans
-      const templateItems = selectedTemplates.map(template => ({
-        _id: template.id,
-        meal_name: template.templateName,
-        meal_type: template.mealType,
-        duration: template.duration || "Custom Template",
-        calories: template.calories,
-        description: template.foodItems,
-        isTemplate: true, // Flag to identify templates
-        templateData: template // Keep original template data
-      }));
 
   // Combine both arrays into a single list for rendering and export
       const allItems = [...apiItems, ...templateItems];
@@ -281,18 +292,20 @@ export default function CurrentMeal() {
       
   // Check if it's a template (selected from predefined templates)
       if (plan.isTemplate) {
-        // Remove from localStorage
-        let currentUserId = null;
+        // Remove via API
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: "Bearer " + token } : undefined;
         try {
-          const uStr = localStorage.getItem('user');
-          if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
-        } catch {}
-        const storageKey = currentUserId ? `selectedMealTemplates:${currentUserId}` : 'selectedMealTemplates';
-        const selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const updatedTemplates = selectedTemplates.filter(t => t.id !== plan._id);
-        localStorage.setItem(storageKey, JSON.stringify(updatedTemplates));
-        
-        toast.success("The template has been removed from your meal plans.");
+          const templateId = plan.templateData?.template_id || plan.templateData?._id || plan._id;
+          await axios.delete(
+            `${import.meta.env.VITE_BACKEND_URL}/api/saved-meal-templates/save/${encodeURIComponent(templateId)}`,
+            headers ? { headers } : undefined
+          );
+          toast.success("The template has been removed from your meal plans.");
+        } catch (e) {
+          const msg = e?.response?.data?.message || e?.message || "Failed to remove template";
+          toast.error(msg);
+        }
       } else {
         // Delete regular meal plan from API
         const id = plan.mealPlan_id;

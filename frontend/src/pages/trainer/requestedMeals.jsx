@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download } from "lucide-react";
+import { FileDown, RotateCcw, Search, Filter, List, AlertTriangle, CheckCircle, Leaf, Utensils } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { generateMealRequestsPDF } from "../../utils/mealRequestsReport";
 
 export default function RequestedMeals() {
   const navigate = useNavigate();
@@ -13,6 +12,10 @@ export default function RequestedMeals() {
   const [requests, setRequests] = useState([]);
   const [busy, setBusy] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [q, setQ] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [mealTypeFilter, setMealTypeFilter] = useState("all"); // all | vegan | non-vegan
 
 
   // -------- FETCH ----------
@@ -53,137 +56,66 @@ export default function RequestedMeals() {
     fetchRequests();
   }, []);
 
-  // Filter requests based on status
-  const filteredRequests = requests.filter(request => {
-    if (statusFilter === "all") return true;
-    return request.status === statusFilter;
-  });
+  // Normalize meal type to consistent categories
+  const normalizeMealType = (s) => {
+    const v = (s || "").toString().toLowerCase().replace(/\s|_/g, "");
+    if (v.includes("non") && v.includes("vegan")) return "non-vegan";
+    if (v.includes("vegan")) return "vegan";
+    return v || "";
+  };
 
-  // -------- PDF ----------
-  const handleDownloadPDF = () => {
-    // Build a report PDF with brand header, two tables, and footer
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(220, 38, 38); // Red color
-    doc.text("Gettz Fitness", 20, 20);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Black color
-    doc.text("Address: Matara", 20, 30);
-    
-    // Red line
-    doc.setDrawColor(220, 38, 38);
-    doc.setLineWidth(0.5);
-    doc.line(20, 35, 190, 35);
-    
-    // Title
-    doc.setFontSize(16);
-    doc.setTextColor(220, 38, 38);
-    doc.text("User Meal Requests Report", 20, 45);
-    
-    // First Table - Basic Info
-    autoTable(doc, {
-      startY: 55,
-      head: [
-        [
-          "No",
-          "Request ID",
-          "First Name",
-          "Last Name",
-          "Status",
-          "Meal Type"
-        ]
-      ],
-      body: filteredRequests.map((request, index) => [
-        index + 1,
-        String(request.request_id ?? "-"),
-        request.user_name ?? "-",
-        request.last_name ?? "-",
-        request.status === 'urgent' ? 'Urgent' : 'Normal',
-        request.mealType ?? "-"
-      ]),
-      theme: "grid",
-      headStyles: { 
-        fillColor: [220, 38, 38], // Red background
-        textColor: [255, 255, 255], // White text
-        fontSize: 10,
-        halign: 'left'
-      },
-      styles: { 
-        fontSize: 8,
-        cellPadding: 3,
-        halign: 'left'
-      },
-      columnStyles: {
-        0: { cellWidth: 15, halign: 'left' }, // No
-        1: { cellWidth: 25, halign: 'left' }, // Request ID
-        2: { cellWidth: 35, halign: 'left' }, // First Name
-        3: { cellWidth: 35, halign: 'left' }, // Last Name
-        4: { cellWidth: 30, halign: 'left' }, // Status
-        5: { cellWidth: 30, halign: 'left' }  // Meal Type
-      },
-      margin: { top: 55, left: 20, right: 20 },
-      tableWidth: 'auto',
-      showHead: 'everyPage'
+  // Filtering : search, status, meal type, date range
+  const filteredRequests = useMemo(() => {
+    const qLower = q.trim().toLowerCase();
+    const fromTime = dateFrom ? new Date(dateFrom).setHours(0,0,0,0) : null;
+    const toTime = dateTo ? new Date(dateTo).setHours(23,59,59,999) : null;
+    return requests.filter((r) => {
+      const matchesStatus = statusFilter === "all" || String(r.status || "").toLowerCase() === statusFilter;
+      const mt = normalizeMealType(r.mealType);
+      const matchesMealType = mealTypeFilter === "all" || mt === mealTypeFilter;
+      const matchesQ = !qLower || [
+        r.request_id,
+        r.user_name,
+        r.last_name,
+        r.mealType,
+        r.description,
+      ]
+        .map((v) => (v ? String(v).toLowerCase() : ""))
+        .some((s) => s.includes(qLower));
+      const t = r.createdAt ? new Date(r.createdAt).getTime() : null;
+      const matchesFrom = !fromTime || (t && t >= fromTime);
+      const matchesTo = !toTime || (t && t <= toTime);
+      return matchesStatus && matchesMealType && matchesQ && matchesFrom && matchesTo;
     });
+  }, [requests, statusFilter, mealTypeFilter, q, dateFrom, dateTo]);
 
-    // Second Table - Additional Details
-    autoTable(doc, {
-      // Start after first table ends; if undefined, fall back to a default
-      startY: (doc.lastAutoTable?.finalY || 55) + 20,
-      head: [
-        [
-          "No",
-          "Request ID",
-          "Description",
-          "Weight",
-          "Height"
-        ]
-      ],
-      body: filteredRequests.map((request, index) => [
-        index + 1,
-        String(request.request_id ?? "-"),
-        request.description ?? "-",
-        request.weight ?? "-",
-        request.height ?? "-"
-      ]),
-      theme: "grid",
-      headStyles: { 
-        fillColor: [220, 38, 38], // Red background
-        textColor: [255, 255, 255], // White text
-        fontSize: 10,
-        halign: 'left'
-      },
-      styles: { 
-        fontSize: 8,
-        cellPadding: 3,
-        halign: 'left'
-      },
-      columnStyles: {
-        0: { cellWidth: 15, halign: 'left' }, // No
-        1: { cellWidth: 25, halign: 'left' }, // Request ID
-        2: { cellWidth: 80, halign: 'left' }, // Description
-        3: { cellWidth: 25, halign: 'left' }, // Weight
-        4: { cellWidth: 25, halign: 'left' }  // Height
-      },
-      margin: { top: 20, left: 20, right: 20 },
-      tableWidth: 'auto',
-      showHead: 'everyPage'
-    });
-
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
-      doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, doc.internal.pageSize.height - 5);
+  // Totals
+  const totals = useMemo(() => {
+    const count = filteredRequests.length;
+    let urgent = 0, normal = 0, vegan = 0, nonVegan = 0;
+    for (const r of filteredRequests) {
+      if (String(r.status || "").toLowerCase() === "urgent") urgent++;
+      else normal++;
+      const mt = normalizeMealType(r.mealType);
+      if (mt === "vegan") vegan++;
+      else if (mt === "non-vegan") nonVegan++;
     }
+    return { count, urgent, normal, vegan, nonVegan };
+  }, [filteredRequests]);
 
-    doc.save("user_meal_requests_report.pdf");
+  // Report download (PDF)
+  const downloadPDF = () => {
+    const filters = {
+      status: statusFilter,
+      mealType: mealTypeFilter,
+      dateFrom,
+      dateTo,
+      q,
+    };
+    generateMealRequestsPDF(filteredRequests, totals, {
+      title: "Meal Requests Report",
+      filters,
+    });
   };
 
   // ---- Assign helper ----
@@ -209,24 +141,144 @@ export default function RequestedMeals() {
     <div className="p-6">
       <div className="mx-auto w-full max-w-screen-2xl">
         {/* Header */}
-        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="mb-6">
           <h1 className="text-2xl font-semibold text-black">User Requests</h1>
+          <p className="text-gray-600">Manage and export user meal requests</p>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadPDF}
-              className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700"
-            >
-              <Download className="h-4 w-4" />
-              Download PDF
-            </button>
+        {/* Filters + Actions (modeled after AdminPaymentPage) */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            {/* Search */}
+            <div className="relative lg:max-w-sm w-full">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder:text-gray-400"
+                placeholder="Search by name, id, type..."
+              />
+            </div>
+
+            {/* Status quick chips retained below */}
+
+            {/* Date range */}
+            <div className="w-full lg:w-48">
+              <div className="mb-1 text-xs font-semibold text-gray-600 uppercase">From</div>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            <div className="w-full lg:w-48">
+              <div className="mb-1 text-xs font-semibold text-gray-600 uppercase">To</div>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setQ(""); setDateFrom(""); setDateTo(""); setStatusFilter("all"); setMealTypeFilter("all"); }}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm hover:bg-gray-50 transition"
+                title="Reset filters"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </button>
+              <button
+                onClick={downloadPDF}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2.5 text-sm text-white shadow-sm hover:shadow transition hover:bg-green-700 cursor-pointer"
+                title="Download PDF report"
+              >
+                <FileDown className="h-4 w-4" />
+                Download Report
+              </button>
+            </div>
+          </div>
+
+          {/* Totals bar */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-5 gap-3">
+            <div className="rounded-md border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <List className="h-4 w-4 text-gray-500" />
+                <div className="text-xs text-gray-500">Filtered Count</div>
+              </div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{totals.count}</div>
+            </div>
+            <div className="rounded-md border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <div className="text-xs text-gray-500">Urgent</div>
+              </div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{totals.urgent}</div>
+            </div>
+            <div className="rounded-md border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <div className="text-xs text-gray-500">Normal</div>
+              </div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{totals.normal}</div>
+            </div>
+            <div className="rounded-md border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <Leaf className="h-4 w-4 text-green-600" />
+                <div className="text-xs text-gray-500">Vegan</div>
+              </div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{totals.vegan}</div>
+            </div>
+            <div className="rounded-md border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <Utensils className="h-4 w-4 text-gray-600" />
+                <div className="text-xs text-gray-500">Non-Vegan</div>
+              </div>
+              <div className="mt-1 text-base font-semibold text-gray-900">{totals.nonVegan}</div>
+            </div>
           </div>
         </div>
 
-  {/* Filter Section: quick chips to filter by urgency */}
+  {/* Filter Section: one-row chips for meal type and status */}
         <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 mr-1">Meal Type:</span>
+            <button
+              onClick={() => setMealTypeFilter("all")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mealTypeFilter === "all"
+                  ? "bg-red-600 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setMealTypeFilter("vegan")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mealTypeFilter === "vegan"
+                  ? "bg-red-600 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+              }`}
+            >
+              Vegan
+            </button>
+            <button
+              onClick={() => setMealTypeFilter("non-vegan")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mealTypeFilter === "non-vegan"
+                  ? "bg-red-600 text-white"
+                  : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
+              }`}
+            >
+              Non-Vegan
+            </button>
+
+            <span className="text-sm font-medium text-gray-700 ml-4 mr-1">Status:</span>
             <button
               onClick={() => setStatusFilter("all")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -235,7 +287,7 @@ export default function RequestedMeals() {
                   : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
               }`}
             >
-              All Requests
+              All
             </button>
             <button
               onClick={() => setStatusFilter("urgent")}
@@ -245,7 +297,7 @@ export default function RequestedMeals() {
                   : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
               }`}
             >
-              Urgent Only
+              Urgent
             </button>
             <button
               onClick={() => setStatusFilter("normal")}
@@ -255,7 +307,7 @@ export default function RequestedMeals() {
                   : "bg-white text-gray-700 border border-gray-300 hover:border-red-300"
               }`}
             >
-              Normal Only
+              Normal
             </button>
           </div>
         </div>

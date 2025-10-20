@@ -4,6 +4,7 @@ import { Upload, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
+import mediaUpload from "../../utils/mediaUpload";
 
 export default function AddMealTemplate() {
   const navigate = useNavigate();
@@ -102,21 +103,20 @@ export default function AddMealTemplate() {
   };
 
 
-  // Helper to build FormData for multipart upload (photo optional)
-  function buildFormData() {
-    const formData = new FormData();
-    formData.append("templateName", form.templateName.trim());
-    formData.append("mealType", form.mealType.trim());
-    formData.append("foodItems", form.foodItems.trim());
-    formData.append("calories", form.calories);
-    formData.append("protein", form.protein);
-    formData.append("carbs", form.carbs);
-    formData.append("fats", form.fats);
-    formData.append("dietCategory", form.dietCategory.trim());
-    formData.append("duration", form.duration.trim());
-    if (form.photo) formData.append("photo", form.photo);
-
-    return formData;
+  // Build JSON payload. If a File is present, caller should replace photo with uploaded URL string.
+  function buildPayload(photoUrl) {
+    return {
+      templateName: form.templateName.trim(),
+      mealType: form.mealType.trim(),
+      foodItems: form.foodItems.trim(),
+      calories: form.calories,
+      protein: form.protein,
+      carbs: form.carbs,
+      fats: form.fats,
+      dietCategory: form.dietCategory.trim(),
+      duration: form.duration.trim(),
+      photo: photoUrl ?? null,
+    };
   }
 
 
@@ -180,14 +180,19 @@ export default function AddMealTemplate() {
     
     setLoading(true);
     try {
-      const formData = buildFormData();
       const token = localStorage.getItem("token");
-      
-      // Note: do NOT set Content-Type manually for FormData; let the browser set the boundary
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+      // If a file is selected, upload to Supabase first to get a public URL
+      let photoUrl = null;
+      if (form.photo instanceof File) {
+        photoUrl = await mediaUpload(form.photo);
+      }
+
+      const payload = buildPayload(photoUrl);
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/mealTemplate`,
-        formData,
+        payload,
         headers ? { headers } : undefined
       );
       
