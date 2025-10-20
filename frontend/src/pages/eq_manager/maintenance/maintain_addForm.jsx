@@ -82,7 +82,7 @@ export default function MaintenanceLogAddPage() {
         }
     }
 
-    async function handleSave() {e
+    async function handleSave() {
         if (!Eq_ID.trim()) return toast.error("Equipment (Eq_ID) is required");
         if (!M_Eq_name.trim()) return toast.error("Equipment name is required");
         if (!M_description.trim()) return toast.error("Description is required");

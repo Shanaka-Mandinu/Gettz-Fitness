@@ -15,18 +15,43 @@ import {
   ThumbsUp,
   MessageCircle,
   Bookmark,
-  ExternalLink
+  ExternalLink,
+  X,
+  Plus
 } from "lucide-react";
 import Header from "../../components/header";
 
+// Utility function to format duration from seconds to readable format
+function formatDuration(seconds) {
+  if (!seconds || seconds < 0) return "0 min";
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes} min`;
+  } else {
+    return `${remainingSeconds} sec`;
+  }
+}
 
-const RAW_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const RAW_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 const API_BASE = RAW_BASE.replace(/\/+$/, "");
 
 const endpoints = {
   getOne: (id) => `${API_BASE}/api/video/${id}`,
   addView: (id) => `${API_BASE}/api/video/${id}/view`,
   toggleLike: (id) => `${API_BASE}/api/video/${id}/like`,
+  saveVideo: (id) => `${API_BASE}/api/saved-videos/save/${id}`,
+  unsaveVideo: (id) => `${API_BASE}/api/saved-videos/unsave/${id}`,
+  checkSaved: (id) => `${API_BASE}/api/saved-videos/check-saved/${id}`,
+  getUserProfile: () => `${API_BASE}/api/user/profile`,
+  getPlaylists: () => `${API_BASE}/api/saved-videos/playlists`,
+  createPlaylist: () => `${API_BASE}/api/saved-videos/playlist/create`,
+  addToPlaylist: (playlistId, videoId) => `${API_BASE}/api/saved-videos/playlist/${playlistId}/add/${videoId}`,
 };
 
 function parseYouTubeId(url) {
@@ -73,10 +98,22 @@ function normalizeDriveDirect(url) {
   }
 }
 
-export default function VideoDetails() {
+export default function VideoDetails() {       // Workout Details Page
   const { videoId } = useParams();
   const [data, setData] = useState(null);
   const [likeBusy, setLikeBusy] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [playlists, setPlaylists] = useState([]);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [newPlaylistDescription, setNewPlaylistDescription] = useState("");
+  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAddingToPlaylist, setIsAddingToPlaylist] = useState(false);
+  
   const viewKey = useMemo(() => `viewed:${(videoId || "").trim()}`, [videoId]);
   const likeKey = useMemo(() => `liked:${(videoId || "").trim()}`, [videoId]);
 
@@ -108,15 +145,51 @@ export default function VideoDetails() {
     };
   }, [videoId]);
 
-  const rawUrl = (data?.videoUrl || "").trim();
-  const ytEmbed = useMemo(() => toYouTubeEmbed(rawUrl), [rawUrl]);
+  // Load user profile and check saved status
+  useEffect(() => {
+    async function loadUserData() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Load user profile
+        const profileRes = await axios.get(endpoints.getUserProfile(), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUserProfile(profileRes.data);
+
+        // Check if video is saved
+        const savedRes = await axios.get(endpoints.checkSaved(videoId), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsSaved(savedRes.data.isSaved);
+        setSavedAt(savedRes.data.savedAt);
+
+        // Load user playlists
+        const playlistsRes = await axios.get(endpoints.getPlaylists(), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("Playlists response:", playlistsRes.data);
+        setPlaylists(playlistsRes.data.playlists || []);
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    }
+
+    if (data) {
+      loadUserData();
+    }
+  }, [data, videoId]);
+
+  const rawUrl = (data?.videoUrl || "").trim();            // URL of the video
+  const ytEmbed = useMemo(() => toYouTubeEmbed(rawUrl), [rawUrl]);    // YouTube embed URL if applicable
   const fileSrc = useMemo(() => {
     if (ytEmbed) return null;
     if (!rawUrl) return null;
-    return normalizeDriveDirect(rawUrl);
+    return normalizeDriveDirect(rawUrl);     
   }, [ytEmbed, rawUrl]);
 
-  useEffect(() => {
+  useEffect(() => {             // Increment view count on first load
     if (!data) return;
     if (sessionStorage.getItem(viewKey)) return;
     sessionStorage.setItem(viewKey, "1");
@@ -169,6 +242,104 @@ export default function VideoDetails() {
       toast.error(msg);
     } finally {
       setLikeBusy(false);
+    }
+  }
+
+  // Handle save/unsave video
+  async function handleSaveVideo() {
+    if (!data || isSaving) return;
+    
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to save videos");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        await axios.delete(endpoints.unsaveVideo(videoId), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsSaved(false);
+        setSavedAt(null);
+        toast.success("Video removed from saved list");
+      } else {
+        await axios.post(endpoints.saveVideo(videoId), {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsSaved(true);
+        setSavedAt(new Date());
+        toast.success("Video saved for later");
+      }
+    } catch (error) {
+      const msg = error?.response?.data?.message || error?.message || "Failed to save video";
+      toast.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  // Handle create playlist
+  async function handleCreatePlaylist() {
+    if (!newPlaylistName.trim() || isCreatingPlaylist) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to create playlists");
+      return;
+    }
+
+    setIsCreatingPlaylist(true);
+    try {
+      const res = await axios.post(endpoints.createPlaylist(), {
+        name: newPlaylistName.trim(),
+        description: newPlaylistDescription.trim(),
+        isPublic: false
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log("Created playlist:", res.data.playlist);
+      setPlaylists(prev => [...prev, res.data.playlist]);
+      setNewPlaylistName("");
+      setNewPlaylistDescription("");
+      setShowCreatePlaylistModal(false);
+      toast.success("Playlist created successfully");
+    } catch (error) {
+      const msg = error?.response?.data?.message || error?.message || "Failed to create playlist";
+      toast.error(msg);
+    } finally {
+      setIsCreatingPlaylist(false);
+    }
+  }
+
+  // Handle add video to playlist
+  async function handleAddToPlaylist(playlistId) {
+    if (!data || isAddingToPlaylist) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to add videos to playlists");
+      return;
+    }
+
+    console.log("Adding video to playlist:", { playlistId, videoId });
+    setIsAddingToPlaylist(true);
+    try {
+      const response = await axios.post(endpoints.addToPlaylist(playlistId, videoId), {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log("Add to playlist response:", response.data);
+      toast.success("Video added to playlist");
+      setShowPlaylistModal(false);
+    } catch (error) {
+      console.error("Error adding to playlist:", error);
+      const msg = error?.response?.data?.message || error?.message || "Failed to add video to playlist";
+      toast.error(msg);
+    } finally {
+      setIsAddingToPlaylist(false);
     }
   }
 
@@ -271,7 +442,7 @@ export default function VideoDetails() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock size={18} />
-                        <span className="font-medium">25 min</span>
+                        <span className="font-medium">{formatDuration(data.duration)}</span>
                       </div>
                     </div>
                   </div>
@@ -346,22 +517,40 @@ export default function VideoDetails() {
                       <Clock className="h-5 w-5 text-red-600" />
                       <span className="text-gray-700 font-medium">Duration</span>
                     </div>
-                    <span className="font-bold text-gray-900">25 min</span>
+                    <span className="font-bold text-gray-900">{formatDuration(data.duration)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <User className="h-5 w-5 text-blue-600" />
-                      <span className="text-gray-700 font-medium">Difficulty</span>
+                      <span className="text-gray-700 font-medium">Category</span>
                     </div>
-                    <span className="font-bold text-gray-900">Intermediate</span>
+                    <span className="font-bold text-gray-900">{data.category || 'General'}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <ThumbsUp className="h-5 w-5 text-green-600" />
-                      <span className="text-gray-700 font-medium">Equipment</span>
+                      <span className="text-gray-700 font-medium">Views</span>
                     </div>
-                    <span className="font-bold text-gray-900">Dumbbells</span>
+                    <span className="font-bold text-gray-900">{data.viewCount || 0}</span>
                   </div>
+                  {data.tags && data.tags.length > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <MessageCircle className="h-5 w-5 text-purple-600" />
+                        <span className="text-gray-700 font-medium">Tags</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {data.tags.slice(0, 3).map((tag, idx) => (
+                          <span key={idx} className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                        {data.tags.length > 3 && (
+                          <span className="text-gray-500 text-xs">+{data.tags.length - 3}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -369,24 +558,265 @@ export default function VideoDetails() {
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
-                  <button className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                    <Bookmark className="h-5 w-5 text-gray-600" />
-                    <span className="text-gray-700 font-medium">Save for Later</span>
+                  <button 
+                    onClick={handleSaveVideo}
+                    disabled={isSaving}
+                    className={`w-full flex items-center gap-3 p-3 text-left rounded-lg transition-colors ${
+                      isSaved 
+                        ? 'bg-red-50 text-red-700 hover:bg-red-100' 
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Bookmark className={`h-5 w-5 ${isSaved ? 'text-red-600' : 'text-gray-600'}`} />
+                    <span className="font-medium">
+                      {isSaving ? 'Saving...' : isSaved ? 'Saved for Later' : 'Save for Later'}
+                    </span>
+                    {isSaved && savedAt && (
+                      <span className="text-xs text-gray-500 ml-auto">
+                        {new Date(savedAt).toLocaleDateString()}
+                      </span>
+                    )}
                   </button>
-                  <button className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  
+                  <button 
+                    onClick={async () => {
+                      console.log("Opening playlist modal, current playlists:", playlists);
+                      // Refresh playlists when opening modal
+                      try {
+                        const token = localStorage.getItem("token");
+                        if (token) {
+                          const playlistsRes = await axios.get(endpoints.getPlaylists(), {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          console.log("Refreshed playlists:", playlistsRes.data);
+                          setPlaylists(playlistsRes.data.playlists || []);
+                        }
+                      } catch (error) {
+                        console.error("Error refreshing playlists:", error);
+                      }
+                      setShowPlaylistModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
+                  >
                     <MessageCircle className="h-5 w-5 text-gray-600" />
-                    <span className="text-gray-700 font-medium">Add to Playlist</span>
+                    <span className="font-medium">Add to Playlist</span>
+                    <span className="text-xs text-gray-500 ml-auto">
+                      {playlists.length} playlist{playlists.length !== 1 ? 's' : ''}
+                    </span>
                   </button>
-                  <button className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                  
+                  <button 
+                    onClick={() => window.open(data.videoUrl, '_blank')}
+                    className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
+                  >
                     <ExternalLink className="h-5 w-5 text-gray-600" />
-                    <span className="text-gray-700 font-medium">Watch on YouTube</span>
+                    <span className="font-medium">Watch on YouTube</span>
                   </button>
                 </div>
+
+                {/* User Profile Info */}
+                {userProfile && (
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Your Profile</h4>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {userProfile.firstName} {userProfile.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">{userProfile.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {userProfile.role}
+                          </span>
+                          {userProfile.point > 0 && (
+                            <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">
+                              {userProfile.point} pts
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* Playlist Selection Modal */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Add to Playlist</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      if (token) {
+                        const playlistsRes = await axios.get(endpoints.getPlaylists(), {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        setPlaylists(playlistsRes.data.playlists || []);
+                        toast.success("Playlists refreshed");
+                      }
+                    } catch (error) {
+                      console.error("Error refreshing playlists:", error);
+                      toast.error("Failed to refresh playlists");
+                    }
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  title="Refresh playlists"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowPlaylistModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {/* Debug info */}
+              <div className="text-xs text-gray-400 mb-2">
+                Debug: {playlists.length} playlists loaded
+              </div>
+              {playlists.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">No playlists yet</p>
+                  <button
+                    onClick={() => {
+                      setShowPlaylistModal(false);
+                      setShowCreatePlaylistModal(true);
+                    }}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                  >
+                    Create First Playlist
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {playlists.map((playlist) => (
+                    <button
+                      key={playlist.id}
+                      onClick={() => handleAddToPlaylist(playlist.playlistId)}
+                      disabled={isAddingToPlaylist}
+                      className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900">{playlist.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {playlist.videoCount} video{playlist.videoCount !== 1 ? 's' : ''}
+                        </p>
+                        {playlist.description && (
+                          <p className="text-xs text-gray-400 mt-1">{playlist.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="h-5 w-5 text-gray-400" />
+                        {isAddingToPlaylist && (
+                          <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                  
+                  <button
+                    onClick={() => {
+                      setShowPlaylistModal(false);
+                      setShowCreatePlaylistModal(true);
+                    }}
+                    className="w-full flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-red-300 hover:text-red-600 transition-colors"
+                  >
+                    <Plus size={20} />
+                    <span>Create New Playlist</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Playlist Modal */}
+      {showCreatePlaylistModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Create Playlist</h3>
+              <button
+                onClick={() => {
+                  setShowCreatePlaylistModal(false);
+                  setNewPlaylistName("");
+                  setNewPlaylistDescription("");
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Playlist Name
+                </label>
+                <input
+                  type="text"
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  placeholder="My Workout Playlist"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={newPlaylistDescription}
+                  onChange={(e) => setNewPlaylistDescription(e.target.value)}
+                  placeholder="Describe your playlist..."
+                  rows={3}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowCreatePlaylistModal(false);
+                    setNewPlaylistName("");
+                    setNewPlaylistDescription("");
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreatePlaylist}
+                  disabled={!newPlaylistName.trim() || isCreatingPlaylist}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreatingPlaylist ? 'Creating...' : 'Create Playlist'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

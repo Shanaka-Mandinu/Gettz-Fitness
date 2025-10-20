@@ -36,6 +36,7 @@ export default function EquipmentEditPage(){
     const [Eq_repairNote, setRepairNote] = useState("");
     const [Eq_supplier, setSupplier] = useState("");
     const [IM_ID, setIMID] = useState("");
+    const [managerName, setManagerName] = useState("");
 
     //fetch from api , if not from state loc
     useEffect(() => {
@@ -57,6 +58,7 @@ export default function EquipmentEditPage(){
         setRepairNote(eq.Eq_repairNote || "");
         setSupplier(eq.Eq_supplier || "");
         setIMID(eq?.IM_ID?._id || eq?.IM_ID || "");
+        setManagerName(eq?.IM_ID?.name || "Unknown manager");
       } catch (err) {
         toast.error(`Failed to load equipment: ${getAxiosError(err)}`);
         navigate("..", { replace: true });
@@ -74,6 +76,7 @@ export default function EquipmentEditPage(){
       setRepairNote(s.Eq_repairNote || "");
       setSupplier(s.Eq_supplier || "");
       setIMID(s?.IM_ID?._id || s?.IM_ID || "");
+      setManagerName(s?.IM_ID?.name || "Unknown manager");
       setLoadingEquipment(false);
     } else {
       fetchOne();
@@ -84,10 +87,19 @@ export default function EquipmentEditPage(){
     };
   }, [code, location.state, navigate]);
 
+  useEffect(() => {
+    if (!managerName) {
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (user?.name) setManagerName(user.name);
+      } catch {}
+    }
+  }, [managerName]);
+
   async function handleSave() {
     if (!Eq_name.trim()) return toast.error("Name is required");
     if (!Eq_type.trim()) return toast.error("Type is required");
-    if (!IM_ID.trim()) return toast.error("Equipment Manager ID (IM_ID) is required");
+    if (!IM_ID.trim()) return toast.error("Equipment Manager is required");
 
     try{
         setSaving(true);
@@ -256,7 +268,7 @@ export default function EquipmentEditPage(){
             {/* IM_ID */}
             <div>
               <label className="block text-sm font-medium mb-1">
-                Equipment Manager ID (IM_ID) <span className="text-red-600">*</span>
+                Equipment Manager  <span className="text-red-600">*</span>
               </label>
               <div className="relative">
                 <User
@@ -264,12 +276,12 @@ export default function EquipmentEditPage(){
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
                 />
                 <input
-                  value={IM_ID}
-                  onChange={(e) => setIMID(e.target.value)}
-                  placeholder="Mongo _id of equipmentManager"
-                  className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  value={managerName || "Unknown manager"}
+                  disabled
+                  className="w-full rounded-xl border border-black/10 pl-8 pr-3 py-2 text-sm bg-gray-50 text-gray-600"
                 />
               </div>
+              <input type="hidden" value={IM_ID} readOnly />
             </div>
           </div>
         </div>

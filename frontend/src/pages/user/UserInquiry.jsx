@@ -1,78 +1,280 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
+import io from "socket.io-client";
 
 export default function UserInquiry() {
     const [inquiries, setInquiries] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [replyText, setReplyText] = useState("");
+    const [submittingReply, setSubmittingReply] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
+    const token = useMemo(() => localStorage.getItem("token"), []);
+    const userId = useMemo(() => localStorage.getItem("userId"), []);
+
+    // Socket.io connection for real-time updates
+    const socket = useMemo(() => {
+        if (!token) return null;
+        return io(import.meta.env.VITE_BACKEND_URL, {
+            auth: {
+                token: token
+            }
+        });
+    }, [token]);
+
+    const fetchInquiries = async () => {
+        if (!token) return;
+        
         setLoading(true);
         setError(null);
         const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-        axios.get(`${backendUrl}/api/inquiry/user`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => {
-                console.log("User inquiry response:", res.data);
-                setInquiries(Array.isArray(res.data) ? res.data : []);
-                setLoading(false);
-            })
-            .catch(err => {
-                setError(err?.message || "Failed to fetch inquiries");
-                console.error("User inquiry error:", err);
-                setLoading(false);
+        
+        try {
+            const res = await axios.get(`${backendUrl}/api/inquiry/user`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-    }, []);
+            console.log("User inquiry response:", res.data);
+            setInquiries(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            setError(err?.message || "Failed to fetch inquiries");
+            console.error("User inquiry error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchInquiries();
+    }, [token]);
+
+    // Real-time notification handling for admin replies
+    useEffect(() => {
+        if (!socket) return;
+
+        // Listen for inquiry reply notifications
+        socket.on('inquiryReply', (data) => {
+            // Check if this notification is for the current user
+            if (data.userId === userId || data.userId === localStorage.getItem("userId")) {
+                // Show toast notification
+                toast.success(`New reply to your inquiry #${data.inquiryId}`, {
+                    duration: 5000,
+                    position: 'top-right'
+                });
+
+                // Update the specific inquiry with the new reply
+                setInquiries(prevInquiries => 
+                    prevInquiries.map(inquiry => {
+                        if (inquiry.inquiry_id === data.inquiryId) {
+                            // Add the new admin reply
+                            const newReply = {
+                                message: data.message,
+                                responder: "admin",
+                                date: new Date()
+                            };
+                            
+                            return {
+                                ...inquiry,
+                                inquiry_response: [...(inquiry.inquiry_response || []), newReply]
+                            };
+                        }
+                        return inquiry;
+                    })
+                );
+            }
+        });
+
+        return () => {
+            socket.off('inquiryReply');
+        };
+    }, [socket, userId]);
+
+    // Auto-scroll to bottom when messages change
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [inquiries, replyingTo]);
+
+    const handleReply = async (inquiryId) => {
+        if (!replyText.trim()) {
+            toast.error("Please enter a reply message");
+            return;
+        }
+
+        setSubmittingReply(true);
+        try {
+            const token = localStorage.getItem("token");
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+            
+            const response = await axios.post(
+                `${backendUrl}/api/inquiry/user-reply/${inquiryId}`,
+                { message: replyText.trim() },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            toast.success("Reply sent successfully!");
+            setReplyText("");
+            setReplyingTo(null);
+            
+            // Refresh inquiries to show the new reply
+            await fetchInquiries();
+            
+        } catch (err) {
+            console.error("Reply error:", err);
+            toast.error(err?.response?.data?.message || "Failed to send reply");
+        } finally {
+            setSubmittingReply(false);
+        }
+    };
+
+    const selectInquiry = (inquiryId) => {
+        setReplyingTo(inquiryId);
+        setReplyText("");
+    };
+
+    const clearSelection = () => {
+        setReplyingTo(null);
+        setReplyText("");
+    };
+
+    // Count inquiries with admin replies
+    const inquiriesWithAdminReplies = inquiries.filter(inq => 
+        inq.inquiry_response && inq.inquiry_response.some(resp => resp.responder === "admin")
+    ).length;
 
     return (
-        <div className="p-8">
-            <h2 className="text-2xl font-bold text-black mb-6">Your Inquiries & Replies</h2>
+        <div className="min-h-screen bg-gray-50 p-4">
+            {/* Minimal Header */}
+            <div className="mb-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900">Inquiries</h2>
+                        <p className="text-sm text-gray-500 mt-1">Support conversations</p>
+                    </div>
+                    {inquiriesWithAdminReplies > 0 && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm text-gray-600">
+                                {inquiriesWithAdminReplies} with replies
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {loading ? (
-                <div className="text-gray-500">Loading inquiries...</div>
+                <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto mb-3"></div>
+                        <div className="text-sm text-gray-500">Loading...</div>
+                    </div>
+                </div>
             ) : error ? (
-                <div className="text-red-500">Error: {error}</div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                    <div className="text-red-600 text-sm font-medium mb-1">Error</div>
+                    <div className="text-red-500 text-sm">{error}</div>
+                </div>
             ) : inquiries.length === 0 ? (
-                <div className="text-gray-500">No inquiries found.</div>
+                <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+                    <div className="text-gray-400 text-sm mb-2">No inquiries yet</div>
+                    <p className="text-gray-500 text-sm">You haven't submitted any inquiries.</p>
+                </div>
             ) : (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
                     {inquiries.map((inq) => (
-                        <li key={inq._id} className="bg-white rounded-2xl shadow-md border border-red-100 p-6 flex flex-col gap-2">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="inline-block px-3 py-1 rounded-full bg-red-100 text-red-600 font-semibold text-sm">{inq.inquiry_type}</span>
-                                {inq.inquiry_status && (
-                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ml-2
-                                        ${inq.inquiry_status === 'completed' ? 'bg-green-100 text-green-700' :
-                                          inq.inquiry_status === 'inprogress' ? 'bg-yellow-100 text-yellow-700' :
-                                          'bg-gray-100 text-gray-700'}`}
-                                    >
-                                        {inq.inquiry_status.charAt(0).toUpperCase() + inq.inquiry_status.slice(1)}
+                        <div key={inq._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-sm transition-shadow">
+                            {/* Minimal Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                    <h3 className="font-medium text-gray-900">{inq.inquiry_type}</h3>
+                                    <span className="text-sm text-gray-500">#{inq.inquiry_id}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {/* New reply indicator */}
+                                    {inq.inquiry_response && inq.inquiry_response.some(resp => resp.responder === "admin") && (
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    )}
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                        inq.inquiry_status === 'Resolved' ? 'bg-green-100 text-green-700' :
+                                        inq.inquiry_status === 'In Progress' ? 'bg-yellow-100 text-yellow-700' :
+                                        inq.inquiry_status === 'Closed' ? 'bg-gray-100 text-gray-700' :
+                                        'bg-blue-100 text-blue-700'
+                                    }`}>
+                                        {inq.inquiry_status}
                                     </span>
-                                )}
+                                </div>
                             </div>
-                            <div className="text-gray-800 text-base font-medium mb-1">{inq.inquiry_message}</div>
-                            <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                <span>Sent: {new Date(inq.inquiry_date).toLocaleString()}</span>
+
+                            {/* Inquiry Message */}
+                            <div className="mb-4">
+                                <p className="text-gray-700 text-sm leading-relaxed">{inq.inquiry_message}</p>
+                                <p className="text-xs text-gray-400 mt-2">{new Date(inq.inquiry_date).toLocaleString()}</p>
                             </div>
-                            <div className="font-semibold text-gray-700 mb-1">Replies:</div>
-                            <div className="flex flex-col gap-1">
-                                {inq.inquiry_response && inq.inquiry_response.length > 0 ? (
-                                    inq.inquiry_response.map((resp, idx) => (
-                                        <div key={idx} className="flex items-center gap-2">
-                                            <span className="text-red-600 font-bold">{resp.responder === "admin" ? "Admin:" : "You:"}</span>
-                                            <span className="text-gray-700 font-medium">{resp.message}</span>
-                                            <span className="text-gray-400 text-xs">{resp.date ? new Date(resp.date).toLocaleString() : ""}</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-gray-400">No replies yet.</div>
-                                )}
-                            </div>
-                        </li>
+
+                            {/* Conversation */}
+                            {inq.inquiry_response && inq.inquiry_response.length > 0 && (
+                                <div className="mb-4">
+                                    <div className="space-y-2">
+                                        {inq.inquiry_response.map((resp, idx) => (
+                                            <div key={idx} className={`text-sm p-3 rounded ${
+                                                resp.responder === "admin" 
+                                                    ? "bg-blue-50 text-blue-900" 
+                                                    : "bg-gray-50 text-gray-700"
+                                            }`}>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-medium text-xs">
+                                                        {resp.responder === "admin" ? "Admin" : "You"}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">
+                                                        {resp.date ? new Date(resp.date).toLocaleString() : ""}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm">{resp.message}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Reply Section */}
+                            {replyingTo === inq.inquiry_id ? (
+                                <div className="border-t pt-4">
+                                    <textarea
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        placeholder="Type your reply..."
+                                        className="w-full p-3 border border-gray-200 rounded text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-300 mb-3"
+                                        rows={3}
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleReply(inq.inquiry_id)}
+                                            disabled={submittingReply || !replyText.trim()}
+                                            className="px-4 py-2 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {submittingReply ? "Sending..." : "Send"}
+                                        </button>
+                                        <button
+                                            onClick={clearSelection}
+                                            className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded hover:bg-gray-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => selectInquiry(inq.inquiry_id)}
+                                    className="text-sm text-gray-600 hover:text-gray-900 underline"
+                                >
+                                    Reply
+                                </button>
+                            )}
+                        </div>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     );

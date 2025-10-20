@@ -21,6 +21,19 @@ export default function VideoDetailsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportType, setReportType] = useState("monthly");
+  
+  // Video report generation state
+  const [reportFilters, setReportFilters] = useState({
+    startDate: '',
+    endDate: '',
+    category: 'all',
+    status: 'all',
+    reportType: 'custom'
+  });
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportData, setReportData] = useState(null);
+  const [dateValidationErrors, setDateValidationErrors] = useState({});
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,8 +132,417 @@ export default function VideoDetailsPage() {
     setStatusFilter("");
   };
 
-  // Generate video analytics report
-  const generateVideoReport = () => {
+  // Video report generation functions
+  const handleFilterChange = (field, value) => {
+    setReportFilters(prev => {
+      const newFilters = { ...prev, [field]: value };
+      
+      // Clear validation errors when user changes the field
+      setDateValidationErrors(prevErrors => ({
+        ...prevErrors,
+        [field]: null
+      }));
+      
+      // Auto-set end date when start date is selected
+      if (field === 'startDate' && value) {
+        const startDate = new Date(value);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 7); // Default to 7 days later
+        
+        // Format the end date for input
+        const formattedEndDate = endDate.toISOString().split('T')[0];
+        newFilters.endDate = formattedEndDate;
+        
+        // Clear end date validation error when start date changes
+        setDateValidationErrors(prevErrors => ({
+          ...prevErrors,
+          endDate: null
+        }));
+      }
+      
+      return newFilters;
+    });
+  };
+
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Get maximum date for start date (today)
+  const getMaxStartDate = () => {
+    return getTodayDate();
+  };
+
+  // Get maximum date for end date (today)
+  const getMaxEndDate = () => {
+    return getTodayDate();
+  };
+
+  // Validate date range
+  const validateDateRange = () => {
+    const errors = {};
+    let isValid = true;
+    
+    if (reportFilters.startDate && reportFilters.endDate) {
+      const startDate = new Date(reportFilters.startDate);
+      const endDate = new Date(reportFilters.endDate);
+      const today = new Date();
+      
+      // Check if start date is not in the future
+      if (startDate > today) {
+        errors.startDate = 'Start date cannot be in the future';
+        isValid = false;
+      }
+      
+      // Check if end date is not in the future
+      if (endDate > today) {
+        errors.endDate = 'End date cannot be in the future';
+        isValid = false;
+      }
+      
+      // Check if end date is not before start date
+      if (endDate < startDate) {
+        errors.endDate = 'End date cannot be before start date';
+        isValid = false;
+      }
+      
+      // Check if date range is not too long (max 1 year)
+      const diffTime = Math.abs(endDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays > 365) {
+        errors.endDate = 'Date range cannot exceed 1 year';
+        isValid = false;
+      }
+    }
+    
+    setDateValidationErrors(errors);
+    return isValid;
+  };
+
+  // Generate video report
+  const generateVideoReport = async () => {
+    if (reportFilters.reportType === 'custom' && (!reportFilters.startDate || !reportFilters.endDate)) {
+      toast.error('Please select start and end dates for custom report');
+      return;
+    }
+
+    // Validate date range for custom reports
+    if (reportFilters.reportType === 'custom' && !validateDateRange()) {
+      return;
+    }
+
+    setGeneratingReport(true);
+    try {
+      // Calculate date range based on report type
+      let startDate, endDate, periodLabel;
+      const now = new Date();
+      
+      if (reportFilters.reportType === 'weekly') {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        startDate = weekStart;
+        endDate = new Date(weekStart);
+        endDate.setDate(weekStart.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        periodLabel = 'Last 7 days';
+      } else if (reportFilters.reportType === 'monthly') {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate = monthStart;
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        periodLabel = 'Last 30 days';
+      } else {
+        startDate = new Date(reportFilters.startDate);
+        endDate = new Date(reportFilters.endDate);
+        periodLabel = 'Custom range';
+      }
+
+      // Filter videos by date range and other filters
+      let filteredVideos = video.filter(vid => {
+        // Date filter
+        if (vid.createdAt) {
+          const videoDate = new Date(vid.createdAt);
+          if (videoDate < startDate || videoDate > endDate) return false;
+        }
+        
+        // Category filter
+        if (reportFilters.category !== 'all' && vid.category !== reportFilters.category) {
+          return false;
+        }
+        
+        // Status filter
+        if (reportFilters.status !== 'all') {
+          if (reportFilters.status === 'published' && !vid.isPublished) return false;
+          if (reportFilters.status === 'unlisted' && vid.isPublished) return false;
+        }
+        
+        return true;
+      });
+
+      // Calculate statistics
+      const totalVideos = filteredVideos.length;
+      const totalViews = filteredVideos.reduce((sum, vid) => sum + (vid.viewCount || 0), 0);
+      const totalLikes = filteredVideos.reduce((sum, vid) => sum + (vid.likeCount || 0), 0);
+      const publishedVideos = filteredVideos.filter(vid => vid.isPublished).length;
+      const unlistedVideos = filteredVideos.filter(vid => !vid.isPublished).length;
+
+      // Category breakdown
+      const categoryStats = {};
+      filteredVideos.forEach(vid => {
+        const category = vid.category || 'Uncategorized';
+        if (!categoryStats[category]) {
+          categoryStats[category] = {
+            count: 0,
+            totalViews: 0,
+            totalLikes: 0,
+            published: 0,
+            unlisted: 0
+          };
+        }
+        categoryStats[category].count++;
+        categoryStats[category].totalViews += vid.viewCount || 0;
+        categoryStats[category].totalLikes += vid.likeCount || 0;
+        if (vid.isPublished) {
+          categoryStats[category].published++;
+        } else {
+          categoryStats[category].unlisted++;
+        }
+      });
+
+      // Generate report ID
+      const reportId = `VR-${Date.now()}`;
+      const generatedAt = new Date();
+
+      const reportData = {
+        reportId,
+        generatedAt,
+        reportType: reportFilters.reportType,
+        filters: {
+          startDate: reportFilters.reportType === 'custom' ? reportFilters.startDate : null,
+          endDate: reportFilters.reportType === 'custom' ? reportFilters.endDate : null,
+          category: reportFilters.category,
+          status: reportFilters.status,
+          dateRange: periodLabel
+        },
+        summary: {
+          totalVideos,
+          totalViews,
+          totalLikes,
+          publishedVideos,
+          unlistedVideos,
+          categoryStats
+        },
+        videos: filteredVideos.map(video => ({
+          videoId: video.videoId,
+          title: video.title,
+          category: video.category,
+          duration: video.duration,
+          viewCount: video.viewCount || 0,
+          likeCount: video.likeCount || 0,
+          isPublished: video.isPublished,
+          createdAt: video.createdAt
+        }))
+      };
+
+      setReportData(reportData);
+      toast.success('Video report generated successfully');
+    } catch (error) {
+      console.error('Report generation error:', error);
+      toast.error('Error generating report: ' + (error?.response?.data?.message || error.message));
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  const resetReportFilters = () => {
+    setReportFilters({
+      startDate: '',
+      endDate: '',
+      category: 'all',
+      status: 'all',
+      reportType: 'custom'
+    });
+    setReportData(null);
+    setDateValidationErrors({});
+  };
+
+  // Professional PDF Download Handler
+  const handleDownloadPDF = async () => {
+    if (!reportData) {
+      toast.error('Please generate a report first');
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Minimal Header - Clean white background
+    doc.setFillColor(255, 255, 255); // White background
+    doc.rect(0, 0, 210, 25, 'F');
+    
+    // Add logo image
+    try {
+      // Convert image to base64 for PDF
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Add logo to PDF
+        doc.addImage(imgData, 'JPEG', 10, 5, 15, 15);
+        
+        // Company name - minimal styling
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Gettz Fitness', 30, 12);
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'normal');
+        doc.text('48 Udyana Mawatha, Matara', 30, 17);
+        
+        // Minimal separator line
+        doc.setDrawColor(200, 200, 200); // Light gray line
+        doc.setLineWidth(0.5);
+        doc.line(10, 22, 200, 22);
+        
+        // Report title - minimal
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('Video Report', 105, 35, { align: 'center' });
+        
+        // Continue with rest of the PDF generation...
+        generateVideoPDFContent(doc);
+      };
+      img.src = GymLogo;
+    } catch (error) {
+      console.error('Error loading logo:', error);
+      // Fallback without logo
+      generateVideoPDFContent(doc);
+    }
+  };
+
+  // Separate function for PDF content generation
+  const generateVideoPDFContent = (doc) => {
+    // Report details box - minimal styling
+    const boxY = 45;
+    const boxHeight = 25;
+    
+    // Draw minimal box border
+    doc.setDrawColor(220, 220, 220); // Light gray border
+    doc.setLineWidth(0.3);
+    doc.roundedRect(10, boxY, 190, boxHeight, 2, 2);
+    
+    // Vertical line
+    doc.line(105, boxY, 105, boxY + boxHeight);
+    
+    // Left side - Report Details
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('REPORT DETAILS', 15, boxY + 8);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(`REPORT ID: ${reportData.reportId}`, 15, boxY + 14);
+    doc.text(`GENERATED: ${new Date(reportData.generatedAt).toLocaleString()}`, 15, boxY + 20);
+    
+    // Right side - Summary
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('SUMMARY', 110, boxY + 8);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(`TOTAL VIDEOS: ${reportData.summary.totalVideos}`, 110, boxY + 14);
+    doc.text(`TOTAL VIEWS: ${reportData.summary.totalViews}`, 110, boxY + 18);
+    doc.text(`PUBLISHED: ${reportData.summary.publishedVideos}`, 110, boxY + 22);
+    
+    // Filters section
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('FILTERS APPLIED', 15, boxY + 35);
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(`DATE RANGE: ${reportData.filters.dateRange}`, 15, boxY + 41);
+    if (reportData.filters.startDate && reportData.filters.endDate) {
+      doc.text(`FROM: ${new Date(reportData.filters.startDate).toLocaleDateString()}`, 15, boxY + 45);
+      doc.text(`TO: ${new Date(reportData.filters.endDate).toLocaleDateString()}`, 15, boxY + 49);
+    }
+    doc.text(`CATEGORY: ${reportData.filters.category === 'all' ? 'All Categories' : reportData.filters.category}`, 15, boxY + 53);
+    doc.text(`STATUS: ${reportData.filters.status === 'all' ? 'All Statuses' : reportData.filters.status}`, 15, boxY + 57);
+    
+    // Category breakdown
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('CATEGORY BREAKDOWN', 110, boxY + 35);
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    let yOffset = 41;
+    Object.entries(reportData.summary.categoryStats).forEach(([category, stats]) => {
+      doc.text(`${category}: ${stats.count} videos`, 110, boxY + yOffset);
+      yOffset += 4;
+    });
+    
+    // Table - minimal styling
+    const tableStartY = boxY + 70;
+    
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [['No', 'Video ID', 'Title', 'Category', 'Views', 'Likes', 'Status']],
+      body: reportData.videos.map((video, index) => [
+        index + 1,
+        video.videoId,
+        video.title,
+        video.category,
+        video.viewCount,
+        video.likeCount,
+        video.isPublished ? 'Published' : 'Unlisted'
+      ]),
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [240, 240, 240], // Light gray header
+        textColor: [0, 0, 0], // Black text
+        fontSize: 9
+      },
+      bodyStyles: { fontSize: 8 },
+      margin: { left: 10, right: 10 },
+      styles: { cellPadding: 2 }
+    });
+    
+    // Minimal footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      
+      // Minimal footer line
+      doc.setDrawColor(200, 200, 200);
+      doc.line(10, 285, 200, 285);
+      
+      // Footer text
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Generated by Gettz Fitness Management System', 15, 290);
+      doc.text(`Page ${i} of ${pageCount}`, 180, 290, { align: 'right' });
+    }
+    
+    doc.save(`gettz_fitness_video_report_${reportData.reportId}.pdf`);
+    toast.success('Professional PDF report downloaded successfully');
+  };
+
+  // Generate video analytics report (legacy function)
+  const generateVideoAnalyticsReport = () => {
     const now = new Date();
     const reportDate = now.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -206,69 +628,7 @@ export default function VideoDetailsPage() {
     };
   };
 
-  // Generate and download report
-  const handleGenerateReport = () => {
-    const report = generateVideoReport();
-    setShowReportModal(true);
-  };
 
-  // PDF Download Handler
-  const handleDownloadPDF = async () => {
-    const doc = new jsPDF();
-  
-    const img = new window.Image();
-    img.src = GymLogo;
-    await new Promise((resolve) => { img.onload = resolve; });
-    doc.addImage(img, 'JPEG', 10, 8, 18, 18);
-  
-    doc.setFontSize(18);
-    doc.setTextColor('#e30613');
-    doc.text('Gettz Fitness', 32, 18);
-    doc.setFontSize(11);
-    doc.setTextColor('#333');
-    doc.text('Address: Matara', 32, 25);
-    doc.setDrawColor('#e30613');
-    doc.line(10, 30, 200, 30);
-
-    
-    autoTable(doc, {
-      startY: 35,
-      head: [[
-        'No', 'Video ID', 'Title', 'Duration', 'Views', 'Category', 'Status'
-      ]],
-      body: video.map((vid, idx) => [
-        idx + 1,
-        vid.videoId,
-        vid.title,
-        vid.duration,
-        vid.viewCount,
-        vid.category,
-        vid.isPublished ? 'Published' : 'Unlisted',
-      ]),
-      theme: 'grid',
-      headStyles: { fillColor: [227, 6, 19] },
-      styles: { fontSize: 9 },
-    });
-
-   
-    const sorted = [...video].sort((a, b) => (b.viewCount + b.likeCount) - (a.viewCount + a.likeCount));
-    const popular = sorted.slice(0, 5);
-    let y = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(14);
-    doc.setTextColor('#e30613');
-    doc.text('Popular Videos', 10, y);
-    y += 2;
-    autoTable(doc, {
-      startY: y + 3,
-      head: [[ 'Title', 'Views', 'Likes', 'Category' ]],
-      body: popular.map(v => [v.title, v.viewCount, v.likeCount, v.category]),
-      theme: 'striped',
-      headStyles: { fillColor: [227, 6, 19] },
-      styles: { fontSize: 9 },
-    });
-
-    doc.save('gettz_fitness_videos.pdf');
-  };
 
   return (
     <div className="relative w-full h-full rounded-lg">
@@ -278,20 +638,6 @@ export default function VideoDetailsPage() {
           <p className="text-gray-600 mt-1">Manage and view all your fitness videos</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleGenerateReport}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Generate Report
-          </button>
-          <button
-            onClick={handleDownloadPDF}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
-          </button>
           <Link
             to="/admin/video/upload"
             className="inline-flex items-center gap-2 rounded-lg bg-[#e30613] px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
@@ -425,6 +771,170 @@ export default function VideoDetailsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Professional Video Report Generation Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Professional Video Report</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+          {/* Report Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+            <select
+              value={reportFilters.reportType}
+              onChange={(e) => handleFilterChange('reportType', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="custom">Custom Date Range</option>
+              <option value="weekly">Weekly Report</option>
+              <option value="monthly">Monthly Report</option>
+            </select>
+          </div>
+
+          {/* Start Date */}
+          {reportFilters.reportType === 'custom' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                value={reportFilters.startDate}
+                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                max={getMaxStartDate()}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  dateValidationErrors.startDate ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
+                title="Select a date from the past up to today"
+              />
+              {dateValidationErrors.startDate ? (
+                <p className="text-xs text-red-500 mt-1">{dateValidationErrors.startDate}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Cannot select future dates</p>
+              )}
+            </div>
+          )}
+
+          {/* End Date */}
+          {reportFilters.reportType === 'custom' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                value={reportFilters.endDate}
+                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                min={reportFilters.startDate || getTodayDate()}
+                max={getMaxEndDate()}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  dateValidationErrors.endDate ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                }`}
+                title="Select a date from start date up to today"
+              />
+              {dateValidationErrors.endDate ? (
+                <p className="text-xs text-red-500 mt-1">{dateValidationErrors.endDate}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  {reportFilters.startDate ? `Must be after ${new Date(reportFilters.startDate).toLocaleDateString()}` : 'Cannot select future dates'}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Category Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              value={reportFilters.category}
+              onChange={(e) => handleFilterChange('category', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="all">All Categories</option>
+              {uniqueCategories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Video Status</label>
+            <select
+              value={reportFilters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="unlisted">Unlisted</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={generateVideoReport}
+            disabled={generatingReport}
+            className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {generatingReport ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Generate Report
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={resetReportFilters}
+            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Reset Filters
+          </button>
+
+          {reportData && (
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download PDF
+            </button>
+          )}
+        </div>
+
+        {/* Report Summary */}
+        {reportData && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-md font-semibold text-gray-900 mb-3">Report Summary</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{reportData.summary.totalVideos}</div>
+                <div className="text-sm text-gray-600">Total Videos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{reportData.summary.totalViews}</div>
+                <div className="text-sm text-gray-600">Total Views</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">{reportData.summary.totalLikes}</div>
+                <div className="text-sm text-gray-600">Total Likes</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">{reportData.summary.publishedVideos}</div>
+                <div className="text-sm text-gray-600">Published</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {loaded ? (

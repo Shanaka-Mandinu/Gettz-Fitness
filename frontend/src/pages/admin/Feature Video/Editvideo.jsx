@@ -32,6 +32,48 @@ function getAxiosError(err) {
 const parseList = (s) => (s || "").split(",").map((t) => t.trim()).filter(Boolean);
 const joinList = (arr) => (Array.isArray(arr) ? arr.join(", ") : "");
 
+// Validation functions
+const validateField = (name, value, videoFile, videoUrl) => {
+  switch (name) {
+    case 'title':
+      if (!value.trim()) return 'Title is required';
+      if (value.trim().length < 3) return 'Title must be at least 3 characters';
+      if (value.trim().length > 100) return 'Title must be less than 100 characters';
+      return '';
+    case 'description':
+      if (!value.trim()) return 'Description is required';
+      if (value.trim().length < 10) return 'Description must be at least 10 characters';
+      if (value.trim().length > 500) return 'Description must be less than 500 characters';
+      return '';
+    case 'category':
+      if (!value) return 'Please select a category';
+      return '';
+    case 'duration':
+      const durationNum = Number(value);
+      if (isNaN(durationNum) || durationNum < 5) return 'Duration must be at least 5 seconds';
+      if (durationNum > 3600) return 'Duration must be less than 1 hour';
+      return '';
+    case 'videoUrl':
+      if (!value.trim() && !videoFile) return 'Please provide a video URL or upload a file';
+      if (value.trim() && !isValidUrl(value.trim())) return 'Please enter a valid URL';
+      return '';
+    case 'videoFile':
+      if (!value && !videoUrl.trim()) return 'Please upload a video file or provide a URL';
+      return '';
+    default:
+      return '';
+  }
+};
+
+const isValidUrl = (string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
 export default function EditVideo() {
   const CATEGORIES = [
     "Strength",
@@ -66,7 +108,66 @@ export default function EditVideo() {
   const [ytLoading, setYtLoading] = useState(false);
   const [ytResults, setYtResults] = useState([]);
 
+  // Form validation state
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
   const videoRef = useRef(null);
+
+  // Validation helper functions
+  const handleFieldChange = (name, value) => {
+    // Update the field value
+    switch (name) {
+      case 'title':
+        setTitle(value);
+        break;
+      case 'description':
+        setDescription(value);
+        break;
+      case 'category':
+        setCategory(value);
+        break;
+      case 'duration':
+        setDuration(value);
+        break;
+      case 'videoUrl':
+        setVideoUrl(value);
+        break;
+      case 'videoFile':
+        setVideoFile(value);
+        break;
+    }
+
+    // Mark field as touched
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    // Validate field
+    const error = validateField(name, value, videoFile, videoUrl);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const newTouched = {};
+
+    // Validate all fields
+    newErrors.title = validateField('title', title, videoFile, videoUrl);
+    newErrors.description = validateField('description', description, videoFile, videoUrl);
+    newErrors.category = validateField('category', category, videoFile, videoUrl);
+    newErrors.duration = validateField('duration', duration, videoFile, videoUrl);
+    newErrors.videoUrl = validateField('videoUrl', videoUrl, videoFile, videoUrl);
+    newErrors.videoFile = validateField('videoFile', videoFile, videoFile, videoUrl);
+
+    // Mark all fields as touched
+    Object.keys(newErrors).forEach(key => {
+      newTouched[key] = true;
+    });
+
+    setErrors(newErrors);
+    setTouched(newTouched);
+
+    return !Object.values(newErrors).some(error => error !== '');
+  };
 
   // 🧩 Handle local preview file
   useEffect(() => {
@@ -151,9 +252,10 @@ export default function EditVideo() {
 
   // 🧩 Save updates
   async function handleSave() {
-    if (!title.trim()) return toast.error("Title is required");
-    if (!description.trim()) return toast.error("Description is required");
-    if (!category) return toast.error("Please pick a category");
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -315,21 +417,35 @@ export default function EditVideo() {
               <label className="block text-sm font-medium mb-1">Title</label>
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  touched.title && errors.title 
+                    ? 'border-red-500 focus:ring-red-500/30' 
+                    : 'border-black/10 focus:ring-[#e30613]/30'
+                }`}
                 placeholder="Leg press tutorial"
               />
+              {touched.title && errors.title && (
+                <p className="mt-1 text-xs text-red-600">{errors.title}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Description</label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
                 rows={6}
-                className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  touched.description && errors.description 
+                    ? 'border-red-500 focus:ring-red-500/30' 
+                    : 'border-black/10 focus:ring-[#e30613]/30'
+                }`}
                 placeholder="Coach explains correct leg press form..."
               />
+              {touched.description && errors.description && (
+                <p className="mt-1 text-xs text-red-600">{errors.description}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -355,14 +471,23 @@ export default function EditVideo() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Duration (seconds)</label>
+                <label className="block text-sm font-medium mb-1">
+                  Workout Duration (seconds)
+                </label>
                 <input
                   type="number"
-                  min={0}
+                  min={5}
                   value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  onChange={(e) => handleFieldChange('duration', e.target.value)}
+                  className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    touched.duration && errors.duration 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-black/10 focus:ring-[#e30613]/30'
+                  }`}
                 />
+                {touched.duration && errors.duration && (
+                  <p className="mt-1 text-xs text-red-600">{errors.duration}</p>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-6">
                 <input
@@ -388,9 +513,13 @@ export default function EditVideo() {
               <div className="flex gap-2">
                 <input
                   value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
+                  onChange={(e) => handleFieldChange('videoUrl', e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  className="flex-1 rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    touched.videoUrl && errors.videoUrl 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-black/10 focus:ring-[#e30613]/30'
+                  }`}
                 />
                 <button
                   type="button"
@@ -401,25 +530,36 @@ export default function EditVideo() {
                   Pick
                 </button>
               </div>
-              <p className="mt-1 text-xs text-neutral-500">
-                If you choose a new file below, we’ll replace this URL with the uploaded file URL.
-              </p>
+              {touched.videoUrl && errors.videoUrl ? (
+                <p className="mt-1 text-xs text-red-600">{errors.videoUrl}</p>
+              ) : (
+                <p className="mt-1 text-xs text-neutral-500">
+                  If you choose a new file below, we'll replace this URL with the uploaded file URL.
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Or choose a new video file
               </label>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-black/20 p-6 text-center hover:bg-black/5">
+              <label className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed p-6 text-center hover:bg-black/5 ${
+                touched.videoFile && errors.videoFile 
+                  ? 'border-red-500 bg-red-50' 
+                  : 'border-black/20'
+              }`}>
                 <UploadCloud className="mb-2" />
                 <span className="text-sm">Drag & drop or click to choose</span>
                 <input
                   type="file"
                   accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  onChange={(e) => handleFieldChange('videoFile', e.target.files?.[0] || null)}
                   className="hidden"
                 />
               </label>
+              {touched.videoFile && errors.videoFile && (
+                <p className="mt-1 text-xs text-red-600">{errors.videoFile}</p>
+              )}
 
               {(preview || videoUrl) && (
                 <div className="mt-3 w-full rounded-xl border border-black/10 overflow-hidden">
@@ -457,7 +597,7 @@ export default function EditVideo() {
           </Link>
           <button
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || Object.values(errors).some(error => error !== '')}
             className="inline-flex items-center gap-2 rounded-xl bg-[#e30613] px-4 py-2 text-sm font-medium text-white shadow hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save size={16} />
@@ -522,7 +662,7 @@ export default function EditVideo() {
             <div className="flex justify-end gap-2 border-t px-4 py-3">
               <button
                 onClick={() => setYtOpen(false)}
-                className="rounded-xl border border-black/10 px-3 py-2 text-sm hover:bg-black/5"
+                className="rounded-xl border border-black/10 px-3 py-2 text-sm hover:bg-black/5 "
               >
                 Close
               </button>

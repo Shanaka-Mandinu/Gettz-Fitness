@@ -20,6 +20,7 @@ import {
 import { Link } from "react-router-dom";
 import FeedbackDisplay from "./FeedbackDisplay";
 import axios from "axios";
+import { ChevronUp } from "lucide-react";
 
 
 const BRAND = {
@@ -49,6 +50,7 @@ export default function GymLandingPage() {
       <FeedbackDisplay />
       <Faq />
       <FinalCta />
+      <BackToTop />
     </div>
   );
 }
@@ -809,5 +811,44 @@ function FinalCta() {
         </div>
       </Container>
     </section>
+  );
+}
+
+/** Back to Top Button */
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      try {
+        const sc = window.scrollY || window.pageYOffset;
+        setVisible(sc > 300);
+      } catch (e) {
+        // ignore in non-browser environments
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // run once to set initial state
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <button
+      aria-label="Back to top"
+      title="Back to top"
+      onClick={scrollToTop}
+      className={`fixed right-8 md:right-10 bottom-[90px] md:-bottom-[-100px] z-50 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-red-300 ${
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+    >
+      <ChevronUp className="h-5 w-5" />
+    </button>
   );
 }

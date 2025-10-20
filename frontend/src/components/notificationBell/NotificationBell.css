@@ -11,6 +11,9 @@
   --nf-chip-promotional: #16a34a; 
   --nf-chip-warning: #ef4444;     
   --nf-chip-alert: #f59e0b;       
+  --nf-chip-inquiry_reply: #7c3aed;
+  --nf-chip-system: #6b7280;
+  --nf-chip-announcement: #dc2626;
   --nf-badge: #ef4444;
 }
 
@@ -200,6 +203,9 @@
 .nf-promotional { background: var(--nf-chip-promotional); }
 .nf-warning { background: var(--nf-chip-warning); }
 .nf-alert { background: var(--nf-chip-alert); }
+.nf-inquiry_reply { background: var(--nf-chip-inquiry_reply); }
+.nf-system { background: var(--nf-chip-system); }
+.nf-announcement { background: var(--nf-chip-announcement); }
 
 /* Empty state */
 .nf-empty {

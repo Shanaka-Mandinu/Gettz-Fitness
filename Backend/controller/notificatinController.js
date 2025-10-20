@@ -97,6 +97,20 @@ export async function createPromotionalNotification(req, res) {
     }));
     if (bulk.length) await UserNotification.bulkWrite(bulk);
 
+    //real-time notification to all members
+    if (req.io) {
+      members.forEach(member => {
+        req.io.emit('notification', {
+          userId: member._id.toString(),
+          id: notification._id,
+          title: notification.title,
+          body: notification.body,
+          type: notification.type,
+          createdAt: notification.sentDate
+        });
+      });
+    }
+
     res.status(201).json({
       message: "Notification created and attached to all members",
       notificationId: notification._id,
@@ -137,6 +151,18 @@ export async function createNotificationForUser(req, res) {
     await notification.save();
 
     await new UserNotification({ NIC: notification._id, user_id: userId }).save();
+
+    // real-time notification to specific user
+    if (req.io) {
+      req.io.emit('notification', {
+        userId: userId.toString(),
+        id: notification._id,
+        title: notification.title,
+        body: notification.body,
+        type: notification.type,
+        createdAt: notification.sentDate
+      });
+    }
 
     res.status(201).json({ message: 'Notification created for user', notificationId: notification._id });
   } catch (e) {

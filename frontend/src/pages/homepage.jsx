@@ -19,10 +19,54 @@ import SupplementCheckout from "./eq_manager/supplement_store/supplement_checkou
 import SupplementSavedCards from "./eq_manager/supplement_store/supplement_saved_cards";
 import SupplementPaymentSuccess from "./eq_manager/supplement_store/supplement_paymentSuccess";
 import SupplementPaymentFailed from "./eq_manager/supplement_store/supplement_paymentFailed";
-
 import ChallengePage from "./client/challengesPage";
 import NotFound from "../pages/NotFound";
+import { useEffect, useState } from "react";
 export default function Homepage() {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(
+    () => {
+      // Check if user is logged in
+      const checkAuthStatus = () => {
+        const token = localStorage.getItem("token")
+        const user = localStorage.getItem("user")
+        setIsLoggedIn(user && token ? true : false);
+      }
+
+      checkAuthStatus()
+
+       // Listen for custom auth change events (same tab)
+      const handleAuthChange = (e) => {
+        if(e.detail && typeof e.detail.isLoggedIn !== 'undefined'){
+          setIsLoggedIn(e.detail.isLoggedIn)
+        }else{
+          // Fallback: check localStorage
+          checkAuthStatus();
+        }
+      }
+
+      // Listen for storage changes (when user logs in/out in another tab)
+      const handleStorageChange = (e) => {
+        if (e.key === 'token' || e.key === 'user'){
+          checkAuthStatus()
+        }
+      }
+
+      window.addEventListener('storage', handleStorageChange)
+
+      /// Also listen for custom events if you trigger them on login/logout
+      window.addEventListener('authChange', checkAuthStatus)
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange)
+        window.removeEventListener('authChange', checkAuthStatus)
+      }
+
+    }, []
+  );
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-black via-gray-900 to-gray-800 flex flex-col">
       <Header />
@@ -56,7 +100,9 @@ export default function Homepage() {
         </Routes>
       </div>
       </CartProvider>
-      <ChatBot />
+      {
+        isLoggedIn && <ChatBot />
+      }
       <HomeFooter />
     </div>
   );

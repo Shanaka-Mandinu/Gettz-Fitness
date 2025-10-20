@@ -115,7 +115,7 @@ export default function AnnouncementDetailsPage() {
     fetchFilteredData();
   }, [typeFilter, dateFilter, loaded]); // Dependencies: filters and loaded state
 
-  // PDF Download (styled like competitions page)
+
   const handleDownloadPDF = async () => {
     const doc = new jsPDF();
 
@@ -130,7 +130,7 @@ export default function AnnouncementDetailsPage() {
     doc.text('Gettz Fitness', 32, 18);
     doc.setFontSize(11);
     doc.setTextColor('#333');
-    doc.text('Address: GettzFitness Matara', 32, 25);
+    doc.text('Address: 48 Udyana Mawatha, Matara', 32, 25);
 
     doc.setFontSize(10);
     doc.setTextColor('#333');
@@ -307,7 +307,7 @@ export default function AnnouncementDetailsPage() {
       )}
 
       {!loaded && (
-        <div className="h-[500px] border-2">
+        <div className="h-[500px]">
           <Loader />
         </div>
       )}
