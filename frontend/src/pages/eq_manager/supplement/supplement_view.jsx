@@ -36,6 +36,8 @@ export default function SupplementsViewPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   //need for image preview
   const [preview, setPreview] = useState({
@@ -172,6 +174,24 @@ export default function SupplementsViewPage() {
   const visibleSupplements = useMemo(() => {
     const q = (search || "").toLowerCase().trim();
 
+    const start = startDate ? new Date(`${startDate}T00:00:00.000`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+    function getItemDate(s) {
+      const ca = s?.createdAt;
+      if (ca) {
+        const d = new Date(ca);
+        if (!isNaN(d.getTime())) return d;
+      }
+      const id = s?._id;
+      if (typeof id === "string" && id.length === 24) {
+        const ms = parseInt(id.substring(0, 8), 16) * 1000;
+        const d = new Date(ms);
+        if (!isNaN(d.getTime())) return d;
+      }
+      return null;
+    }
+
     return (supplements || [])
       .filter((s) => {
         const matchesText =
@@ -189,14 +209,46 @@ export default function SupplementsViewPage() {
           (s?.Sup_type || "").toString().toLowerCase() ===
             typeFilter.toLowerCase();
 
-        return matchesText && matchesStatus && matchesType;
+        // Date range filter
+        let matchesDate = true;
+        if (start || end) {
+          const d = getItemDate(s);
+          if (!d) {
+            matchesDate = false;
+          } else {
+            if (start && d < start) matchesDate = false;
+            if (end && d > end) matchesDate = false;
+          }
+        }
+
+        return matchesText && matchesStatus && matchesType && matchesDate;
       })
       .sort((a, b) => {
         const ac = Number(a?.Sup_code) || 0;
         const bc = Number(b?.Sup_code) || 0;
         return ac - bc;
       });
-  }, [supplements, search, statusFilter, typeFilter]);
+  }, [supplements, search, statusFilter, typeFilter, startDate, endDate]);
+
+  // helpers to show date in table
+  function resolveItemDate(item) {
+    const ca = item?.createdAt;
+    if (ca) {
+      const d = new Date(ca);
+      if (!isNaN(d.getTime())) return d;
+    }
+    const id = item?._id;
+    if (typeof id === "string" && id.length === 24) {
+      const ms = parseInt(id.substring(0, 8), 16) * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+  function formatItemDate(item) {
+    const d = resolveItemDate(item);
+    return d ? d.toLocaleDateString() : "-";
+  }
 
   //change status part
   async function updateStatus(s, newStatus) {
@@ -285,9 +337,10 @@ export default function SupplementsViewPage() {
         statusFilter === "all" ? "All statuses" : statusFilter;
       const typeLabel = typeFilter === "all" ? "All types" : typeFilter;
       const searchLabel = (search || "").trim() ? `"${search.trim()}"` : "—";
+      const dateLabel = startDate || endDate ? `${startDate || '…'} → ${endDate || '…'}` : "—";
       doc.setFontSize(10);
       doc.text(
-        `Filters • Status: ${statusLabel}  |  Type: ${typeLabel}  |  Search: ${searchLabel}`,
+        `Filters • Status: ${statusLabel}  |  Type: ${typeLabel}  |  Search: ${searchLabel}  |  Date: ${dateLabel}`,
         left,
         78,
         { maxWidth: pageW - 2 * left }
@@ -374,7 +427,7 @@ export default function SupplementsViewPage() {
       </div>
 
       {/* search */}
-      <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="mb-3 grid grid-cols-1 md:grid-cols-4 gap-2">
         <div className="relative">
           <Search
             size={16}
@@ -420,6 +473,24 @@ export default function SupplementsViewPage() {
             </option>
           ))}
         </select>
+
+        {/* Date range */}
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+            aria-label="Start date"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+            aria-label="End date"
+          />
+        </div>
       </div>
 
       <div className="mb-2 text-xs text-neutral-600">
@@ -438,6 +509,7 @@ export default function SupplementsViewPage() {
                 <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Type</th>
                 <th className="px-3 py-2 text-left">Supplier</th>
+                <th className="px-3 py-2 text-left">Date</th>
                 <th className="px-3 py-2 text-left">Price</th>
                 <th className="px-3 py-2 text-left">Quantity</th>
                 <th className="px-3 py-2 text-left">Status</th>
@@ -494,6 +566,7 @@ export default function SupplementsViewPage() {
                     <td className="px-3 py-2">{s.Sup_name}</td>
                     <td className="px-3 py-2">{s.Sup_type}</td>
                     <td className="px-3 py-2">{s.Sup_supplier || "-"}</td>
+                    <td className="px-3 py-2">{formatItemDate(s)}</td>
                     <td className="px-3 py-2">
                       {(Number(s.Sup_price) || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,

@@ -16,6 +16,8 @@ export default function EquipmentDetailsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const navigate = useNavigate();
 
@@ -88,6 +90,24 @@ export default function EquipmentDetailsPage() {
   const visibleEquipment = useMemo(() => {
     const q = (search || "").toLowerCase().trim();
 
+    const start = startDate ? new Date(`${startDate}T00:00:00.000`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+    function getItemDate(e) {
+      const ca = e?.createdAt;
+      if (ca) {
+        const d = new Date(ca);
+        if (!isNaN(d.getTime())) return d;
+      }
+      const id = e?._id;
+      if (typeof id === "string" && id.length === 24) {
+        const ms = parseInt(id.substring(0, 8), 16) * 1000;
+        const d = new Date(ms);
+        if (!isNaN(d.getTime())) return d;
+      }
+      return null;
+    }
+
     return (equipment || [])
       .filter((e) => {
         const matchesText = !q ||
@@ -100,14 +120,47 @@ export default function EquipmentDetailsPage() {
         const matchesType = typeFilter === "all" ||
           (e?.Eq_type || "").toString().toLowerCase() === typeFilter.toLowerCase();
 
-        return matchesText && matchesStatus && matchesType;
+        // Date range filter (by createdAt if available, else ObjectId timestamp)
+        let matchesDate = true;
+        if (start || end) {
+          const d = getItemDate(e);
+          if (!d) {
+            matchesDate = false;
+          } else {
+            if (start && d < start) matchesDate = false;
+            if (end && d > end) matchesDate = false;
+          }
+        }
+
+        return matchesText && matchesStatus && matchesType && matchesDate;
       })
       .sort((a, b) => {
         const ac = Number(a?.Eq_code) || 0;
         const bc = Number(b?.Eq_code) || 0;
         return ac - bc;
       });
-  }, [equipment, search, statusFilter, typeFilter]);
+  }, [equipment, search, statusFilter, typeFilter, startDate, endDate]);
+
+  // helpers to show date in table (createdAt if available, else derive from ObjectId)
+  function resolveItemDate(item) {
+    const ca = item?.createdAt;
+    if (ca) {
+      const d = new Date(ca);
+      if (!isNaN(d.getTime())) return d;
+    }
+    const id = item?._id;
+    if (typeof id === "string" && id.length === 24) {
+      const ms = parseInt(id.substring(0, 8), 16) * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
+  function formatItemDate(item) {
+    const d = resolveItemDate(item);
+    return d ? d.toLocaleDateString() : "-";
+  }
 
   //generate pdf
   const handleDownloadPDF = async () => {
@@ -139,9 +192,10 @@ export default function EquipmentDetailsPage() {
       const statusLabel = statusFilter === "all" ? "All statuses" : statusFilter;
       const typeLabel = typeFilter === "all" ? "All types" : typeFilter;
       const searchLabel = search ? `"${search}"` : "—";
+      const dateLabel = startDate || endDate ? `${startDate || '…'} → ${endDate || '…'}` : "—";
       doc.setFontSize(10);
       doc.text(
-        `Filters • Status: ${statusLabel}  |  Type: ${typeLabel}  |  Search: ${searchLabel}`,
+        `Filters • Status: ${statusLabel}  |  Type: ${typeLabel}  |  Search: ${searchLabel}  |  Date: ${dateLabel}`,
         left,
         78,
         { maxWidth: pageW - 2 * left }
@@ -225,7 +279,7 @@ export default function EquipmentDetailsPage() {
       </div>
 
       {/* {search part} */}
-      <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="mb-3 grid grid-cols-1 md:grid-cols-4 gap-2">
         <div className="relative">
           <Search
             size={16}
@@ -273,6 +327,24 @@ export default function EquipmentDetailsPage() {
             </option>
           ))}
         </select>
+
+        {/* Date range */}
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+            aria-label="Start date"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+            aria-label="End date"
+          />
+        </div>
       </div>
 
       <div className="mb-2 text-xs text-neutral-600">
@@ -289,6 +361,7 @@ export default function EquipmentDetailsPage() {
                 <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Type</th>
                 <th className="px-3 py-2 text-left">Supplier</th>
+                <th className="px-3 py-2 text-left">Date</th>
                 <th className="px-3 py-2 text-left">Status</th>
                 <th className="px-3 py-2 text-left">Repair Note</th>
                 <th className="px-3 py-2 text-left">Actions</th>
@@ -297,7 +370,7 @@ export default function EquipmentDetailsPage() {
             <tbody>
               {visibleEquipment.length === 0 && (
                 <tr>
-                  <td className="px-3 py-4 text-center text-neutral-500" colSpan={7}>
+                  <td className="px-3 py-4 text-center text-neutral-500" colSpan={8}>
                     No equipment found with current filters.
                   </td>
                 </tr>
@@ -309,6 +382,7 @@ export default function EquipmentDetailsPage() {
                   <td className="px-3 py-2">{eq.Eq_name}</td>
                   <td className="px-3 py-2">{eq.Eq_type}</td>
                   <td className="px-3 py-2">{eq.Eq_supplier || "-"}</td>
+                  <td className="px-3 py-2">{formatItemDate(eq)}</td>
                   <td className="px-3 py-2">
                     <select
                       value={eq.Eq_status || "Available"}
