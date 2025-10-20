@@ -11,7 +11,8 @@ import { Search, X as Close } from "lucide-react";
 export default function MaintenanceLogsPage() {
     const [logs, setLogs] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const [search, setSearch] = useState("");//for search
+    const [search, setSearch] = useState(""); // for search
+    const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
     useEffect(() => {
         if (!loaded) {
@@ -30,22 +31,44 @@ export default function MaintenanceLogsPage() {
     }, [loaded]);
 
 
-    //search part
+    // Inclusive date range check (treat 'to' as end of the day)
+    function isWithinRange(dateStr, from, to) {
+        if (!from && !to) return true;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return false;
+        if (from) {
+            const f = new Date(from);
+            if (d < f) return false;
+        }
+        if (to) {
+            const t = new Date(to);
+            t.setHours(23, 59, 59, 999);
+            if (d > t) return false;
+        }
+        return true;
+    }
+
+    //search + date filter part
     const visibleLogs = useMemo(() => {
         const q = (search || "").toLowerCase().trim();
         return (logs || [])
             .filter((log) => {
-                if (!q) return true;
+                // Search predicate
                 const eqName = (log?.M_Eq_name || "").toLowerCase();
                 const linkedEqName = (log?.Eq_ID?.Eq_name || "").toLowerCase();
                 const linkedEqCode = (log?.Eq_ID?.Eq_code || log?.Eq_ID || "").toString().toLowerCase();
                 const desc = (log?.M_description || "").toLowerCase();
                 const type = (log?.M_logType || "").toLowerCase();
+                const matchesSearch = !q || [eqName, linkedEqName, linkedEqCode, desc, type].some((v) => v.includes(q));
 
-                return [eqName, linkedEqName, linkedEqCode, desc, type].some((v) => v.includes(q));
+                // Date predicate
+                const matchesDate = isWithinRange(log?.M_date, dateRange.from, dateRange.to);
+
+                return matchesSearch && matchesDate;
             })
             .sort((a, b) => new Date(b.M_date) - new Date(a.M_date));
-    }, [logs, search]);
+    }, [logs, search, dateRange]);
 
     //gen pdf
     const handleDownloadPDF = async () => {
@@ -78,8 +101,16 @@ export default function MaintenanceLogsPage() {
 
             //filter
             const searchLabel = (search || "").trim() ? `"${search.trim()}"` : "—";
+            let dateLabel = "—";
+            if (dateRange.from && dateRange.to) {
+                dateLabel = `${new Date(dateRange.from).toLocaleDateString()} to ${new Date(dateRange.to).toLocaleDateString()}`;
+            } else if (dateRange.from) {
+                dateLabel = `From ${new Date(dateRange.from).toLocaleDateString()}`;
+            } else if (dateRange.to) {
+                dateLabel = `Up to ${new Date(dateRange.to).toLocaleDateString()}`;
+            }
             doc.setFontSize(10);
-            doc.text(`Filters • Search: ${searchLabel}`, left, 78, {
+            doc.text(`Filters • Search: ${searchLabel}   Date: ${dateLabel}`, left, 78, {
                 maxWidth: pageW - 2 * left,
             });
 
@@ -134,9 +165,9 @@ export default function MaintenanceLogsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h2 className="text-xl font-semibold">Maintenance Logs</h2>
 
-                {/* {search part} */}
-                <div className="flex-1 sm:max-w-md">
-                    <div className="relative">
+                {/* Search + Date filter */}
+                <div className="flex flex-col sm:flex-row gap-2 flex-1 sm:max-w-2xl">
+                    <div className="relative flex-1">
                         <Search
                             size={16}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
@@ -155,6 +186,34 @@ export default function MaintenanceLogsPage() {
                                 title="Clear"
                             >
                                 <Close size={14} className="text-neutral-500" />
+                            </button>
+                        )}
+                    </div>
+                    {/* Date range filter */}
+                    <div className="flex items-center gap-1">
+                        <label className="text-xs text-neutral-600 mr-1">Date:</label>
+                        <input
+                            type="date"
+                            value={dateRange.from}
+                            onChange={(e) => setDateRange((r) => ({ ...r, from: e.target.value }))}
+                            className="rounded border border-black/10 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                            max={dateRange.to || undefined}
+                        />
+                        <span className="mx-1 text-xs text-neutral-500">to</span>
+                        <input
+                            type="date"
+                            value={dateRange.to}
+                            onChange={(e) => setDateRange((r) => ({ ...r, to: e.target.value }))}
+                            className="rounded border border-black/10 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                            min={dateRange.from || undefined}
+                        />
+                        {(dateRange.from || dateRange.to) && (
+                            <button
+                                onClick={() => setDateRange({ from: "", to: "" })}
+                                className="ml-1 rounded p-1 hover:bg-black/5"
+                                title="Clear date filter"
+                            >
+                                <Close size={13} className="text-neutral-500" />
                             </button>
                         )}
                     </div>

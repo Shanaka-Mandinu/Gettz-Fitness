@@ -11,7 +11,8 @@ import GymLogo from "../../../assets/GymLogo.jpg";
 export default function PurchaseListPage() {
     const [purchases, setPurchases] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const [query, setQuery] = useState("");//for search
+    const [query, setQuery] = useState(""); // for search
+    const [dateRange, setDateRange] = useState({ from: "", to: "" });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,16 +31,28 @@ export default function PurchaseListPage() {
         }
     }, [loaded]);
 
+    // Helper to check if a date is within range
+    function isWithinDateRange(dateStr, from, to) {
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        if (from && d < new Date(from)) return false;
+        if (to && d > new Date(to)) return false;
+        return true;
+    }
+
     //filter function
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return purchases;
         return purchases.filter((p) => {
+            // Search filter
             const code = String(p?.P_code ?? "").toLowerCase();
             const item = String(p?.P_item ?? "").toLowerCase();
-            return code.includes(q) || item.includes(q);
+            const matchesQuery = !q || code.includes(q) || item.includes(q);
+            // Date filter
+            const matchesDate = (!dateRange.from && !dateRange.to) || isWithinDateRange(p?.P_date, dateRange.from, dateRange.to);
+            return matchesQuery && matchesDate;
         });
-    }, [purchases, query]);
+    }, [purchases, query, dateRange]);
 
     //delete ui
     function confirmDelete(code) {
@@ -127,9 +140,18 @@ export default function PurchaseListPage() {
             const now = new Date();
             doc.text(`Generated: ${now.toLocaleString()}`, left + 55, 52);
 
+            // PDF filter summary
             const searchLabel = (query || "").trim() ? `"${query.trim()}"` : "—";
+            let dateLabel = "—";
+            if (dateRange.from && dateRange.to) {
+                dateLabel = `${new Date(dateRange.from).toLocaleDateString()} to ${new Date(dateRange.to).toLocaleDateString()}`;
+            } else if (dateRange.from) {
+                dateLabel = `From ${new Date(dateRange.from).toLocaleDateString()}`;
+            } else if (dateRange.to) {
+                dateLabel = `Up to ${new Date(dateRange.to).toLocaleDateString()}`;
+            }
             doc.setFontSize(10);
-            doc.text(`Filters • Search: ${searchLabel}`, left, 78, {
+            doc.text(`Filters • Search: ${searchLabel}   Date: ${dateLabel}`, left, 78, {
                 maxWidth: pageW - 2 * left,
             });
 
@@ -194,9 +216,10 @@ export default function PurchaseListPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h2 className="text-xl font-semibold">Purchases</h2>
 
-                {/* Search bar */}
-                <div className="flex-1 sm:max-w-md">
-                    <div className="relative">
+                {/* Search and Date Filter */}
+                <div className="flex flex-col sm:flex-row gap-2 flex-1 sm:max-w-2xl">
+                    {/* Search bar */}
+                    <div className="relative flex-1">
                         <Search
                             size={16}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
@@ -218,10 +241,37 @@ export default function PurchaseListPage() {
                             </button>
                         )}
                     </div>
+                    {/* Date range filter */}
+                    <div className="flex items-center gap-1">
+                        <label className="text-xs text-neutral-600 mr-1">Date:</label>
+                        <input
+                            type="date"
+                            value={dateRange.from}
+                            onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+                            className="rounded border border-black/10 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                            max={dateRange.to || undefined}
+                        />
+                        <span className="mx-1 text-xs text-neutral-500">to</span>
+                        <input
+                            type="date"
+                            value={dateRange.to}
+                            onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+                            className="rounded border border-black/10 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#e30613]/30"
+                            min={dateRange.from || undefined}
+                        />
+                        {(dateRange.from || dateRange.to) && (
+                            <button
+                                onClick={() => setDateRange({ from: "", to: "" })}
+                                className="ml-1 rounded p-1 hover:bg-black/5"
+                                title="Clear date filter"
+                            >
+                                <Close size={13} className="text-neutral-500" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="ml-auto flex gap-2">
-                    {/* {undo when finished} */}
                     <button
                         onClick={handleDownloadPDF}
                         className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:opacity-95 transition"
@@ -247,7 +297,7 @@ export default function PurchaseListPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-black text-white">
                             <tr>
-                                <th className="px-3 py-2 text-left">No</th>
+                                
                                 <th className="px-3 py-2 text-left">Code</th>
                                 <th className="px-3 py-2 text-left">Date</th>
                                 <th className="px-3 py-2 text-left">Cost</th>
@@ -270,11 +320,17 @@ export default function PurchaseListPage() {
                             )}
 
                             {[...filtered]
-                                .sort((a, b) => new Date(b.P_date) - new Date(a.P_date))
+                                .sort((a, b) => {
+                                    // Sort by P_code ascending 
+                                    const codeA = String(a.P_code || "").toLowerCase();
+                                    const codeB = String(b.P_code || "").toLowerCase();
+                                    if (codeA < codeB) return -1;
+                                    if (codeA > codeB) return 1;
+                                    return 0;
+                                })
                                 .map((p, index) => (
                                     <tr key={p.P_code || index} className="border-t border-black/10">
-                                        <td className="px-3 py-2">{index + 1}</td>
-                                        <td className="px-3 py-2">{p.P_code}</td>
+                                        <td className="px-3 py-2">PU-{p.P_code}</td>
                                         <td className="px-3 py-2">
                                             {p?.P_date ? new Date(p.P_date).toLocaleDateString() : "-"}
                                         </td>
