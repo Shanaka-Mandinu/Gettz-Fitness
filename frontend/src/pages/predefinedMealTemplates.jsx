@@ -12,10 +12,13 @@ export default function PredefinedMealTemplates() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [savedIds, setSavedIds] = useState(new Set());
 
   // Fetch meal templates from backend (public endpoint)
   useEffect(() => {
     fetchTemplates();
+    // Also fetch saved templates for current user (if logged in)
+    fetchSaved();
   }, []);
 
   const fetchTemplates = async () => {
@@ -35,6 +38,22 @@ export default function PredefinedMealTemplates() {
       setError(String(msg));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load user's saved template ids for visual state and to avoid duplicates
+  const fetchSaved = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return; // Not logged in
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/saved-meal-templates/mine`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const ids = new Set((Array.isArray(data) ? data : []).map(x => x.template_id));
+      setSavedIds(ids);
+    } catch (err) {
+      // Ignore if unauthorized; page still works for browsing
     }
   };
 
@@ -162,6 +181,59 @@ export default function PredefinedMealTemplates() {
 // Individual Meal Template Card Component
 function MealTemplateCard({ template }) {
   const [imageError, setImageError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  async function handleSelect(template) {
+    // Require login
+    if (!token) {
+      Swal.fire({
+        title: "Login Required",
+        text: "Please log in to add templates to your dashboard.",
+        icon: "info",
+        timer: 2000,
+        showConfirmButton: false
+      });
+      return;
+    }
+    try {
+      setSaving(true);
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/saved-meal-templates/save/${template._id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      Swal.fire({
+        title: "Template Selected!",
+        text: `${template.templateName} has been added to your meal plans.`,
+        icon: "success",
+        timer: 1800,
+        showConfirmButton: false
+      });
+      // Optimistic UI: mark as saved globally if parent provided context; fallback: reload saved
+      // We don't have direct access to parent's setSavedIds here; soft refresh saved list by reloading page data
+      // Alternatively, use event/localStorage flag; for now, do a light refetch
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/saved-meal-templates/mine`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Emit a custom event others can listen to if needed
+        window.dispatchEvent(new CustomEvent('savedTemplatesUpdated', { detail: data }));
+      } catch {}
+    } catch (err) {
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message || err?.message || "Failed to save template";
+      // Show specific duplicate error message if provided by backend
+      Swal.fire({
+        title: status === 400 ? "Already Selected" : "Error",
+        text: msg,
+        icon: status === 400 ? "info" : "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -169,7 +241,7 @@ function MealTemplateCard({ template }) {
       <div className="h-48 bg-gray-200 relative">
         {template.photo && !imageError ? (
           <img
-            src={`${import.meta.env.VITE_BACKEND_URL}/${template.photo}`}
+            src={String(template.photo).startsWith("http") ? template.photo : `${import.meta.env.VITE_BACKEND_URL}/${template.photo}`}
             alt={template.templateName}
             className="w-full h-full object-cover"
             onError={() => {
@@ -259,68 +331,13 @@ function MealTemplateCard({ template }) {
           </div>
         )}
 
-        {/* Action Button: store selected template in localStorage per user for later use (requires login) */}
+        {/* Action Button: persist selection via API */}
         <button
-          onClick={() => {
-            // Read current user to namespace storage per user
-            let currentUserId = null;
-            try {
-              const uStr = localStorage.getItem('user');
-              if (uStr) currentUserId = JSON.parse(uStr)?._id || null;
-            } catch {}
-            // Enforce login: prevent saving to a generic key
-            if (!currentUserId) {
-              Swal.fire({
-                title: "Login Required",
-                text: "Please log in to add templates to your dashboard.",
-                icon: "info",
-                timer: 2000,
-                showConfirmButton: false
-              });
-              return;
-            }
-            const storageKey = `selectedMealTemplates:${currentUserId}`;
-
-            // Safely parse stored templates (default to [])
-            let selectedTemplates = [];
-            try {
-              selectedTemplates = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            } catch {
-              selectedTemplates = [];
-            }
-            const templateData = {
-              ...template,
-              selectedDate: new Date().toISOString(),
-              id: template._id + '_' + Date.now() // Unique ID for deletion
-            };
-            
-            // Check if template already exists (avoid duplicates)
-            const exists = selectedTemplates.some(t => t._id === template._id);
-            if (!exists) {
-              selectedTemplates.push(templateData);
-              localStorage.setItem(storageKey, JSON.stringify(selectedTemplates));
-              
-              // Show success message
-              Swal.fire({
-                title: "Template Selected!",
-                text: `${template.templateName} has been added to your meal plans.`,
-                icon: "success",
-                timer: 2000,
-                showConfirmButton: false
-              });
-            } else {
-              Swal.fire({
-                title: "Already Selected",
-                text: "This template is already in your meal plans.",
-                icon: "info",
-                timer: 2000,
-                showConfirmButton: false
-              });
-            }
-          }}
-          className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium"
+          onClick={() => handleSelect(template)}
+          disabled={saving}
+          className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Select This Template
+          {saving ? 'Saving...' : 'Select This Template'}
         </button>
       </div>
     </div>

@@ -49,6 +49,7 @@ import feedbackRouter from "./routes/feedbackRoute.js"
 import statsRouter from "./routes/statsRoute.js"
 import revenueRouter from "./routes/revenueRoute.js"
 import savedVideoRouter from "./routes/savedVideoRoute.js"
+import savedMealTemplateRouter from "./routes/savedMealTemplateRoute.js";
 import path from "path";
 import initRFIDListener from "./serial/rfidListener.js"; 
 
@@ -104,7 +105,6 @@ app.use("/api/employeeSalary", employeeSalaryRouter);
 app.use("/api/employeeSalarayRecords", employeeSalaryRecordsRouter);
 app.use("/api/mealRequest", mealRequestRouter);
 app.use("/api/mealTemplate",mealTemplateRouter);
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/api/equipment",equipmentRouter);
 app.use("/api/supplement",supplementRouter);
@@ -133,6 +133,7 @@ app.use("/api/feedback", feedbackRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/revenue", revenueRouter);
 app.use("/api/saved-videos", savedVideoRouter);
+app.use("/api/saved-meal-templates", savedMealTemplateRouter);
 
 io.on("connection", (socket) => {
   console.log("🟢 Dashboard connected");

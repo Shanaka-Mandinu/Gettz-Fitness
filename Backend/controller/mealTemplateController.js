@@ -1,5 +1,4 @@
 import MealTemplate from "../model/mealTemplate.js";
-import path from "path";
 
 export const addMealTemplate = async (req, res) => {
   if (!req.user) {
@@ -25,9 +24,11 @@ export const addMealTemplate = async (req, res) => {
       fats,
       dietCategory,
       duration,
+      photo: photoFromBody,
     } = req.body;
 
-    const photo = req.file ? req.file.path.replace(process.cwd() + path.sep, '') : null;
+    // Accept URL from body (cloud storage)
+    const photo = photoFromBody || null;
 
     // Create a new document and save the new meal template in database 
     const doc = await MealTemplate.create({
@@ -76,23 +77,28 @@ export const updateMealTemplate = async (req, res) => {
       photo: photoFromBody,
     } = req.body;
 
-    const photo = req.file ? req.file.path.replace(process.cwd() + path.sep, '') : photoFromBody ?? undefined;
+    // Accept URL from body; if not provided, don't modify existing photo
+    const computedPhoto = (photoFromBody ?? undefined);
+
+    const updateDoc = {
+      templateName,
+      mealType,
+      foodItems,
+      calories,
+      protein,
+      carbs,
+      fats,
+      dietCategory,
+      duration,
+    };
+    if (computedPhoto !== undefined) {
+      updateDoc.photo = computedPhoto;
+    }
 
     const updated = await MealTemplate.findByIdAndUpdate(
       req.params.id,
-      {
-        templateName,
-        mealType,
-        foodItems,
-        calories,
-        protein,
-        carbs,
-        fats,
-        dietCategory,
-        duration,
-        photo,
-      },
-      { new: true, runValidators: true } //enforce schema validators on update and return the updated document
+      updateDoc,
+      { new: true, runValidators: true }
     );
 
     if (!updated) {

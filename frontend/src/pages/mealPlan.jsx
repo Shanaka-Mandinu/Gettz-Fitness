@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import meal1 from "../assets/meal1.jpg";
@@ -19,6 +19,31 @@ export default function MealPlan() {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Prefill first/last name (and user_id) from backend only
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token || !import.meta.env.VITE_BACKEND_URL) return;
+    (async () => {
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/user/getUser`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const u = data?.user;
+        if (u) {
+          setForm((prev) => ({
+            ...prev,
+            user_id: u._id || prev.user_id,
+            user_name: u.firstName || prev.user_name,
+            last_name: u.lastName || prev.last_name,
+          }));
+        }
+      } catch (err) {
+        // Keep fields empty if fetch fails; submission will require auth
+      }
+    })();
+  }, []);
 
   const resetForm = () => {
     setForm({
@@ -88,8 +113,6 @@ export default function MealPlan() {
 
   function validateAll(values = form) {
     const fields = [
-      "user_name",
-      "last_name",
       "status",
       "height",
       "weight",
@@ -125,10 +148,6 @@ export default function MealPlan() {
   async function onCreate(e) {
     e.preventDefault();
 
-    // Read user from localStorage
-    const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : null;
-
     // Validate all
     const newErrors = validateAll();
     if (Object.values(newErrors).some(Boolean)) {
@@ -137,11 +156,15 @@ export default function MealPlan() {
       return;
     }
 
-    //check if the user is logged in to the system
-    const derivedUserId = user?._id || form.user_id || "";
-
-    if (!derivedUserId) {
+    // Require auth token and a fetched user_id from backend
+    const token = localStorage.getItem("token");
+    if (!token) {
       toast.error("Please log in to continue.");
+      return;
+    }
+
+    if (!form.user_id) {
+      toast.error("Unable to load your profile. Please refresh and try again.");
       return;
     }
 
@@ -152,7 +175,7 @@ export default function MealPlan() {
     }
 
     const payload = {
-      user_id: derivedUserId,
+  user_id: form.user_id,
       user_name: form.user_name.trim(),
       last_name: form.last_name.trim(),
       status: form.status,
@@ -163,7 +186,6 @@ export default function MealPlan() {
     };
 
     try {
-      const token = localStorage.getItem("token");
       await axios.post(
         import.meta.env.VITE_BACKEND_URL + "/api/mealRequest",
         payload,
@@ -231,92 +253,52 @@ export default function MealPlan() {
             Request your <span className="text-red-500">meal plan</span> here...
           </h2>
 
-          {/* First Name */}
+          {/* Read-only display of the current user's name (white background, names in red) */}
+          {form.user_id && (
+            <div
+              className="bg-white text-black rounded-xl px-4 py-3 shadow-sm flex items-center justify-center w-full"
+              aria-label="Request will be recorded as"
+            >
+              <p className="text-base md:text-lg text-center">
+                Your request will be recorded as{" "}
+                <span className="font-semibold text-red-500">
+                  {([form.user_name, form.last_name].filter(Boolean).join(" ")) || ""}
+                </span>
+              </p>
+            </div>
+          )}
+
+          {/* Request Status */}
           <div>
             <label className="block mb-1 text-sm font-medium text-black">
-              First Name
+              Request Status
             </label>
-            <p className="text-xs text-gray-500 mb-1">Your first name.</p>
-            <input
-              type="text"
-              placeholder="Lidiya"
-              value={form.user_name}
-              onChange={(e) => handleChange("user_name", e.target.value)}
-              onBlur={() => handleBlur("user_name")}
-              aria-invalid={!!errors.user_name}
-              aria-describedby={errId("user_name")}
+            <p className="text-xs text-gray-500 mb-1">
+              Whether this request is urgent or normal.
+            </p>
+            <select
+              value={form.status}
+              onChange={(e) => handleChange("status", e.target.value)}
+              onBlur={() => handleBlur("status")}
+              aria-invalid={!!errors.status}
+              aria-describedby={errId("status")}
               className={`w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 ${
-                errors.user_name
+                errors.status
                   ? "border-red-500 focus:ring-red-300"
                   : "border-black/30 focus:ring-black/20"
               }`}
-            />
-            {errors.user_name && (
-              <p id="user_name-error" className="mt-1 text-sm text-red-600">
-                {errors.user_name}
+            >
+              <option value="normal">Normal</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            {errors.status && (
+              <p
+                id="status-error"
+                className="mt-1 text-sm text-red-600"
+              >
+                {errors.status}
               </p>
             )}
-          </div>
-
-          {/* Last Name | Request Status */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block mb-1 text-sm font-medium text-black">
-                Last Name
-              </label>
-              <p className="text-xs text-gray-500 mb-1">Your family surname.</p>
-              <input
-                type="text"
-                placeholder="Smith"
-                value={form.last_name}
-                onChange={(e) => handleChange("last_name", e.target.value)}
-                onBlur={() => handleBlur("last_name")}
-                aria-invalid={!!errors.last_name}
-                aria-describedby={errId("last_name")}
-                className={`w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 ${
-                  errors.last_name
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-black/30 focus:ring-black/20"
-                }`}
-              />
-              {errors.last_name && (
-                <p id="last_name-error" className="mt-1 text-sm text-red-600">
-                  {errors.last_name}
-                </p>
-              )}
-            </div>
-
-            <div className="flex-1">
-              <label className="block mb-1 text-sm font-medium text-black">
-                Request Status
-              </label>
-              <p className="text-xs text-gray-500 mb-1">
-                Whether this request is urgent or normal.
-              </p>
-              <select
-                value={form.status}
-                onChange={(e) => handleChange("status", e.target.value)}
-                onBlur={() => handleBlur("status")}
-                aria-invalid={!!errors.status}
-                aria-describedby={errId("status")}
-                className={`w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 ${
-                  errors.status
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-black/30 focus:ring-black/20"
-                }`}
-              >
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent</option>
-              </select>
-              {errors.status && (
-                <p
-                  id="status-error"
-                  className="mt-1 text-sm text-red-600"
-                >
-                  {errors.status}
-                </p>
-              )}
-            </div>
           </div>
 
           {/* Description */}
@@ -328,7 +310,7 @@ export default function MealPlan() {
               Add any notes or special requirements.
             </p>
             <textarea
-              rows="3"
+              rows="5"
               placeholder="Write something here..."
               value={form.description}
               onChange={(e) => handleChange("description", e.target.value)}
