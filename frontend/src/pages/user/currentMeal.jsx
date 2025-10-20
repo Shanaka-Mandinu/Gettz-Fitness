@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 
 
@@ -343,150 +341,7 @@ export default function CurrentMeal() {
   });
 
 
-  // Export the currently filtered plans to a PDF with two tables (basic + nutritional info)
-  function handleDownloadPDF() {
-    try {
-      const doc = new jsPDF();
-      
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(220, 38, 38); // Red color
-      doc.text("Gettz Fitness", 20, 20);
-      
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0); // Black color
-      doc.text("Address: Matara", 20, 30);
-      
-      // Red line
-      doc.setDrawColor(220, 38, 38);
-      doc.setLineWidth(0.5);
-      doc.line(20, 35, 190, 35);
-      
-      // Title
-      doc.setFontSize(16);
-      doc.setTextColor(220, 38, 38);
-      doc.text("User Meal Plans Report", 20, 45);
-      
-      // First Table - Basic Info
-      const basicTableData = filteredPlans.map((p, index) => {
-        const type = p.meal_type ?? p.planMealType ?? "-";
-        const typeWithSource = p.isTemplate ? `${type} (Template)` : type;
-        
-        return [
-          index + 1,
-          p.meal_name ?? p.mealName ?? "-",
-          typeWithSource,
-          p.duration ?? "-",
-          String(p.calories ?? "-")
-        ];
-      });
-
-      autoTable(doc, {
-        startY: 55,
-        head: [
-          [
-            "No",
-            "Meal Name",
-            "Meal Type",
-            "Duration",
-            "Calories"
-          ]
-        ],
-        body: basicTableData,
-        theme: "grid",
-        headStyles: { 
-          fillColor: [220, 38, 38], // Red background
-          textColor: [255, 255, 255], // White text
-          fontSize: 10,
-          halign: 'left'
-        },
-        styles: { 
-          fontSize: 8,
-          cellPadding: 3,
-          halign: 'left'
-        },
-        columnStyles: {
-          0: { cellWidth: 15, halign: 'left' }, // No
-          1: { cellWidth: 50, halign: 'left' }, // Meal Name
-          2: { cellWidth: 35, halign: 'left' }, // Meal Type
-          3: { cellWidth: 30, halign: 'left' }, // Duration
-          4: { cellWidth: 25, halign: 'left' }  // Calories
-        },
-        margin: { top: 55, left: 20, right: 20 },
-        tableWidth: 'auto',
-        showHead: 'everyPage'
-      });
-
-      // Second Table - Nutritional Info
-      const nutritionalTableData = filteredPlans.map((p, index) => {
-        const protein = p.isTemplate ? (p.templateData?.protein || "-") : (p.protein || "-");
-        const carbs = p.isTemplate ? (p.templateData?.carbs || "-") : (p.carbs || "-");
-        const fats = p.isTemplate ? (p.templateData?.fats || "-") : (p.fats || "-");
-        const category = p.isTemplate ? (p.templateData?.dietCategory || "-") : (p.dietCategory || "-");
-        
-        return [
-          index + 1,
-          p.meal_name ?? p.mealName ?? "-",
-          protein,
-          carbs,
-          fats,
-          category
-        ];
-      });
-
-      autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 20,
-        head: [
-          [
-            "No",
-            "Meal Name",
-            "Protein",
-            "Carbs",
-            "Fats",
-            "Diet Category"
-          ]
-        ],
-        body: nutritionalTableData,
-        theme: "grid",
-        headStyles: { 
-          fillColor: [220, 38, 38], // Red background
-          textColor: [255, 255, 255], // White text
-          fontSize: 10,
-          halign: 'left'
-        },
-        styles: { 
-          fontSize: 8,
-          cellPadding: 3,
-          halign: 'left'
-        },
-        columnStyles: {
-          0: { cellWidth: 15, halign: 'left' }, // No
-          1: { cellWidth: 50, halign: 'left' }, // Meal Name
-          2: { cellWidth: 25, halign: 'left' }, // Protein
-          3: { cellWidth: 25, halign: 'left' }, // Carbs
-          4: { cellWidth: 25, halign: 'left' }, // Fats
-          5: { cellWidth: 35, halign: 'left' }  // Diet Category
-        },
-        margin: { top: 20, left: 20, right: 20 },
-        tableWidth: 'auto',
-        showHead: 'everyPage'
-      });
-
-      // Footer
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, doc.internal.pageSize.height - 5);
-      }
-
-      doc.save("user_meal_plans_report.pdf");
-    } catch (err) {
-      toast.error("Failed to generate PDF");
-    }
-  }
+  // PDF download removed
   
 
   return (
@@ -499,15 +354,7 @@ export default function CurrentMeal() {
             <p className="mt-1 text-sm text-gray-500">Here you can see your active meal plans.</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadPDF}
-              className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700"
-            >
-              Download PDF
-            </button>
-          </div>
+          {/* PDF download button removed */}
         </div>
 
         {/* Filter Section */}
