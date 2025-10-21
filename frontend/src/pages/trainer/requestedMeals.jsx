@@ -17,6 +17,13 @@ export default function RequestedMeals() {
   const [dateTo, setDateTo] = useState("");
   const [mealTypeFilter, setMealTypeFilter] = useState("all"); // all | vegan | non-vegan
 
+  // Today string in local timezone for limiting future dates (YYYY-MM-DD)
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }, []);
+
 
   // -------- FETCH ----------
   async function fetchRequests() {
@@ -169,6 +176,7 @@ export default function RequestedMeals() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
+                max={todayStr}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
             </div>
@@ -178,6 +186,7 @@ export default function RequestedMeals() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
+                max={todayStr}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
             </div>
