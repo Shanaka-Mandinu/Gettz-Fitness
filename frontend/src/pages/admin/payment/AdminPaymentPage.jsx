@@ -29,6 +29,24 @@ export default function AdminPaymentPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");   
 
+  // Today (yyyy-mm-dd) for constraints and clamping
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const handleFromChange = (e) => {
+    let val = e.target.value;
+    if (val && val > todayStr) val = todayStr; // prevent future dates
+    setDateFrom(val);
+    // Ensure To is not before From
+    if (dateTo && val && dateTo < val) setDateTo(val);
+  };
+
+  const handleToChange = (e) => {
+    let val = e.target.value;
+    if (val && val > todayStr) val = todayStr; // prevent future dates
+    if (dateFrom && val && val < dateFrom) val = dateFrom; // keep To >= From
+    setDateTo(val);
+  };
+
   const fmt = (n) => `LKR ${Number(n || 0).toLocaleString("en-LK")}`;
 
   useEffect(() => {
@@ -222,7 +240,8 @@ export default function AdminPaymentPage() {
             <input
               type="date"
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={handleFromChange}
+              max={todayStr}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
             />
           </div>
@@ -231,7 +250,9 @@ export default function AdminPaymentPage() {
             <input
               type="date"
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={handleToChange}
+              min={dateFrom || undefined}
+              max={todayStr}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
             />
           </div>
