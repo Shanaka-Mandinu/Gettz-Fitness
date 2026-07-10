@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "jose": "^6.2.3",
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2"
   }

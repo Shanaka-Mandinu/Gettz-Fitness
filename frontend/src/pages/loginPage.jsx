@@ -7,6 +7,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
+import { useAuthContext } from "@asgardeo/auth-react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, signOut, getAccessToken, isAuthenticated } = useAuthContext();
 
   const validate = () => {
     const e = {};
@@ -94,6 +96,28 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  // When Asgardeo completes authentication and we are authenticated, persist token and navigate.
+  React.useEffect(() => {
+    let mounted = true;
+    const handle = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessToken();
+          if (token && mounted) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('asgardeo_access_token', token);
+            window.dispatchEvent(new CustomEvent('authChange', { detail: { isLoggedIn: true } }));
+            navigate('/');
+          }
+        } catch (err) {
+          console.error('Error getting Asgardeo access token', err);
+        }
+      }
+    };
+    handle();
+    return () => { mounted = false; };
+  }, [isAuthenticated, getAccessToken, navigate]);
 
   return (
     <div className="min-h-screen w-full bg-white text-black grid grid-cols-1 lg:grid-cols-2">
@@ -234,6 +258,21 @@ export default function LoginPage() {
               <div className="w-full">
                 <div className="w-full flex justify-center">
                   <div className="w-full flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await signIn();
+                        } catch (err) {
+                          console.error('Asgardeo signIn error', err);
+                          toast.error('Asgardeo login failed');
+                        }
+                      }}
+                      className="w-full mb-3 inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                    >
+                      Sign in with Asgardeo
+                    </button>
+
                     <GoogleLogin
                       onSuccess={handleGoogle}
                       onError={() => toast.error("Google login failed")}

@@ -12,12 +12,19 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const userData = JSON.parse(localStorage.getItem("user"));
   const readUser = () => {
     try {
       const token = localStorage.getItem("token");
+      const asgardeoToken = localStorage.getItem("asgardeo_access_token");
       const userStr = localStorage.getItem("user");
-      if (token && userStr) return JSON.parse(userStr);
+      if ((token || asgardeoToken) && userStr) return JSON.parse(userStr);
+      if (asgardeoToken) {
+        return {
+          name: "Member",
+          email: "",
+          authProvider: "asgardeo",
+        };
+      }
       return null;
     } catch {
       return null;
@@ -30,10 +37,15 @@ export default function Navbar() {
 
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key === "user" || e.key === "token") setUser(readUser());
+      if (e.key === "user" || e.key === "token" || e.key === "asgardeo_access_token") setUser(readUser());
     };
+    const onAuthChange = () => setUser(readUser());
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("authChange", onAuthChange);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("authChange", onAuthChange);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -49,6 +61,7 @@ export default function Navbar() {
       if (result.isConfirmed) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("asgardeo_access_token");
         setUser(null);
 
          // Dispatch custom event to notify other components
@@ -63,6 +76,7 @@ export default function Navbar() {
 
   const displayName = useMemo(() => {
     if (!user) return "Guest";
+    if (user.authProvider === "asgardeo") return "Member";
     if (user.firstName)
       return [user.firstName].filter(Boolean).join(" ").trim();
     if (user.name && typeof user.name === "string") return user.name;
@@ -118,9 +132,9 @@ export default function Navbar() {
     { to: "/contactUs", label: "Contact" },
     { to: "/mealPlan", label: "Meals" },
     { to: "/store", label: "Store" },
-    ...(userData ? [{ to: "/challenges", label: "Competitions" }] : [])
+    ...(user ? [{ to: "/challenges", label: "Competitions" }] : [])
   ],
-  [userData]
+  [user]
 );
 
   // Consistent link style for active/inactive
