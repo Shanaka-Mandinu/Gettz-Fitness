@@ -139,13 +139,19 @@ io.on("connection", (socket) => {
   console.log("🟢 Dashboard connected");
   socket.on("disconnect", () => console.log("🔴 Dashboard disconnected"));
 });
-initRFIDListener(io);
+if (process.env.ENABLE_RFID_LISTENER === "true") {
+  initRFIDListener(io);
+} else {
+  console.log("RFID listener disabled");
+}
 
 app.post('/api/auth/google', googleLogin);
 
 // Use httpServer instead of app for socket.io compatibility
-httpServer.listen(3000, () => {
-  console.log('Server is running on port 3000');
+const port = process.env.PORT || 3000;
+
+httpServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
   console.log('Socket.io server is ready');
 });
 
