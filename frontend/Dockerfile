@@ -24,7 +24,7 @@ RUN printf 'server {\n\
 }\n' > /etc/nginx/conf.d/default.conf
 
 # Explicitly run as a non-root user
-USER 101
+USER nginx
 
 EXPOSE 8080
 
